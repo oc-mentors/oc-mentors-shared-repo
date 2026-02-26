@@ -3,6 +3,8 @@ import { ArrowLeft, Star, MapPin, Clock, Calendar, Video, MessageSquare, DollarS
 import { ProfileButton } from "../components/ProfileButton";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { useCalendar } from "../contexts/CalendarContext";
 
 interface Tutor {
   id: number;
@@ -22,8 +24,17 @@ interface Tutor {
 export default function SubjectTutorsPage() {
   const navigate = useNavigate();
   const { subject } = useParams<{ subject: string }>();
+  const { addSession, addCalendarEvent } = useCalendar();
   const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingData, setBookingData] = useState({
+    date: "2026-02-20",
+    time: "14:00",
+    duration: "1 hour",
+    topic: "",
+    sessionType: "Video Call",
+    location: "Online"
+  });
 
   // Capitalize subject for display
   const subjectDisplay = subject ? subject.charAt(0).toUpperCase() + subject.slice(1) : "";
@@ -127,6 +138,61 @@ export default function SubjectTutorsPage() {
   };
 
   const confirmBooking = () => {
+    if (!selectedTutor) return;
+
+    // Parse the booking data
+    const [year, month, day] = bookingData.date.split('-').map(Number);
+    const [hours, minutes] = bookingData.time.split(':').map(Number);
+    
+    // Convert to 12-hour format
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    const startTime = `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+    
+    // Calculate end time based on duration
+    const durationMap: { [key: string]: number } = {
+      "1 hour": 1,
+      "1.5 hours": 1.5,
+      "2 hours": 2
+    };
+    const durationHours = durationMap[bookingData.duration] || 1;
+    const endHours = hours + durationHours;
+    const endPeriod = endHours >= 12 ? 'PM' : 'AM';
+    const endHours12 = endHours === 0 ? 12 : endHours > 12 ? endHours - 12 : endHours;
+    const endTime = `${endHours12}:${minutes.toString().padStart(2, '0')} ${endPeriod}`;
+
+    // Create calendar event
+    const calendarEvent = {
+      id: Date.now(),
+      type: "class" as const,
+      title: `${subjectDisplay}${bookingData.topic ? ` - ${bookingData.topic}` : ''}`,
+      startTime,
+      endTime,
+      day: new Date(year, month - 1, day).getDay(),
+      date: new Date(year, month - 1, day),
+      tutor: selectedTutor.name,
+      location: bookingData.location,
+      color: "from-[#5b7ceb] to-[#7c3aed]",
+    };
+
+    // Create session entry
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const session = {
+      id: Date.now() + 1,
+      subject: `${subjectDisplay}${bookingData.topic ? ` - ${bookingData.topic}` : ''}`,
+      tutor: selectedTutor.name,
+      tutorAvatar: selectedTutor.avatar,
+      date: `${monthNames[month - 1]} ${day}, ${year}`,
+      time: startTime,
+      duration: bookingData.duration,
+      status: "upcoming" as const,
+      location: bookingData.location,
+    };
+
+    // Add to context (which will save to localStorage automatically)
+    addCalendarEvent(calendarEvent);
+    addSession(session);
+
     setShowBookingModal(false);
     navigate("/schedule", { state: { showBookingSuccess: true } });
   };
@@ -333,7 +399,8 @@ export default function SubjectTutorsPage() {
                   </label>
                   <input
                     type="date"
-                    defaultValue="2026-02-20"
+                    value={bookingData.date}
+                    onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
                     className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
                   />
                 </div>
@@ -345,7 +412,8 @@ export default function SubjectTutorsPage() {
                     </label>
                     <input
                       type="time"
-                      defaultValue="14:00"
+                      value={bookingData.time}
+                      onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
                       className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
                     />
                   </div>
@@ -353,7 +421,11 @@ export default function SubjectTutorsPage() {
                     <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
                       Duration
                     </label>
-                    <select className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors">
+                    <select
+                      value={bookingData.duration}
+                      onChange={(e) => setBookingData({ ...bookingData, duration: e.target.value })}
+                      className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                    >
                       <option>1 hour</option>
                       <option>1.5 hours</option>
                       <option>2 hours</option>
@@ -368,6 +440,8 @@ export default function SubjectTutorsPage() {
                   <input
                     type="text"
                     placeholder="What would you like to focus on?"
+                    value={bookingData.topic}
+                    onChange={(e) => setBookingData({ ...bookingData, topic: e.target.value })}
                     className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] placeholder:text-[#a8b3cf] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
                   />
                 </div>
@@ -376,9 +450,30 @@ export default function SubjectTutorsPage() {
                   <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
                     Session Type
                   </label>
-                  <select className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors">
+                  <select
+                    value={bookingData.sessionType}
+                    onChange={(e) => setBookingData({ ...bookingData, sessionType: e.target.value })}
+                    className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                  >
                     <option>Video Call</option>
                     <option>In-Person</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                    Location
+                  </label>
+                  <select
+                    value={bookingData.location}
+                    onChange={(e) => setBookingData({ ...bookingData, location: e.target.value })}
+                    className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                  >
+                    <option>Online</option>
+                    <option>UCI</option>
+                    <option>Santa Ana High School</option>
+                    <option>Troy High School</option>
+                    <option>Irvine High School</option>
                   </select>
                 </div>
               </div>

@@ -1,8 +1,11 @@
-import { Link, useNavigate } from "react-router";
-import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { useState, useRef, useEffect } from "react";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import svgPaths from "../../imports/svg-in824s3fr2";
+import { motion, AnimatePresence } from "motion/react";
+import { ArrowLeft, Check, ChevronLeft, Eye } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface QuizQuestion {
   id: number;
@@ -57,38 +60,69 @@ const learningStyles = ["Visual", "Auditory", "Reading/Writing", "Kinesthetic"];
 
 export default function LearningStyleQuizPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isRetake = searchParams.get("retake") === "true";
+  const savedResult = localStorage.getItem("learningStyleResult");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [showResults, setShowResults] = useState(false);
-
-  const progress = ((currentQuestion + 1) / quizQuestions.length) * 100;
+  const [showResults, setShowResults] = useState(!isRetake && !!savedResult);
+  const { colors, accentColor } = useTheme();
+  const currentQuestionRef = useRef(0);
+  const [barProgress, setBarProgress] = useState(0);
+  const [quizPhase, setQuizPhase] = useState<"quiz" | "transitioning" | "results">(
+    !isRetake && !!savedResult ? "results" : "quiz"
+  );
 
   const handleOptionSelect = (optionIndex: number) => {
     setSelectedOption(optionIndex);
     
     // Auto-advance after a short delay
     setTimeout(() => {
-      const newAnswers = [...selectedAnswers];
-      newAnswers[currentQuestion] = optionIndex;
-      setSelectedAnswers(newAnswers);
+      const cq = currentQuestionRef.current;
+      setSelectedAnswers(prev => {
+        const newAnswers = [...prev];
+        newAnswers[cq] = optionIndex;
+        return newAnswers;
+      });
 
-      if (currentQuestion < quizQuestions.length - 1) {
-        setCurrentQuestion(currentQuestion + 1);
+      if (cq < quizQuestions.length - 1) {
+        const next = cq + 1;
+        currentQuestionRef.current = next;
+        setCurrentQuestion(next);
+        setBarProgress(next / quizQuestions.length);
         setSelectedOption(null);
       } else {
-        setShowResults(true);
+        // Last question: slide bar to 100%, then transition to results
+        setBarProgress(1);
+        setTimeout(() => {
+          setQuizPhase("transitioning");
+        }, 500);
+        setTimeout(() => {
+          setShowResults(true);
+          setQuizPhase("results");
+        }, 1800);
       }
     }, 400);
   };
 
   const getResult = () => {
+    // If showing saved result (not a retake), use the saved value
+    if (!isRetake && savedResult && selectedAnswers.length === 0) return savedResult;
     if (selectedAnswers.length === 0) return "Visual";
     const counts = [0, 0, 0, 0];
     selectedAnswers.forEach((answer) => counts[answer]++);
     const maxIndex = counts.indexOf(Math.max(...counts));
     return learningStyles[maxIndex];
   };
+
+  // Save result to localStorage when results are shown
+  useEffect(() => {
+    if (showResults) {
+      const result = getResult();
+      localStorage.setItem("learningStyleResult", result);
+    }
+  }, [showResults]);
 
   if (showResults) {
     const result = getResult();
@@ -102,12 +136,6 @@ export default function LearningStyleQuizPage() {
               <path d={svgPaths.p23cbedc0} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="5" />
             </svg>
           );
-        case "Auditory":
-          return <Ear className="w-20 h-20 text-white" />;
-        case "Reading/Writing":
-          return <BookOpen className="w-20 h-20 text-white" />;
-        case "Kinesthetic":
-          return <Hand className="w-20 h-20 text-white" />;
         default:
           return <Eye className="w-20 h-20 text-white" />;
       }
@@ -118,11 +146,11 @@ export default function LearningStyleQuizPage() {
         case "Visual":
           return "You learn best by seeing information. Diagrams, charts, videos, and visual demonstrations help you absorb and retain knowledge";
         case "Auditory":
-          return "You learn best through listening and verbal explanations. Discussions, lectures, and audio content help you understand";
+          return "You learn best by hearing information. Lectures, discussions, and verbal explanations help you absorb and retain knowledge";
         case "Reading/Writing":
-          return "You learn best through reading and writing. Taking notes, reading textbooks, and written assignments help you learn";
+          return "You learn best through reading and writing. Textbooks, notes, and written exercises help you absorb and retain knowledge";
         case "Kinesthetic":
-          return "You learn best through hands-on practice and experience. Physical activities and real-world applications help you understand";
+          return "You learn best through hands-on experience. Practical activities, experiments, and physical engagement help you absorb and retain knowledge";
         default:
           return "";
       }
@@ -138,21 +166,21 @@ export default function LearningStyleQuizPage() {
           ];
         case "Auditory":
           return [
-            { emoji: "🎧", title: "Record Lectures", description: "Listen to recordings while studying" },
-            { emoji: "👥", title: "Study Groups", description: "Discuss topics with others to reinforce learning" },
-            { emoji: "🗣️", title: "Read Aloud", description: "Hearing information helps you remember better" },
+            { emoji: "🎧", title: "Listen to Podcasts", description: "Audio content helps reinforce learning" },
+            { emoji: "🗣️", title: "Join Study Groups", description: "Discussing topics out loud improves understanding" },
+            { emoji: "🎵", title: "Use Mnemonics", description: "Create rhymes or songs to remember key facts" },
           ];
         case "Reading/Writing":
           return [
-            { emoji: "📝", title: "Take Detailed Notes", description: "Writing helps you process and remember" },
-            { emoji: "📚", title: "Summarize Content", description: "Rewrite information in your own words" },
-            { emoji: "📋", title: "Create Lists", description: "Organize information with outlines and lists" },
+            { emoji: "📝", title: "Take Detailed Notes", description: "Writing things down strengthens your memory" },
+            { emoji: "📖", title: "Read Widely", description: "Explore textbooks, articles, and written resources" },
+            { emoji: "✍️", title: "Rewrite Key Points", description: "Summarize material in your own words" },
           ];
         case "Kinesthetic":
           return [
-            { emoji: "✍️", title: "Practice Problems", description: "Work through exercises hands-on" },
-            { emoji: "🔬", title: "Experiments", description: "Use hands-on activities to learn concepts" },
-            { emoji: "🚶", title: "Take Breaks", description: "Move around while studying to stay engaged" },
+            { emoji: "🔬", title: "Do Experiments", description: "Hands-on practice makes concepts click" },
+            { emoji: "🏃", title: "Take Active Breaks", description: "Move around between study sessions to stay focused" },
+            { emoji: "🧩", title: "Use Physical Models", description: "Build or manipulate objects to understand concepts" },
           ];
         default:
           return [];
@@ -160,15 +188,8 @@ export default function LearningStyleQuizPage() {
     };
 
     return (
-      <div className="min-h-screen bg-[#2c3042] overflow-auto pb-20">
+      <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
         <div className="max-w-md mx-auto">
-          {/* Status Bar */}
-          <div className="px-6 pt-3 pb-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[15px] font-semibold text-white">9:41</span>
-            </div>
-          </div>
-
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -179,9 +200,10 @@ export default function LearningStyleQuizPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.05)] flex items-center justify-center"
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: colors.bgTertiary }}
               >
-                <ChevronLeft className="w-6 h-6 text-[#e8edf5]" />
+                <ChevronLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
               </motion.button>
             </Link>
           </motion.div>
@@ -280,7 +302,7 @@ export default function LearningStyleQuizPage() {
             transition={{ delay: 1 }}
             className="px-6 mb-6"
           >
-            <h3 className="text-[20px] font-semibold text-[#e8edf5] mb-4">Recommended Study Tips</h3>
+            <h3 className="text-[20px] font-semibold mb-4" style={{ color: colors.textPrimary }}>Recommended Study Tips</h3>
             <div className="space-y-3">
               {getStudyTips().map((tip, index) => (
                 <motion.div
@@ -289,15 +311,16 @@ export default function LearningStyleQuizPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 1.1 + index * 0.1 }}
                   whileHover={{ scale: 1.01, x: 4 }}
-                  className="bg-[#353a52] rounded-2xl p-4 border border-[rgba(255,255,255,0.05)] cursor-pointer"
+                  className="rounded-2xl p-4 border cursor-pointer"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
                 >
                   <div className="flex items-start gap-3">
                     <div className="text-[30px] leading-[45px] flex-shrink-0">{tip.emoji}</div>
                     <div className="flex-1">
-                      <h4 className="text-[15px] font-semibold text-[#e8edf5] mb-1">
+                      <h4 className="text-[15px] font-semibold mb-1" style={{ color: colors.textPrimary }}>
                         {tip.title}
                       </h4>
-                      <p className="text-[13px] text-[#a8b3cf] leading-[18px]">
+                      <p className="text-[13px] leading-[18px]" style={{ color: colors.textSecondary }}>
                         {tip.description}
                       </p>
                     </div>
@@ -314,27 +337,95 @@ export default function LearningStyleQuizPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#2c3042] to-[#1e2139] flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: `linear-gradient(to bottom right, ${colors.bgPrimary}, ${colors.bgSecondary})` }}>
       <div className="w-full max-w-md">
-        {/* Progress Bar */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="px-6 mb-8"
-        >
-          <div className="w-full h-2 bg-[#2a2f4a] rounded-full overflow-hidden">
+
+        {/* Back Arrow */}
+        <div className="px-6 mb-4" style={{ marginTop: "-1rem" }}>
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer"
+            style={{ backgroundColor: colors.bgTertiary }}
+          >
+            <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
+          </motion.button>
+        </div>
+
+        {/* Transitioning overlay */}
+        <AnimatePresence>
+          {quizPhase === "transitioning" && (
             <motion.div
+              key="transition-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+              style={{ background: `linear-gradient(to bottom right, ${colors.bgPrimary}, ${colors.bgSecondary})` }}
+            >
+              {/* Animated checkmark circle */}
+              <motion.div
+                initial={{ scale: 0, rotate: -90 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+                className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
+                style={{ backgroundColor: accentColor.primary }}
+              >
+                <motion.div
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ delay: 0.4, duration: 0.4 }}
+                >
+                  <Check className="w-12 h-12 text-white" strokeWidth={3} />
+                </motion.div>
+              </motion.div>
+
+              {/* Text */}
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.3 }}
+                className="text-[18px] font-semibold"
+                style={{ color: colors.textPrimary }}
+              >
+                Analyzing your answers...
+              </motion.p>
+
+              {/* Animated dots */}
+              <div className="flex gap-2 mt-4">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: accentColor.primary }}
+                    animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Progress Bar */}
+        <div className="px-6 mb-8">
+          <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: colors.bgTertiary }}>
+            <div
               className="h-full rounded-full"
               style={{
-                backgroundImage: "linear-gradient(174.463deg, rgb(67, 97, 217) 0%, rgb(91, 124, 235) 100%)",
+                backgroundColor: accentColor.primary,
+                width: "100%",
+                transform: `scaleX(${barProgress})`,
+                transformOrigin: "left",
+                transition: "transform 0.5s ease-out",
               }}
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
             />
           </div>
-        </motion.div>
+        </div>
 
         {/* Question */}
         <AnimatePresence mode="wait">
@@ -346,7 +437,7 @@ export default function LearningStyleQuizPage() {
             transition={{ duration: 0.3 }}
             className="px-6 mb-8"
           >
-            <h2 className="text-[22px] font-semibold text-[#e8edf5] mb-8 leading-[30px]">
+            <h2 className="text-[22px] font-semibold mb-8 leading-[30px]" style={{ color: colors.textPrimary }}>
               {quizQuestions[currentQuestion].question}
             </h2>
 
@@ -360,19 +451,19 @@ export default function LearningStyleQuizPage() {
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleOptionSelect(index)}
-                  className={`w-full bg-[#1e2139] rounded-xl p-5 text-left border transition-all ${
-                    selectedOption === index
-                      ? "border-[#5b7ceb] bg-[rgba(91,124,235,0.1)]"
-                      : "border-[rgba(255,255,255,0.12)]"
-                  } shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]`}
+                  className={`w-full rounded-xl p-5 text-left border transition-all shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]`}
+                  style={{
+                    backgroundColor: selectedOption === index ? `${accentColor.primary}15` : colors.bgCard,
+                    borderColor: selectedOption === index ? accentColor.primary : colors.borderSecondary,
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                        selectedOption === index
-                          ? "border-[#5b7ceb] bg-[#5b7ceb]"
-                          : "border-[rgba(255,255,255,0.12)]"
-                      }`}
+                      className="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all"
+                      style={{
+                        borderColor: selectedOption === index ? accentColor.primary : colors.borderSecondary,
+                        backgroundColor: selectedOption === index ? accentColor.primary : "transparent",
+                      }}
                     >
                       {selectedOption === index && (
                         <motion.div
@@ -382,31 +473,13 @@ export default function LearningStyleQuizPage() {
                         />
                       )}
                     </div>
-                    <span className="text-[15px] text-[#e8edf5]">{option}</span>
+                    <span className="text-[15px]" style={{ color: colors.textPrimary }}>{option}</span>
                   </div>
                 </motion.button>
               ))}
             </div>
           </motion.div>
         </AnimatePresence>
-
-        {/* Skip Quiz */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="px-6"
-        >
-          <Link to="/progress">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-full py-4 text-[#a8b3cf] text-[15px] font-normal"
-            >
-              Skip Quiz
-            </motion.button>
-          </Link>
-        </motion.div>
       </div>
 
       <BottomNav currentPage="profile" />

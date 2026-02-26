@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from "motion/react";
 import { Search, SlidersHorizontal, Star, MapPin, BookOpen } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface Tutor {
   id: number;
@@ -24,6 +25,27 @@ const subjects = ["All", "Math", "Science", "English", "History", "Writing", "Ch
 export default function TutorsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("All");
+  const { colors, accentColor } = useTheme();
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftFade, setShowLeftFade] = useState(false);
+  const [showRightFade, setShowRightFade] = useState(true);
+
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setShowLeftFade(scrollLeft > 0);
+      // Use a small buffer (e.g. 1px) to account for potential rounding issues
+      setShowRightFade(scrollLeft < scrollWidth - clientWidth - 1);
+    }
+  };
+
+  useEffect(() => {
+    handleScroll();
+    // Re-check on resize
+    window.addEventListener('resize', handleScroll);
+    return () => window.removeEventListener('resize', handleScroll);
+  }, []);
 
   const tutors: Tutor[] = [
     {
@@ -124,66 +146,106 @@ export default function TutorsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#2c3042] overflow-auto pb-20">
-      <div className="max-w-md mx-auto">
-        {/* Header with Profile Button */}
-        <div className="px-6 pt-12 pb-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-[28px] font-bold text-[#e8edf5]">Find Tutors</h1>
-            <ProfileButton />
+    <div className="h-screen overflow-hidden flex flex-col" style={{ backgroundColor: colors.bgPrimary }}>
+      <div className="max-w-md mx-auto w-full h-full flex flex-col relative">
+        {/* Fixed Header Section */}
+        <div className="flex-shrink-0 relative z-10" style={{ backgroundColor: colors.bgPrimary }}>
+          {/* Header with Profile Button */}
+          <div className="px-6 pt-12 pb-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Find Tutors</h1>
+              <ProfileButton />
+            </div>
           </div>
+
+          {/* Search Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="px-6 pb-4"
+          >
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
+              <input
+                type="text"
+                placeholder="Search by name or subject..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl pl-12 pr-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                style={{
+                  backgroundColor: colors.bgTertiary,
+                  color: colors.textPrimary,
+                  borderColor: 'transparent'
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = accentColor.primary}
+                onBlur={(e) => e.currentTarget.style.borderColor = 'transparent'}
+              />
+            </div>
+          </motion.div>
+
+          {/* Subject Filter Chips */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="px-6 pb-5"
+          >
+            <div className="relative">
+              <div 
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+              >
+                {subjects.map((subject, index) => (
+                  <motion.button
+                    key={subject}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.15 + index * 0.03 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedSubject(subject)}
+                    className="px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all cursor-pointer flex-shrink-0"
+                    style={{
+                      backgroundColor: selectedSubject === subject ? accentColor.primary : colors.bgTertiary,
+                      color: selectedSubject === subject ? 'white' : colors.textSecondary,
+                      boxShadow: selectedSubject === subject ? `0px 4px 12px 0px ${accentColor.primary}40` : 'none'
+                    }}
+                  >
+                    {subject}
+                  </motion.button>
+                ))}
+              </div>
+              {/* Gradient Fades */}
+              <AnimatePresence>
+                {showLeftFade && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute left-0 top-0 bottom-2 w-12 pointer-events-none"
+                    style={{ background: `linear-gradient(to right, ${colors.bgPrimary}, transparent)` }}
+                  />
+                )}
+              </AnimatePresence>
+              <AnimatePresence>
+                {showRightFade && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute right-0 top-0 bottom-2 w-12 pointer-events-none"
+                    style={{ background: `linear-gradient(to left, ${colors.bgPrimary}, transparent)` }}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
         </div>
 
-        {/* Search Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="px-6 pb-4"
-        >
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#a8b3cf]" />
-            <input
-              type="text"
-              placeholder="Search by name or subject..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#2a2f4a] rounded-xl pl-12 pr-4 py-3 text-[14px] text-[#e8edf5] placeholder:text-[#a8b3cf] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
-            />
-          </div>
-        </motion.div>
-
-        {/* Subject Filter Chips */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="px-6 pb-5"
-        >
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {subjects.map((subject, index) => (
-              <motion.button
-                key={subject}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.15 + index * 0.03 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedSubject(subject)}
-                className={`px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all cursor-pointer ${
-                  selectedSubject === subject
-                    ? "bg-[#5b7ceb] text-white shadow-[0px_4px_12px_0px_rgba(91,124,235,0.4)]"
-                    : "bg-[#2a2f4a] text-[#a8b3cf] hover:bg-[#363b55]"
-                }`}
-              >
-                {subject}
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
-
         {/* Tutors List */}
-        <div className="px-6 pb-6">
+        <div className="flex-1 overflow-y-auto px-6 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
           <AnimatePresence mode="popLayout">
             {filteredTutors.map((tutor, index) => (
               <motion.div
@@ -199,7 +261,8 @@ export default function TutorsPage() {
                   <motion.div
                     whileHover={{ scale: 1.01, y: -2 }}
                     whileTap={{ scale: 0.99 }}
-                    className="bg-[#1e2139] rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border border-[rgba(255,255,255,0.08)] cursor-pointer"
+                    className="rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border cursor-pointer"
+                    style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
                   >
                     <div className="flex gap-4">
                       {/* Avatar */}
@@ -213,16 +276,16 @@ export default function TutorsPage() {
                       <div className="flex-1 min-w-0">
                         {/* Name and Price */}
                         <div className="flex items-start justify-between mb-1">
-                          <h3 className="text-[15px] font-medium text-[#e8edf5]">
+                          <h3 className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
                             {tutor.name}
                           </h3>
-                          <span className="text-[11px] font-semibold text-[#5b7ceb] flex-shrink-0 ml-2">
+                          <span className="text-[11px] font-semibold flex-shrink-0 ml-2" style={{ color: accentColor.primary }}>
                             {tutor.priceLevel}
                           </span>
                         </div>
 
                         {/* University */}
-                        <p className="text-[11px] text-[#a8b3cf] mb-2">
+                        <p className="text-[11px] mb-2" style={{ color: colors.textSecondary }}>
                           {tutor.university}
                         </p>
 
@@ -231,28 +294,29 @@ export default function TutorsPage() {
                           {tutor.subjects.map((subject) => (
                             <span
                               key={subject}
-                              className="bg-[rgba(91,124,235,0.1)] text-[#5b7ceb] text-[10px] px-2 py-1 rounded"
+                              className="text-[10px] px-2 py-1 rounded"
+                              style={{ backgroundColor: `${accentColor.primary}20`, color: accentColor.primary }}
                             >
                               {subject}
                             </span>
                           ))}
-                          <span className="bg-[rgba(168,179,207,0.1)] text-[#a8b3cf] text-[10px] px-2 py-1 rounded">
+                          <span className="text-[10px] px-2 py-1 rounded" style={{ backgroundColor: `${colors.textSecondary}20`, color: colors.textSecondary }}>
                             • {tutor.learningStyle}
                           </span>
                         </div>
 
                         {/* Review */}
-                        <p className="text-[13px] text-[#a8b3cf] italic line-clamp-2 mb-2">
+                        <p className="text-[13px] italic line-clamp-2 mb-2" style={{ color: colors.textSecondary }}>
                           "{tutor.review}"
                         </p>
 
                         {/* Rating */}
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 text-[#FFB800] fill-[#FFB800]" />
-                          <span className="text-[13px] font-semibold text-[#e8edf5]">
+                          <span className="text-[13px] font-semibold" style={{ color: colors.textPrimary }}>
                             {tutor.rating.toFixed(1)}
                           </span>
-                          <span className="text-[11px] text-[#a8b3cf]">
+                          <span className="text-[11px]" style={{ color: colors.textSecondary }}>
                             ({tutor.reviewCount})
                           </span>
                         </div>
@@ -271,8 +335,8 @@ export default function TutorsPage() {
               animate={{ opacity: 1 }}
               className="text-center py-12"
             >
-              <p className="text-[#a8b3cf] text-[15px] mb-2">No tutors found</p>
-              <p className="text-[#6a7282] text-[13px]">
+              <p className="text-[15px] mb-2" style={{ color: colors.textSecondary }}>No tutors found</p>
+              <p className="text-[13px]" style={{ color: colors.textSecondary, opacity: 0.7 }}>
                 Try adjusting your search or filters
               </p>
             </motion.div>

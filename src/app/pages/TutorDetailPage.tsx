@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router";
 import { ChevronLeft, Star, MapPin, BookOpen, Calendar, MessageCircle, Clock } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useConversations, Conversation } from "../contexts/ConversationsContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function TutorDetailPage() {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ export default function TutorDetailPage() {
   const params = useParams();
   const tutorId = params.id ? parseInt(params.id) : 1;
   const { hasConversation, addConversation, getConversation } = useConversations();
+  const { colors, accentColor } = useTheme();
 
   // Determine where to go back to based on sessionStorage
   const handleBack = () => {
@@ -180,7 +182,7 @@ export default function TutorDetailPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#2c3042] overflow-auto pb-20">
+    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="px-6 pt-3 pb-4">
@@ -188,9 +190,10 @@ export default function TutorDetailPage() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleBack}
-            className="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.05)] flex items-center justify-center cursor-pointer"
+            className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer"
+            style={{ backgroundColor: colors.borderPrimary }}
           >
-            <ChevronLeft className="w-6 h-6 text-[#e8edf5]" />
+            <ChevronLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
           </motion.button>
         </div>
 
@@ -208,18 +211,18 @@ export default function TutorDetailPage() {
               className="w-24 h-24 rounded-2xl object-cover shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
             />
             <div className="flex-1">
-              <h1 className="text-[24px] font-bold text-[#e8edf5] mb-1">{tutor.name}</h1>
-              <p className="text-[13px] text-[#a8b3cf] mb-2">{tutor.university}</p>
-              <p className="text-[12px] text-[#a8b3cf] mb-3">{tutor.major}</p>
+              <h1 className="text-[24px] font-bold mb-1" style={{ color: colors.textPrimary }}>{tutor.name}</h1>
+              <p className="text-[13px] mb-2" style={{ color: colors.textSecondary }}>{tutor.university}</p>
+              <p className="text-[12px] mb-3" style={{ color: colors.textSecondary }}>{tutor.major}</p>
               <div className="flex items-center gap-2 mb-2">
                 <Star className="w-5 h-5 text-[#FFB800] fill-[#FFB800]" />
-                <span className="text-[16px] font-bold text-[#e8edf5]">
+                <span className="text-[16px] font-bold" style={{ color: colors.textPrimary }}>
                   {tutor.rating.toFixed(1)}
                 </span>
-                <span className="text-[13px] text-[#a8b3cf]">({tutor.reviewCount} reviews)</span>
+                <span className="text-[13px]" style={{ color: colors.textSecondary }}>({tutor.reviewCount} reviews)</span>
               </div>
-              <span className="text-[18px] font-bold text-[#5b7ceb]">{tutor.priceLevel}</span>
-              <span className="text-[13px] text-[#a8b3cf] ml-2">${tutor.pricePerHour}/hr</span>
+              <span className="text-[18px] font-bold" style={{ color: accentColor.primary }}>{tutor.priceLevel}</span>
+              <span className="text-[13px] ml-2" style={{ color: colors.textSecondary }}>${tutor.pricePerHour}/hr</span>
             </div>
           </div>
         </motion.div>
@@ -232,20 +235,20 @@ export default function TutorDetailPage() {
           className="px-6 pb-6"
         >
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-[#1e2139] rounded-xl p-3 text-center shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]">
-              <BookOpen className="w-5 h-5 text-[#5b7ceb] mx-auto mb-1" />
-              <p className="text-[16px] font-bold text-[#e8edf5]">{tutor.totalSessions}</p>
-              <p className="text-[10px] text-[#a8b3cf]">Sessions</p>
+            <div className="rounded-xl p-3 text-center shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]" style={{ backgroundColor: colors.bgCard }}>
+              <BookOpen className="w-5 h-5 mx-auto mb-1" style={{ color: accentColor.primary }} />
+              <p className="text-[16px] font-bold" style={{ color: colors.textPrimary }}>{tutor.totalSessions}</p>
+              <p className="text-[10px]" style={{ color: colors.textSecondary }}>Sessions</p>
             </div>
-            <div className="bg-[#1e2139] rounded-xl p-3 text-center shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]">
-              <Clock className="w-5 h-5 text-[#5b7ceb] mx-auto mb-1" />
-              <p className="text-[14px] font-bold text-[#e8edf5]">{tutor.responseTime}</p>
-              <p className="text-[10px] text-[#a8b3cf]">Response</p>
+            <div className="rounded-xl p-3 text-center shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]" style={{ backgroundColor: colors.bgCard }}>
+              <Clock className="w-5 h-5 mx-auto mb-1" style={{ color: accentColor.primary }} />
+              <p className="text-[14px] font-bold" style={{ color: colors.textPrimary }}>{tutor.responseTime}</p>
+              <p className="text-[10px]" style={{ color: colors.textSecondary }}>Response</p>
             </div>
-            <div className="bg-[#1e2139] rounded-xl p-3 text-center shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]">
+            <div className="rounded-xl p-3 text-center shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]" style={{ backgroundColor: colors.bgCard }}>
               <Star className="w-5 h-5 text-[#FFB800] fill-[#FFB800] mx-auto mb-1" />
-              <p className="text-[16px] font-bold text-[#e8edf5]">{tutor.rating.toFixed(1)}</p>
-              <p className="text-[10px] text-[#a8b3cf]">Rating</p>
+              <p className="text-[16px] font-bold" style={{ color: colors.textPrimary }}>{tutor.rating.toFixed(1)}</p>
+              <p className="text-[10px]" style={{ color: colors.textSecondary }}>Rating</p>
             </div>
           </div>
         </motion.div>
@@ -289,7 +292,8 @@ export default function TutorDetailPage() {
                   }
                 });
               }}
-              className="bg-[#2a2f4a] text-[#e8edf5] py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer"
+              className="py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer"
+              style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
             >
               <MessageCircle className="w-5 h-5" />
               Message
@@ -298,7 +302,7 @@ export default function TutorDetailPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate("/booking")}
-              className="bg-gradient-to-br from-[#4361d9] to-[#5b7ceb] text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer"
+              className={`bg-gradient-to-br ${accentColor.gradient} text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer`}
             >
               <Calendar className="w-5 h-5" />
               Book Lesson
@@ -313,8 +317,8 @@ export default function TutorDetailPage() {
           transition={{ delay: 0.3 }}
           className="px-6 pb-5"
         >
-          <h2 className="text-[18px] font-semibold text-[#e8edf5] mb-3">About</h2>
-          <p className="text-[14px] text-[#a8b3cf] leading-[21px]">{tutor.bio}</p>
+          <h2 className="text-[18px] font-semibold mb-3" style={{ color: colors.textPrimary }}>About</h2>
+          <p className="text-[14px] leading-[21px]" style={{ color: colors.textSecondary }}>{tutor.bio}</p>
         </motion.div>
 
         {/* Subjects */}
@@ -324,17 +328,18 @@ export default function TutorDetailPage() {
           transition={{ delay: 0.35 }}
           className="px-6 pb-5"
         >
-          <h2 className="text-[18px] font-semibold text-[#e8edf5] mb-3">Subjects</h2>
+          <h2 className="text-[18px] font-semibold mb-3" style={{ color: colors.textPrimary }}>Subjects</h2>
           <div className="flex flex-wrap gap-2">
             {tutor.subjects.map((subject) => (
               <span
                 key={subject}
-                className="bg-[rgba(91,124,235,0.1)] text-[#5b7ceb] text-[13px] font-medium px-3 py-2 rounded-lg"
+                className="text-[13px] font-medium px-3 py-2 rounded-lg"
+                style={{ backgroundColor: accentColor.primary + "1a", color: accentColor.primary }}
               >
                 {subject}
               </span>
             ))}
-            <span className="bg-[rgba(168,179,207,0.1)] text-[#a8b3cf] text-[13px] font-medium px-3 py-2 rounded-lg">
+            <span className="text-[13px] font-medium px-3 py-2 rounded-lg" style={{ backgroundColor: colors.borderPrimary, color: colors.textSecondary }}>
               {tutor.learningStyle}
             </span>
           </div>
@@ -347,12 +352,13 @@ export default function TutorDetailPage() {
           transition={{ delay: 0.4 }}
           className="px-6 pb-5"
         >
-          <h2 className="text-[18px] font-semibold text-[#e8edf5] mb-3">Availability</h2>
+          <h2 className="text-[18px] font-semibold mb-3" style={{ color: colors.textPrimary }}>Availability</h2>
           <div className="flex flex-wrap gap-2">
             {tutor.availability.map((time) => (
               <span
                 key={time}
-                className="bg-[#1e2139] text-[#e8edf5] text-[13px] px-3 py-2 rounded-lg border border-[rgba(255,255,255,0.08)]"
+                className="text-[13px] px-3 py-2 rounded-lg border"
+                style={{ backgroundColor: colors.bgCard, color: colors.textPrimary, borderColor: colors.borderPrimary }}
               >
                 {time}
               </span>
@@ -367,27 +373,28 @@ export default function TutorDetailPage() {
           transition={{ delay: 0.45 }}
           className="px-6 pb-6"
         >
-          <h2 className="text-[18px] font-semibold text-[#e8edf5] mb-3">
+          <h2 className="text-[18px] font-semibold mb-3" style={{ color: colors.textPrimary }}>
             Reviews ({tutor.reviewCount})
           </h2>
           <div className="space-y-3">
             {reviews.map((review) => (
               <div
                 key={review.id}
-                className="bg-[#1e2139] rounded-xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
+                className="rounded-xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
+                style={{ backgroundColor: colors.bgCard }}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[14px] font-medium text-[#e8edf5]">
+                  <span className="text-[14px] font-medium" style={{ color: colors.textPrimary }}>
                     {review.student}
                   </span>
-                  <span className="text-[11px] text-[#a8b3cf]">{review.date}</span>
+                  <span className="text-[11px]" style={{ color: colors.textSecondary }}>{review.date}</span>
                 </div>
                 <div className="flex items-center gap-1 mb-2">
                   {Array.from({ length: review.rating }).map((_, i) => (
                     <Star key={i} className="w-3 h-3 text-[#FFB800] fill-[#FFB800]" />
                   ))}
                 </div>
-                <p className="text-[13px] text-[#a8b3cf] leading-[19.5px]">{review.comment}</p>
+                <p className="text-[13px] leading-[19.5px]" style={{ color: colors.textSecondary }}>{review.comment}</p>
               </div>
             ))}
           </div>

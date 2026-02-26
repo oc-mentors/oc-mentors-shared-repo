@@ -3,6 +3,7 @@ import { BottomNav } from "../components/BottomNav";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Filter, AlertCircle, CheckCircle, Calendar } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
 
 const assignments = [
   {
@@ -140,8 +141,11 @@ export default function AssignmentsPage() {
     });
 
   const handleIgnoreAssignment = (id: number) => {
-    setIgnoredAssignments(prev => [...prev, id]);
-    localStorage.setItem('ignoredAssignments', JSON.stringify([...prev, id]));
+    setIgnoredAssignments(prev => {
+      const updated = [...prev, id];
+      localStorage.setItem('ignoredAssignments', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const getStatusBadge = (status: string, daysUntilDue: number) => {
@@ -170,14 +174,16 @@ export default function AssignmentsPage() {
       );
     }
     return (
-      <div className="bg-[rgba(91,124,235,0.2)] text-[#5b7ceb] px-2.5 py-1 rounded-full">
+      <div className="px-2.5 py-1 rounded-full" style={{ backgroundColor: accentColor.primary + "33", color: accentColor.primary }}>
         <span className="text-xs font-medium">Upcoming</span>
       </div>
     );
   };
 
+  const { colors, accentColor } = useTheme();
+
   return (
-    <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-20">
+    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="px-6 pt-12 pb-6">
@@ -187,12 +193,13 @@ export default function AssignmentsPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="w-10 h-10 rounded-full bg-[#1e2139] flex items-center justify-center"
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: colors.bgCard }}
                 >
-                  <ArrowLeft className="w-5 h-5 text-[#e8edf5]" />
+                  <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
                 </motion.button>
               </Link>
-              <h1 className="text-2xl font-bold text-[#e8edf5]">Assignments</h1>
+              <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>Assignments</h1>
             </div>
 
             {/* Filter Button */}
@@ -200,7 +207,8 @@ export default function AssignmentsPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowFilter(!showFilter)}
-              className="w-10 h-10 rounded-full bg-[#14b8a6] flex items-center justify-center"
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: accentColor.primary }}
             >
               <Filter className="w-5 h-5 text-white" />
             </motion.button>
@@ -212,31 +220,32 @@ export default function AssignmentsPage() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-4 bg-[#1e2139] rounded-xl p-4 border border-[rgba(255,255,255,0.12)]"
+              className="mb-4 rounded-xl p-4 border"
+              style={{ backgroundColor: colors.bgCard, borderColor: colors.borderSecondary }}
             >
               {/* Course Filter */}
               <div className="mb-4">
-                <p className="text-sm font-semibold text-[#e8edf5] mb-3">Filter by Course</p>
+                <p className="text-sm font-semibold mb-3" style={{ color: colors.textPrimary }}>Filter by Course</p>
                 <div className="space-y-2">
                   <motion.button
                     whileTap={{ scale: 0.98 }}
                     onClick={selectAllCourses}
-                    className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                      selectedCourses.length === courses.length
-                        ? "bg-[#14b8a6] text-white"
-                        : "bg-[#1a1d29] text-[#a8b3cf] hover:bg-[#252837]"
-                    }`}
+                    className="w-full text-left px-4 py-2 rounded-lg transition-colors"
+                    style={selectedCourses.length === courses.length
+                      ? { backgroundColor: accentColor.primary, color: "white" }
+                      : { backgroundColor: colors.bgPrimary, color: colors.textSecondary }
+                    }
                   >
                     <span className="text-sm font-medium">Select All</span>
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.98 }}
                     onClick={deselectAllCourses}
-                    className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                      selectedCourses.length === 0
-                        ? "bg-[#14b8a6] text-white"
-                        : "bg-[#1a1d29] text-[#a8b3cf] hover:bg-[#252837]"
-                    }`}
+                    className="w-full text-left px-4 py-2 rounded-lg transition-colors"
+                    style={selectedCourses.length === 0
+                      ? { backgroundColor: accentColor.primary, color: "white" }
+                      : { backgroundColor: colors.bgPrimary, color: colors.textSecondary }
+                    }
                   >
                     <span className="text-sm font-medium">Deselect All</span>
                   </motion.button>
@@ -245,11 +254,11 @@ export default function AssignmentsPage() {
                       key={course}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => toggleCourse(course)}
-                      className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                        selectedCourses.includes(course)
-                          ? "bg-[#14b8a6] text-white"
-                          : "bg-[#1a1d29] text-[#a8b3cf] hover:bg-[#252837]"
-                      }`}
+                      className="w-full text-left px-4 py-2 rounded-lg transition-colors"
+                      style={selectedCourses.includes(course)
+                        ? { backgroundColor: accentColor.primary, color: "white" }
+                        : { backgroundColor: colors.bgPrimary, color: colors.textSecondary }
+                      }
                     >
                       <span className="text-sm font-medium">{course}</span>
                     </motion.button>
@@ -259,18 +268,18 @@ export default function AssignmentsPage() {
 
               {/* Status Filter */}
               <div>
-                <p className="text-sm font-semibold text-[#e8edf5] mb-3">Filter by Status</p>
+                <p className="text-sm font-semibold mb-3" style={{ color: colors.textPrimary }}>Filter by Status</p>
                 <div className="flex flex-wrap gap-2">
                   {statuses.map((status) => (
                     <motion.button
                       key={status}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedStatus(status)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                        selectedStatus === status
-                          ? "bg-[#14b8a6] text-white"
-                          : "bg-[#1a1d29] text-[#a8b3cf] hover:bg-[#252837]"
-                      }`}
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                      style={selectedStatus === status
+                        ? { backgroundColor: accentColor.primary, color: "white" }
+                        : { backgroundColor: colors.bgPrimary, color: colors.textSecondary }
+                      }
                     >
                       {status}
                     </motion.button>
@@ -287,9 +296,9 @@ export default function AssignmentsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-wrap items-center gap-2 mb-4"
             >
-              <span className="text-sm text-[#a8b3cf]">Active filters:</span>
+              <span className="text-sm" style={{ color: colors.textSecondary }}>Active filters:</span>
               {selectedCourses.length < courses.length && (
-                <div className="bg-[#14b8a6] px-3 py-1 rounded-full flex items-center gap-2">
+                <div className="px-3 py-1 rounded-full flex items-center gap-2" style={{ backgroundColor: accentColor.primary }}>
                   <span className="text-xs font-medium text-white">{selectedCourses.length} {selectedCourses.length === 1 ? 'course' : 'courses'}</span>
                   <button
                     onClick={selectAllCourses}
@@ -302,7 +311,7 @@ export default function AssignmentsPage() {
                 </div>
               )}
               {selectedStatus !== "All" && (
-                <div className="bg-[#14b8a6] px-3 py-1 rounded-full flex items-center gap-2">
+                <div className="px-3 py-1 rounded-full flex items-center gap-2" style={{ backgroundColor: accentColor.primary }}>
                   <span className="text-xs font-medium text-white">{selectedStatus}</span>
                   <button
                     onClick={() => setSelectedStatus("All")}
@@ -330,12 +339,13 @@ export default function AssignmentsPage() {
                   exit={{ 
                     opacity: 0, 
                     x: -300,
-                    transition: { duration: 0.15 }
+                    transition: { duration: 0.25 }
                   }}
                   layout
                   transition={{ delay: index * 0.05 }}
                   whileHover={{ scale: 1.01 }}
-                  className="bg-[#1e2139] rounded-2xl p-5 border border-[rgba(255,255,255,0.12)] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
+                  className="rounded-2xl p-5 border shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderSecondary }}
                 >
                   {/* Header with Course and Status */}
                   <div className="flex items-start justify-between gap-2 mb-3">
@@ -344,7 +354,7 @@ export default function AssignmentsPage() {
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: assignment.courseColor }}
                       />
-                      <span className="text-xs font-medium text-[#a8b3cf]">
+                      <span className="text-xs font-medium" style={{ color: colors.textSecondary }}>
                         {assignment.courseName}
                       </span>
                     </div>
@@ -352,22 +362,22 @@ export default function AssignmentsPage() {
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-base font-semibold text-[#e8edf5] mb-3">
+                  <h3 className="text-base font-semibold mb-3" style={{ color: colors.textPrimary }}>
                     {assignment.title}
                   </h3>
 
                   {/* Due Date */}
                   <div className="flex items-center gap-2 mb-3 text-sm">
-                    <Calendar className="w-4 h-4 text-[#5b7ceb]" />
+                    <Calendar className="w-4 h-4" style={{ color: accentColor.primary }} />
                     <div>
-                      <span className="text-[#e8edf5] font-medium">Due: </span>
-                      <span className="text-[#a8b3cf]">{assignment.dueDateFull}</span>
+                      <span className="font-medium" style={{ color: colors.textPrimary }}>Due: </span>
+                      <span style={{ color: colors.textSecondary }}>{assignment.dueDateFull}</span>
                     </div>
                   </div>
 
                   {/* Points */}
                   <div className="mb-3">
-                    <span className="text-sm text-[#a8b3cf]">
+                    <span className="text-sm" style={{ color: colors.textSecondary }}>
                       {assignment.status === "completed" 
                         ? `${assignment.score}/${assignment.points} points`
                         : `${assignment.points} points possible`
@@ -376,9 +386,9 @@ export default function AssignmentsPage() {
                   </div>
 
                   {/* Instructions */}
-                  <div className="bg-[#1a1d29] rounded-lg p-3 border border-[rgba(255,255,255,0.08)] mb-3">
-                    <p className="text-xs font-semibold text-[#e8edf5] mb-1">Instructions:</p>
-                    <p className="text-xs text-[#a8b3cf] leading-relaxed">
+                  <div className="rounded-lg p-3 border mb-3" style={{ backgroundColor: colors.bgPrimary, borderColor: colors.borderPrimary }}>
+                    <p className="text-xs font-semibold mb-1" style={{ color: colors.textPrimary }}>Instructions:</p>
+                    <p className="text-xs leading-relaxed" style={{ color: colors.textSecondary }}>
                       {assignment.instructions}
                     </p>
                   </div>
@@ -389,7 +399,7 @@ export default function AssignmentsPage() {
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="flex-1 bg-gradient-to-r from-[#14b8a6] to-[#0891b2] text-white py-3 rounded-xl font-semibold shadow-[0px_4px_12px_0px_rgba(20,184,166,0.4)]"
+                        className={`flex-1 bg-gradient-to-r ${accentColor.gradient} text-white py-3 rounded-xl font-semibold`}
                       >
                         {assignment.status === "missing" ? "Submit Late" : "Start Assignment"}
                       </motion.button>
@@ -400,7 +410,8 @@ export default function AssignmentsPage() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleIgnoreAssignment(assignment.id)}
-                      className={`${assignment.status !== "completed" ? "w-auto px-4" : "w-full"} bg-[#1a1d29] text-[#a8b3cf] py-3 rounded-xl font-medium border border-[rgba(255,255,255,0.08)] hover:bg-[#252837] hover:text-[#e8edf5] transition-colors`}
+                      className={`${assignment.status !== "completed" ? "w-auto px-4" : "w-full"} py-3 rounded-xl font-medium border transition-colors`}
+                      style={{ backgroundColor: colors.bgPrimary, color: colors.textSecondary, borderColor: colors.borderPrimary }}
                     >
                       Ignore
                     </motion.button>
@@ -411,9 +422,10 @@ export default function AssignmentsPage() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="bg-[#1e2139] rounded-2xl p-8 border border-[rgba(255,255,255,0.08)] text-center"
+                className="rounded-2xl p-8 border text-center"
+                style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
               >
-                <p className="text-sm text-[#a8b3cf]">
+                <p className="text-sm" style={{ color: colors.textSecondary }}>
                   No assignments found with the selected filters
                 </p>
               </motion.div>
@@ -422,7 +434,7 @@ export default function AssignmentsPage() {
         </div>
       </div>
 
-      <BottomNav currentPage="canvas" />
+      <BottomNav />
     </div>
   );
 }

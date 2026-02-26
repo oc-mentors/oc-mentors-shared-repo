@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { motion } from "motion/react";
-import { Star, ArrowLeft } from "lucide-react";
+import { Star, ArrowLeft, Check } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { BottomNav } from "../components/BottomNav";

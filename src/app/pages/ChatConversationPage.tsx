@@ -1,16 +1,19 @@
 import { motion, AnimatePresence } from "motion/react";
 import { Link, useNavigate, useLocation, useParams } from "react-router";
-import { ArrowLeft, Send, Paperclip, Smile, Calendar, ImageIcon } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Smile, Calendar, ImageIcon, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import svgPaths from "../../imports/svg-7ytfg5hjyn";
 import { useConversations, type Message, type Conversation } from "../contexts/ConversationsContext";
+import { SwipeableMessage } from "../components/SwipeableMessage";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function ChatConversationPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
   const { getConversation, getMessages, addMessage, setMessagesForConversation, updateConversation } = useConversations();
+  const { colors, accentColor } = useTheme();
   
   // Get conversation data from location state or find by ID
   const conversationFromState = location.state?.conversation as Conversation | undefined;
@@ -38,9 +41,18 @@ export default function ChatConversationPage() {
 
   const [messageInput, setMessageInput] = useState("");
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [showTopFade, setShowTopFade] = useState(false);
+
+  const handleMessagesScroll = () => {
+    if (messagesContainerRef.current) {
+      setShowTopFade(messagesContainerRef.current.scrollTop > 0);
+    }
+  };
 
   // If no conversation found, navigate back to messages
   useEffect(() => {
@@ -68,6 +80,13 @@ export default function ChatConversationPage() {
           minute: "2-digit",
         }),
         isSent: true,
+        ...(replyingTo && {
+          replyTo: {
+            id: replyingTo.id,
+            text: replyingTo.text,
+            isSent: replyingTo.isSent,
+          },
+        }),
       };
       
       // Add message to context
@@ -76,8 +95,13 @@ export default function ChatConversationPage() {
       // Update local state
       setMessages([...messages, newMessage]);
       setMessageInput("");
+      setReplyingTo(null);
       setTimeout(scrollToBottom, 100);
     }
+  };
+
+  const handleReply = (message: Message) => {
+    setReplyingTo(message);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, type: "image" | "file") => {
@@ -107,10 +131,10 @@ export default function ChatConversationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1d29] flex flex-col">
-      <div className="max-w-md mx-auto flex flex-col min-h-screen w-full">
+    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: colors.bgPrimary }}>
+      <div className="max-w-md mx-auto flex flex-col h-full w-full overflow-hidden">
         {/* Header */}
-        <div className="px-6 pt-3 pb-4 relative">
+        <div className="px-6 pt-3 pb-4 relative flex-shrink-0">
           {/* Back Button - Left Side */}
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -118,7 +142,7 @@ export default function ChatConversationPage() {
             onClick={() => navigate('/chat')}
             className="absolute left-6 top-3 w-10 h-10 rounded-xl flex items-center justify-center"
           >
-            <ArrowLeft className="w-6 h-6 text-[#e8edf5]" />
+            <ArrowLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
           </motion.button>
           
           {/* Profile Photo and Name - Centered */}
@@ -141,80 +165,63 @@ export default function ChatConversationPage() {
               />
             </motion.button>
             <div className="flex flex-col items-center gap-0.5">
-              <h2 className="text-[18px] font-semibold text-[#e8edf5]">{currentConversation.name}</h2>
-              <span className="text-[12px] text-[#a8b3cf] capitalize">{currentConversation.role}</span>
+              <h2 className="text-[18px] font-semibold" style={{ color: colors.textPrimary }}>{currentConversation.name}</h2>
+              <span className="text-[12px]" style={{ color: colors.textSecondary }}>
+                {currentConversation.role === 'ta' ? 'TA' : currentConversation.role.charAt(0).toUpperCase() + currentConversation.role.slice(1)}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+        <div className="relative flex-1 overflow-hidden">
+          {/* Top fade overlay */}
           <AnimatePresence>
-            {messages.map((message, index) => (
+            {showTopFade && (
               <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className={`flex ${message.isSent ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[245px] rounded-2xl px-3 py-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] ${
-                    message.isSent
-                      ? "bg-gradient-to-br from-[#4361d9] to-[#5b7ceb]"
-                      : "bg-[#1e2139]"
-                  }`}
-                >
-                  {message.attachments?.map((attachment, idx) => (
-                    <div key={idx} className="mb-2">
-                      {attachment.type === "image" ? (
-                        <img
-                          src={attachment.url}
-                          alt="Attachment"
-                          className="rounded-lg max-w-full mb-2"
-                        />
-                      ) : (
-                        <div className="bg-[rgba(255,255,255,0.1)] rounded-lg p-2 mb-2 flex items-center gap-2">
-                          <Paperclip className="w-4 h-4 text-white" />
-                          <span className="text-[12px] text-white truncate">
-                            {attachment.name}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  <p
-                    className={`text-[14px] leading-[20px] mb-0.5 ${
-                      message.isSent ? "text-white" : "text-[#e8edf5]"
-                    }`}
-                  >
-                    {message.text}
-                  </p>
-                  <p
-                    className={`text-[10px] ${
-                      message.isSent ? "text-white/70" : "text-[#a8b3cf]"
-                    }`}
-                  >
-                    {message.time}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                key="top-fade"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-0 left-0 right-0 h-12 z-10 pointer-events-none"
+                style={{
+                  background: `linear-gradient(to bottom, ${colors.bgPrimary} 0%, transparent 100%)`,
+                }}
+              />
+            )}
           </AnimatePresence>
-          <div ref={messagesEndRef} />
+
+          <div
+            ref={messagesContainerRef}
+            onScroll={handleMessagesScroll}
+            className="h-full overflow-y-auto px-5 py-5 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+          >
+            <AnimatePresence>
+              {messages.map((message, index) => (
+                <SwipeableMessage
+                  key={message.id}
+                  message={message}
+                  index={index}
+                  onReply={handleReply}
+                />
+              ))}
+            </AnimatePresence>
+            <div ref={messagesEndRef} />
+          </div>
         </div>
 
         {/* Book a Lesson Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-5 pb-3"
+          className="px-5 pb-3 flex-shrink-0"
         >
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/booking")}
-            className="w-full bg-gradient-to-br from-[#4361d9] to-[#5b7ceb] rounded-xl py-3 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-center gap-2"
+            className={`w-full bg-gradient-to-br ${accentColor.gradient} rounded-xl py-3 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-center gap-2`}
           >
             <Calendar className="w-[18px] h-[18px] text-white" />
             <span className="text-[15px] font-semibold text-white">Book a Lesson</span>
@@ -222,16 +229,52 @@ export default function ChatConversationPage() {
         </motion.div>
 
         {/* Input Area */}
-        <div className="bg-[#1a1d29] border-t border-[rgba(255,255,255,0.12)] px-5 py-4">
+        <div className="border-t px-5 py-4 flex-shrink-0" style={{ backgroundColor: colors.bgPrimary, borderColor: colors.borderSecondary }}>
+          {/* Reply Preview Banner */}
+          <AnimatePresence>
+            {replyingTo && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="mb-3 rounded-xl p-3 border"
+                style={{ backgroundColor: colors.bgCard, borderColor: accentColor.primary + "4d" }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-1 h-10 rounded-full" style={{ backgroundColor: accentColor.primary }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm line-clamp-2" style={{ color: colors.textSecondary }}>
+                          {replyingTo.text}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setReplyingTo(null)}
+                    className="p-1 rounded-lg transition-colors"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    <X className="w-4 h-4" />
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="flex items-center gap-3">
             {/* Attach Button */}
             <div className="relative">
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowAttachMenu(!showAttachMenu)}
-                className="w-11 h-11 bg-[#2a2f4a] rounded-full flex items-center justify-center"
+                className="w-11 h-11 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: colors.bgTertiary }}
               >
-                <Paperclip className="w-5 h-5 text-[#a8b3cf]" />
+                <Paperclip className="w-5 h-5" style={{ color: colors.textSecondary }} />
               </motion.button>
 
               {/* Attach Menu */}
@@ -241,24 +284,25 @@ export default function ChatConversationPage() {
                     initial={{ opacity: 0, scale: 0.9, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                    className="absolute bottom-full left-0 mb-2 bg-[#2a2f4a] rounded-xl shadow-[0px_8px_24px_0px_rgba(0,0,0,0.6)] border border-[rgba(255,255,255,0.08)] overflow-hidden"
+                    className="absolute bottom-full left-0 mb-2 rounded-xl shadow-[0px_8px_24px_0px_rgba(0,0,0,0.6)] border overflow-hidden"
+                    style={{ backgroundColor: colors.bgTertiary, borderColor: colors.borderPrimary }}
                   >
                     <motion.button
-                      whileHover={{ backgroundColor: "rgba(91, 124, 235, 0.1)" }}
+                      whileHover={{ backgroundColor: accentColor.primary + "1a" }}
                       onClick={() => imageInputRef.current?.click()}
                       className="px-4 py-3 flex items-center gap-3 whitespace-nowrap"
                     >
-                      <ImageIcon className="w-5 h-5 text-[#5b7ceb]" />
-                      <span className="text-[14px] text-[#e8edf5]">Send Image</span>
+                      <ImageIcon className="w-5 h-5" style={{ color: accentColor.primary }} />
+                      <span className="text-[14px]" style={{ color: colors.textPrimary }}>Send Image</span>
                     </motion.button>
-                    <div className="h-px bg-[rgba(255,255,255,0.08)]" />
+                    <div className="h-px" style={{ backgroundColor: colors.borderPrimary }} />
                     <motion.button
-                      whileHover={{ backgroundColor: "rgba(91, 124, 235, 0.1)" }}
+                      whileHover={{ backgroundColor: accentColor.primary + "1a" }}
                       onClick={() => fileInputRef.current?.click()}
                       className="px-4 py-3 flex items-center gap-3 whitespace-nowrap"
                     >
-                      <Paperclip className="w-5 h-5 text-[#5b7ceb]" />
-                      <span className="text-[14px] text-[#e8edf5]">Send File</span>
+                      <Paperclip className="w-5 h-5" style={{ color: accentColor.primary }} />
+                      <span className="text-[14px]" style={{ color: colors.textPrimary }}>Send File</span>
                     </motion.button>
                   </motion.div>
                 )}
@@ -280,14 +324,15 @@ export default function ChatConversationPage() {
             </div>
 
             {/* Text Input */}
-            <div className="flex-1 bg-[#2a2f4a] rounded-full px-5 py-3">
+            <div className="flex-1 rounded-full px-5 py-3" style={{ backgroundColor: colors.bgTertiary }}>
               <input
                 type="text"
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                 placeholder="Type a message..."
-                className="w-full bg-transparent text-[14px] text-[#e8edf5] placeholder:text-[#a8b3cf] outline-none"
+                className="w-full bg-transparent text-[14px] outline-none"
+                style={{ color: colors.textPrimary }}
               />
             </div>
 
@@ -296,7 +341,7 @@ export default function ChatConversationPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleSendMessage}
-              className="w-11 h-11 bg-gradient-to-br from-[#4361d9] to-[#5b7ceb] rounded-full shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-center"
+              className={`w-11 h-11 bg-gradient-to-br ${accentColor.gradient} rounded-full shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-center`}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 20 20">
                 <g clipPath="url(#clip-send)">
@@ -324,14 +369,6 @@ export default function ChatConversationPage() {
             </motion.button>
           </div>
         </div>
-
-        {/* Click outside to close attach menu */}
-        {showAttachMenu && (
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setShowAttachMenu(false)}
-          />
-        )}
       </div>
     </div>
   );

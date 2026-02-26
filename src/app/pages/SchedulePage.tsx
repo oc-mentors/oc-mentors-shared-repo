@@ -1,20 +1,44 @@
 import { motion, AnimatePresence } from "motion/react";
 import { Link, useNavigate, useLocation } from "react-router";
-import { ArrowLeft, Calendar, Star, Clock, Video, MessageSquare, X, ChevronLeft, ChevronRight, Plus, Repeat, Users } from "lucide-react";
+import { ArrowLeft, Calendar, Star, Clock, Video, MessageSquare, X, ChevronLeft, ChevronRight, Plus, Repeat, Users, Edit2, Trash2, FileText, MapPin } from "lucide-react";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { CalendarMonthView } from "../components/CalendarMonthView";
+import { EventDetailsModal } from "../components/EventDetailsModal";
 import { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { useCalendar } from "../contexts/CalendarContext";
 
 interface Session {
   id: number;
   subject: string;
   tutor: string;
   tutorAvatar: string;
+  student?: string;
+  studentAvatar?: string;
   date: string;
   time: string;
   duration: string;
   status: "upcoming" | "completed";
+  location?: string;
+}
+
+interface CalendarEvent {
+  id: number;
+  type: "class" | "study" | "assignment";
+  title: string;
+  startTime: string;
+  endTime: string;
+  day: number;
+  date: Date;
+  tutor?: string;
+  participants?: string[];
+  color?: string;
+  courseName?: string;
+  dueTime?: string;
+  location?: string;
 }
 
 interface User {
@@ -26,6 +50,17 @@ interface User {
 export default function SchedulePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const { colors, accentColor } = useTheme();
+  const { 
+    sessions, 
+    calendarEvents, 
+    removeSession, 
+    removeCalendarEvent, 
+    removedSessionIds, 
+    addRemovedSessionId,
+    updateCalendarEvent 
+  } = useCalendar();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showBookingSuccess, setShowBookingSuccess] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 13)); // Feb 13, 2026 (Friday)
@@ -35,7 +70,6 @@ export default function SchedulePage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [sessionToCancel, setSessionToCancel] = useState<Session | null>(null);
-  const [removedSessionIds, setRemovedSessionIds] = useState<number[]>([]);
   const [studySessionData, setStudySessionData] = useState({
     subject: "",
     date: "",
@@ -43,29 +77,86 @@ export default function SchedulePage() {
     duration: "1 hour",
   });
 
-  // Available users to invite
+  const isTutor = user?.role === "tutor" || user?.role === "admin";
+
+  // New state for event editing and creation
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [showQuickAddModal, setShowQuickAddModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [quickAddTime, setQuickAddTime] = useState("");
+  const [editEventData, setEditEventData] = useState({
+    title: "",
+    startTime: "",
+    endTime: "",
+    type: "class" as "class" | "study",
+    tutor: "",
+    participants: [] as string[],
+    color: "from-[#5b7ceb] to-[#7c3aed]",
+    location: "",
+    date: new Date(),
+  });
+
+  // Assignments data to show on calendar
+  const assignments = [
+    {
+      id: 101,
+      courseName: "CHEM 1A: General Chemistry",
+      title: "Lab Report: Acid-Base Titration",
+      dueDate: "Feb 16, 2026",
+      dueTime: "11:59 PM",
+      status: "upcoming",
+      color: "from-[#8b5cf6] to-[#a855f7]",
+    },
+    {
+      id: 102,
+      courseName: "MATH 2A: Calculus I",
+      title: "Problem Set 5: Integration Techniques",
+      dueDate: "Feb 15, 2026",
+      dueTime: "11:59 PM",
+      status: "upcoming",
+      color: "from-[#3b82f6] to-[#6366f1]",
+    },
+    {
+      id: 103,
+      courseName: "PHYS 7C: Classical Mechanics",
+      title: "Midterm Exam Review",
+      dueDate: "Feb 14, 2026",
+      dueTime: "11:59 PM",
+      status: "urgent",
+      color: "from-[#14b8a6] to-[#06b6d4]",
+    },
+  ];
+
+  // Available users for study session invites
   const availableUsers: User[] = [
     {
       id: 1,
       name: "Sarah Chen",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100",
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
     },
     {
       id: 2,
       name: "Michael Torres",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
     },
     {
       id: 3,
-      name: "Emily Johnson",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100",
+      name: "Emily Rodriguez",
+      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400",
     },
     {
       id: 4,
-      name: "David Park",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100",
+      name: "David Kim",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+    },
+    {
+      id: 5,
+      name: "Jessica Park",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
     },
   ];
+
+  // Sessions and calendar events now come from CalendarContext
 
   useEffect(() => {
     if (location.state?.showSuccessMessage) {
@@ -84,39 +175,6 @@ export default function SchedulePage() {
       setTimeout(() => setShowBookingSuccess(false), 3000);
     }
   }, [location]);
-
-  const sessions: Session[] = [
-    {
-      id: 1,
-      subject: "Math 2A - Matrices",
-      tutor: "Debra Peterson",
-      tutorAvatar: "https://images.unsplash.com/photo-1600081687786-ce51e1e49ec7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjB3b21hbiUyMG1lbnRvciUyMHR1dG9yfGVufDF8fHx8MTc3MDkyOTIyOHww&ixlib=rb-4.1.0&q=80&w=1080",
-      date: "Feb 15, 2026",
-      time: "2:00 PM",
-      duration: "1 hour",
-      status: "upcoming",
-    },
-    {
-      id: 2,
-      subject: "Physics - Mechanics",
-      tutor: "Adam Smith",
-      tutorAvatar: "https://images.unsplash.com/photo-1621533463397-f292bd0745f9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBtYW4lMjBtZW50b3IlMjBidXNpbmVzc3xlbnwxfHx8fDE3NzA5MjkyMjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      date: "Feb 18, 2026",
-      time: "10:00 AM",
-      duration: "1 hour",
-      status: "upcoming",
-    },
-    {
-      id: 3,
-      subject: "Math 2A - Derivatives",
-      tutor: "Debra Peterson",
-      tutorAvatar: "https://images.unsplash.com/photo-1600081687786-ce51e1e49ec7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjB3b21hbiUyMG1lbnRvciUyMHR1dG9yfGVufDF8fHx8MTc3MDkyOTIyOHww&ixlib=rb-4.1.0&q=80&w=1080",
-      date: "Nov 5, 2025",
-      time: "2:00 PM",
-      duration: "1 hour",
-      status: "completed",
-    },
-  ];
 
   const upcomingSessions = sessions.filter((s) => s.status === "upcoming");
   const pastSessions = sessions.filter((s) => s.status === "completed");
@@ -173,78 +231,6 @@ export default function SchedulePage() {
     "6 PM", "7 PM", "8 PM", "9 PM", "10 PM"
   ];
 
-  // Sample events for the calendar
-  interface CalendarEvent {
-    id: number;
-    type: "class" | "study";
-    title: string;
-    startTime: string; // e.g., "10:00 AM"
-    endTime: string;   // e.g., "11:00 AM"
-    day: number;       // Day of week (0-6)
-    date: Date;
-    tutor?: string;
-    participants?: string[];
-    color?: string;
-  }
-
-  const calendarEvents: CalendarEvent[] = [
-    {
-      id: 1,
-      type: "class",
-      title: "Math 2A",
-      startTime: "2:00 PM",
-      endTime: "3:00 PM",
-      day: 5, // Friday
-      date: new Date(2026, 1, 13), // Feb 13, 2026
-      tutor: "Debra Peterson",
-      color: "from-[#5b7ceb] to-[#7c3aed]",
-    },
-    {
-      id: 2,
-      type: "class",
-      title: "Physics",
-      startTime: "10:00 AM",
-      endTime: "11:30 AM",
-      day: 2, // Tuesday
-      date: new Date(2026, 1, 17), // Feb 17, 2026
-      tutor: "Adam Smith",
-      color: "from-[#14b8a6] to-[#0891b2]",
-    },
-    {
-      id: 3,
-      type: "study",
-      title: "Chemistry Study",
-      startTime: "3:00 PM",
-      endTime: "5:00 PM",
-      day: 5, // Friday
-      date: new Date(2026, 1, 13), // Feb 13, 2026
-      participants: ["Sarah Chen", "Michael Torres"],
-      color: "from-[#14b8a6] to-[#06b6d4]",
-    },
-    {
-      id: 4,
-      type: "class",
-      title: "Writing 39B",
-      startTime: "11:00 AM",
-      endTime: "12:00 PM",
-      day: 1, // Monday
-      date: new Date(2026, 1, 16), // Feb 16, 2026
-      tutor: "Jennifer Lee",
-      color: "from-[#8b5cf6] to-[#a855f7]",
-    },
-    {
-      id: 5,
-      type: "class",
-      title: "Biology Lab",
-      startTime: "1:00 PM",
-      endTime: "3:00 PM",
-      day: 4, // Thursday
-      date: new Date(2026, 1, 19), // Feb 19, 2026
-      tutor: "Dr. Martinez",
-      color: "from-[#ec4899] to-[#f43f5e]",
-    },
-  ];
-
   // Convert time string to hour number for positioning
   const timeToHour = (timeStr: string): number => {
     const [time, period] = timeStr.split(" ");
@@ -290,7 +276,10 @@ export default function SchedulePage() {
   const handleCancelSession = () => {
     if (sessionToCancel) {
       // Add to removed sessions list
-      setRemovedSessionIds([...removedSessionIds, sessionToCancel.id]);
+      addRemovedSessionId(sessionToCancel.id);
+      
+      // Also remove the corresponding calendar event
+      removeCalendarEvent(sessionToCancel.id);
       
       // Close modal and reset
       setTimeout(() => {
@@ -298,6 +287,41 @@ export default function SchedulePage() {
         setCancelReason("");
         setSessionToCancel(null);
       }, 300); // Delay to allow slide-out animation
+    }
+  };
+
+  // Handle event click
+  const handleEventClick = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setEditEventData({
+      title: event.title,
+      startTime: event.startTime,
+      endTime: event.endTime,
+      type: event.type === "study" ? "study" : "class",
+      tutor: event.tutor || "",
+      participants: event.participants || [],
+      color: event.color || "from-[#5b7ceb] to-[#7c3aed]",
+      location: event.location || "",
+    });
+    setShowEventModal(true);
+  };
+
+  // Handle event delete
+  const handleDeleteEvent = () => {
+    if (selectedEvent) {
+      removeCalendarEvent(selectedEvent.id);
+      removeSession(selectedEvent.id);
+      setShowEventModal(false);
+      setSelectedEvent(null);
+    }
+  };
+
+  // Handle event save
+  const handleSaveEvent = (updatedData: any) => {
+    if (selectedEvent) {
+      updateCalendarEvent(selectedEvent.id, updatedData);
+      setShowEventModal(false);
+      setSelectedEvent(null);
     }
   };
 
@@ -333,12 +357,12 @@ export default function SchedulePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#2c3042] overflow-auto pb-20">
+    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
       <div className="max-w-md mx-auto">
         {/* Header with Profile Button */}
         <div className="px-6 pt-12 pb-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-[28px] font-bold text-[#e8edf5]">Schedule</h1>
+            <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Schedule</h1>
             <ProfileButton />
           </div>
         </div>
@@ -350,7 +374,7 @@ export default function SchedulePage() {
           transition={{ delay: 0.1 }}
           className="px-6 pb-6"
         >
-          <h2 className="text-[18px] font-semibold text-[#e8edf5] mb-4">Upcoming</h2>
+          <h2 className="text-[18px] font-semibold mb-4" style={{ color: colors.textPrimary }}>Upcoming</h2>
 
           <div className="space-y-4">
             {upcomingSessions
@@ -368,7 +392,8 @@ export default function SchedulePage() {
                         delay: index * 0.05,
                         duration: 0.2
                       }}
-                      className="bg-[#1e2139] rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border border-[rgba(255,255,255,0.08)]"
+                      className="rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border"
+                      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
                     >
                       {/* Tutor Info */}
                       <div className="flex items-start gap-3 mb-3">
@@ -379,19 +404,19 @@ export default function SchedulePage() {
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <h3 className="text-[16px] font-semibold text-[#e8edf5]">
+                            <h3 className="text-[16px] font-semibold" style={{ color: colors.textPrimary }}>
                               {session.subject}
                             </h3>
-                            <span className="bg-[#5b7ceb] text-white text-[11px] font-medium px-2.5 py-1 rounded-full flex-shrink-0">
+                            <span className="text-white text-[11px] font-medium px-2.5 py-1 rounded-full flex-shrink-0" style={{ backgroundColor: accentColor.primary }}>
                               upcoming
                             </span>
                           </div>
-                          <p className="text-[13px] text-[#a8b3cf]">with {session.tutor}</p>
+                          <p className="text-[13px]" style={{ color: colors.textSecondary }}>with {session.tutor}</p>
                         </div>
                       </div>
 
                       {/* Session Details */}
-                      <div className="flex items-center gap-4 mb-4 text-[13px] text-[#a8b3cf]">
+                      <div className="flex flex-wrap items-center gap-4 mb-4 text-[13px]" style={{ color: colors.textSecondary }}>
                         <div className="flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5" />
                           <span>{session.date}</span>
@@ -404,6 +429,12 @@ export default function SchedulePage() {
                           <Clock className="w-3.5 h-3.5" />
                           <span>{session.duration}</span>
                         </div>
+                        {session.location && (
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5" />
+                            <span>{session.location}</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Action Buttons */}
@@ -414,11 +445,11 @@ export default function SchedulePage() {
                           whileTap={isSessionJoinable(session.date, session.time) ? { scale: 0.99 } : {}}
                           onClick={() => isSessionJoinable(session.date, session.time) && navigate("/video-session")}
                           disabled={!isSessionJoinable(session.date, session.time)}
-                          className={`flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
-                            isSessionJoinable(session.date, session.time)
-                              ? "bg-[#5b7ceb] text-white shadow-[0px_4px_12px_0px_rgba(91,124,235,0.4)] cursor-pointer"
-                              : "bg-[rgba(91,124,235,0.3)] text-[rgba(232,237,245,0.5)] cursor-not-allowed"
-                          }`}
+                          className="flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all"
+                          style={isSessionJoinable(session.date, session.time)
+                            ? { backgroundColor: accentColor.primary, color: "white", cursor: "pointer" }
+                            : { backgroundColor: accentColor.primary + "4d", color: colors.textPrimary + "80", cursor: "not-allowed" }
+                          }
                         >
                           <Video className="w-4 h-4" />
                           Join Session
@@ -442,13 +473,13 @@ export default function SchedulePage() {
                   ))
               ) : (
                 <div className="space-y-3">
-                  <div className="bg-[#1e2139] rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border border-[rgba(255,255,255,0.08)] text-center">
-                    <p className="text-[#a8b3cf] mb-4">No upcoming sessions</p>
+                  <div className="rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border text-center" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}>
+                    <p className="mb-4" style={{ color: colors.textSecondary }}>No upcoming sessions</p>
                     <Link to="/book-session">
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="bg-gradient-to-r from-[#5b7ceb] to-[#7c3aed] text-white py-3 px-6 rounded-xl font-semibold shadow-[0px_4px_12px_0px_rgba(91,124,235,0.4)] inline-flex items-center justify-center gap-2"
+                        className={`bg-gradient-to-r ${accentColor.gradient} text-white py-3 px-6 rounded-xl font-semibold inline-flex items-center justify-center gap-2`}
                       >
                         <Plus className="w-4 h-4" />
                         Book Session
@@ -460,34 +491,46 @@ export default function SchedulePage() {
           </div>
         </motion.div>
 
-        {/* Calendar Section */}
+        {/* Month View Calendar Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="px-6 pb-6"
         >
-          <div className="bg-gradient-to-br from-[#1e2139] to-[#252a47] rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border border-[rgba(255,255,255,0.08)]">
+          <CalendarMonthView />
+        </motion.div>
+
+        {/* Day View Calendar Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="px-6 pb-6"
+        >
+          <div className="rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}>
             {/* Calendar Header */}
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[20px] font-bold text-[#e8edf5]">Calendar</h2>
+              <h2 className="text-[20px] font-bold" style={{ color: colors.textPrimary }}>Calendar</h2>
               <div className="flex items-center gap-3">
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={prevDay}
-                  className="w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.05)] flex items-center justify-center text-[#e8edf5] hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: colors.borderPrimary, color: colors.textPrimary }}
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </motion.button>
-                <span className="text-[15px] font-semibold text-[#e8edf5] min-w-[180px] text-center">
+                <span className="text-[15px] font-semibold min-w-[180px] text-center" style={{ color: colors.textPrimary }}>
                   {dayNamesFull[currentDate.getDay()]}, {monthNames[currentDate.getMonth()]} {currentDate.getDate()}
                 </span>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={nextDay}
-                  className="w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.05)] flex items-center justify-center text-[#e8edf5] hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: colors.borderPrimary, color: colors.textPrimary }}
                 >
                   <ChevronRight className="w-5 h-5" />
                 </motion.button>
@@ -508,16 +551,16 @@ export default function SchedulePage() {
                 return (
                   <div
                     key={time}
-                    className="flex border-b border-[rgba(255,255,255,0.05)]"
-                    style={{ minHeight: '70px' }}
+                    className="flex"
+                    style={{ borderBottom: `1px solid ${colors.borderPrimary}`, minHeight: '70px' }}
                   >
                     {/* Time label */}
-                    <div className="w-20 px-3 py-2 text-[13px] text-[#a8b3cf] font-medium flex-shrink-0">
+                    <div className="w-20 px-3 py-2 text-[13px] font-medium flex-shrink-0" style={{ color: colors.textSecondary }}>
                       {time}
                     </div>
                     
                     {/* Event area */}
-                    <div className="flex-1 relative border-l border-[rgba(255,255,255,0.08)] px-2 py-1">
+                    <div className="flex-1 relative px-2 py-1" style={{ borderLeft: `1px solid ${colors.borderPrimary}` }}>
                       {/* Events will be positioned here */}
                     </div>
                   </div>
@@ -526,7 +569,7 @@ export default function SchedulePage() {
 
               {/* Event blocks overlaid */}
               <div className="absolute inset-0 pointer-events-none pl-20">
-                <div className="relative h-full border-l border-[rgba(255,255,255,0.08)]">
+                <div className="relative h-full" style={{ borderLeft: `1px solid ${colors.borderPrimary}` }}>
                   {getEventsForDate(currentDate).map((event, index) => {
                     const style = getEventStyle(event);
                     return (
@@ -538,6 +581,7 @@ export default function SchedulePage() {
                         whileHover={{ scale: 1.02 }}
                         className={`absolute left-2 right-2 rounded-xl p-4 pointer-events-auto cursor-pointer bg-gradient-to-br ${event.color} shadow-lg`}
                         style={style}
+                        onClick={() => handleEventClick(event)}
                       >
                         <div className="text-white h-full flex flex-col">
                           <div className="text-[15px] font-bold mb-1">
@@ -557,6 +601,12 @@ export default function SchedulePage() {
                               <span>{event.participants.join(", ")}</span>
                             </div>
                           )}
+                          {event.location && (
+                            <div className="text-[12px] opacity-90 flex items-center gap-1.5 mt-1">
+                              <MapPin className="w-3.5 h-3.5" />
+                              <span>{event.location}</span>
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     );
@@ -571,7 +621,7 @@ export default function SchedulePage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowRecurringModal(true)}
-                className="flex-1 bg-gradient-to-r from-[#5b7ceb] to-[#7c3aed] text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_12px_0px_rgba(91,124,235,0.4)]"
+                className={`flex-1 bg-gradient-to-r ${accentColor.gradient} text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2`}
               >
                 <Repeat className="w-4 h-4" />
                 Recurring Class
@@ -593,25 +643,26 @@ export default function SchedulePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.3 }}
           className="px-6 pb-6"
         >
           <Link to="/past-lessons">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full bg-gradient-to-br from-[#1e2139] to-[#252a47] rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border border-[rgba(255,255,255,0.08)] flex items-center justify-between"
+              className="w-full rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border flex items-center justify-between"
+              style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-[rgba(91,124,235,0.2)] flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-[#5b7ceb]" />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: accentColor.primary + "33" }}>
+                  <Calendar className="w-6 h-6" style={{ color: accentColor.primary }} />
                 </div>
                 <div className="text-left">
-                  <h3 className="text-lg font-semibold text-[#e8edf5] mb-1">Past Lessons</h3>
-                  <p className="text-sm text-[#a8b3cf]">View your completed sessions</p>
+                  <h3 className="text-lg font-semibold mb-1" style={{ color: colors.textPrimary }}>Past Lessons</h3>
+                  <p className="text-sm" style={{ color: colors.textSecondary }}>View your completed sessions</p>
                 </div>
               </div>
-              <ArrowLeft className="w-5 h-5 text-[#a8b3cf] rotate-180" />
+              <ArrowLeft className="w-5 h-5 rotate-180" style={{ color: colors.textSecondary }} />
             </motion.button>
           </Link>
         </motion.div>
@@ -677,15 +728,17 @@ export default function SchedulePage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#1e2139] rounded-2xl p-6 max-w-md w-full shadow-[0px_8px_32px_0px_rgba(0,0,0,0.8)] border border-[rgba(255,255,255,0.08)]"
+            className="rounded-2xl p-6 max-w-md w-full shadow-[0px_8px_32px_0px_rgba(0,0,0,0.8)] border"
+            style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[22px] font-bold text-[#e8edf5]">Add Recurring Class</h3>
+              <h3 className="text-[22px] font-bold" style={{ color: colors.textPrimary }}>Add Recurring Class</h3>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setShowRecurringModal(false)}
-                className="w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.05)] flex items-center justify-center text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                style={{ backgroundColor: colors.borderPrimary, color: colors.textSecondary }}
               >
                 <X className="w-5 h-5" />
               </motion.button>
@@ -693,21 +746,25 @@ export default function SchedulePage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                   Subject/Class
                 </label>
                 <input
                   type="text"
                   placeholder="e.g., Math 2A - Calculus"
-                  className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] placeholder:text-[#a8b3cf] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                  className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                  style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
                 />
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                   Day of Week
                 </label>
-                <select className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors">
+                <select 
+                  className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                  style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
+                >
                   <option>Monday</option>
                   <option>Tuesday</option>
                   <option>Wednesday</option>
@@ -720,19 +777,23 @@ export default function SchedulePage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                  <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                     Time
                   </label>
                   <input
                     type="time"
-                    className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                    className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                    style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
                   />
                 </div>
                 <div>
-                  <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                  <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                     Duration
                   </label>
-                  <select className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors">
+                  <select 
+                    className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                    style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
+                  >
                     <option>30 mins</option>
                     <option>1 hour</option>
                     <option>1.5 hours</option>
@@ -743,33 +804,36 @@ export default function SchedulePage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                  <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                     Start Date
                   </label>
                   <input
                     type="date"
-                    className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                    className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                    style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
                   />
                 </div>
                 <div>
-                  <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                  <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                     End Date
                   </label>
                   <input
                     type="date"
-                    className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                    className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                    style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                   Location/Link
                 </label>
                 <input
                   type="text"
                   placeholder="Add Zoom link or location"
-                  className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] placeholder:text-[#a8b3cf] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                  className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                  style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
                 />
               </div>
             </div>
@@ -779,7 +843,8 @@ export default function SchedulePage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowRecurringModal(false)}
-                className="flex-1 bg-[rgba(255,255,255,0.05)] text-[#e8edf5] py-3 rounded-xl font-semibold"
+                className="flex-1 py-3 rounded-xl font-semibold"
+                style={{ backgroundColor: colors.borderPrimary, color: colors.textPrimary }}
               >
                 Cancel
               </motion.button>
@@ -791,7 +856,7 @@ export default function SchedulePage() {
                   setShowBookingSuccess(true);
                   setTimeout(() => setShowBookingSuccess(false), 3000);
                 }}
-                className="flex-1 bg-gradient-to-r from-[#5b7ceb] to-[#7c3aed] text-white py-3 rounded-xl font-semibold shadow-[0px_4px_12px_0px_rgba(91,124,235,0.4)]"
+                className={`flex-1 bg-gradient-to-r ${accentColor.gradient} text-white py-3 rounded-xl font-semibold`}
               >
                 Add Class
               </motion.button>
@@ -806,15 +871,17 @@ export default function SchedulePage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#1e2139] rounded-2xl p-6 max-w-md w-full shadow-[0px_8px_32px_0px_rgba(0,0,0,0.8)] border border-[rgba(255,255,255,0.08)]"
+            className="rounded-2xl p-6 max-w-md w-full shadow-[0px_8px_32px_0px_rgba(0,0,0,0.8)] border"
+            style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[22px] font-bold text-[#e8edf5]">Create Study Session</h3>
+              <h3 className="text-[22px] font-bold" style={{ color: colors.textPrimary }}>Create Study Session</h3>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setShowStudySessionModal(false)}
-                className="w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.05)] flex items-center justify-center text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                style={{ backgroundColor: colors.borderPrimary, color: colors.textSecondary }}
               >
                 <X className="w-5 h-5" />
               </motion.button>
@@ -822,7 +889,7 @@ export default function SchedulePage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                   Subject/Topic
                 </label>
                 <input
@@ -830,43 +897,47 @@ export default function SchedulePage() {
                   placeholder="What will you study?"
                   value={studySessionData.subject}
                   onChange={(e) => setStudySessionData({ ...studySessionData, subject: e.target.value })}
-                  className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] placeholder:text-[#a8b3cf] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                  className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                  style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                  <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                     Date
                   </label>
                   <input
                     type="date"
                     value={studySessionData.date}
                     onChange={(e) => setStudySessionData({ ...studySessionData, date: e.target.value })}
-                    className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                    className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                    style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
                   />
                 </div>
                 <div>
-                  <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                  <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                     Time
                   </label>
                   <input
                     type="time"
                     value={studySessionData.time}
                     onChange={(e) => setStudySessionData({ ...studySessionData, time: e.target.value })}
-                    className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                    className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                    style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                   Duration
                 </label>
                 <select
                   value={studySessionData.duration}
                   onChange={(e) => setStudySessionData({ ...studySessionData, duration: e.target.value })}
-                  className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                  className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                  style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
                 >
                   <option>30 mins</option>
                   <option>1 hour</option>
@@ -877,13 +948,14 @@ export default function SchedulePage() {
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-[#a8b3cf] mb-2">
+                <label className="block text-[13px] font-medium mb-2" style={{ color: colors.textSecondary }}>
                   Location
                 </label>
                 <input
                   type="text"
                   placeholder="Library, online, etc."
-                  className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] placeholder:text-[#a8b3cf] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                  className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                  style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
                 />
               </div>
             </div>
@@ -893,7 +965,8 @@ export default function SchedulePage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowStudySessionModal(false)}
-                className="flex-1 bg-[rgba(255,255,255,0.05)] text-[#e8edf5] py-3 rounded-xl font-semibold"
+                className="flex-1 py-3 rounded-xl font-semibold"
+                style={{ backgroundColor: colors.borderPrimary, color: colors.textPrimary }}
               >
                 Cancel
               </motion.button>
@@ -916,21 +989,23 @@ export default function SchedulePage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#1e2139] rounded-2xl p-6 max-w-md w-full shadow-[0px_8px_32px_0px_rgba(0,0,0,0.8)] border border-[rgba(255,255,255,0.08)]"
+            className="rounded-2xl p-6 max-w-md w-full shadow-[0px_8px_32px_0px_rgba(0,0,0,0.8)] border"
+            style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[22px] font-bold text-[#e8edf5]">Invite Study Partner</h3>
+              <h3 className="text-[22px] font-bold" style={{ color: colors.textPrimary }}>Invite Study Partner</h3>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setShowUserSelectModal(false)}
-                className="w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.05)] flex items-center justify-center text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                style={{ backgroundColor: colors.borderPrimary, color: colors.textSecondary }}
               >
                 <X className="w-5 h-5" />
               </motion.button>
             </div>
 
-            <p className="text-[14px] text-[#a8b3cf] mb-4">
+            <p className="text-[14px] mb-4" style={{ color: colors.textSecondary }}>
               Select a classmate to invite to your study session
             </p>
 
@@ -944,7 +1019,8 @@ export default function SchedulePage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleSendStudyInvite(user.id)}
-                  className="w-full flex items-center gap-3 bg-[#2a2f4a] rounded-xl p-4 hover:bg-[#323751] transition-colors"
+                  className="w-full flex items-center gap-3 rounded-xl p-4 transition-colors"
+                  style={{ backgroundColor: colors.bgTertiary }}
                 >
                   <ImageWithFallback
                     src={user.avatar}
@@ -952,8 +1028,8 @@ export default function SchedulePage() {
                     className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                   />
                   <div className="flex-1 text-left">
-                    <p className="text-[15px] font-semibold text-[#e8edf5]">{user.name}</p>
-                    <p className="text-[13px] text-[#a8b3cf]">Online now</p>
+                    <p className="text-[15px] font-semibold" style={{ color: colors.textPrimary }}>{user.name}</p>
+                    <p className="text-[13px]" style={{ color: colors.textSecondary }}>Online now</p>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#14b8a6] to-[#0891b2] flex items-center justify-center">
                     <Plus className="w-5 h-5 text-white" />
@@ -966,7 +1042,8 @@ export default function SchedulePage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowUserSelectModal(false)}
-              className="w-full mt-4 bg-[rgba(255,255,255,0.05)] text-[#e8edf5] py-3 rounded-xl font-semibold"
+              className="w-full mt-4 py-3 rounded-xl font-semibold"
+              style={{ backgroundColor: colors.borderPrimary, color: colors.textPrimary }}
             >
               Cancel
             </motion.button>
@@ -980,21 +1057,23 @@ export default function SchedulePage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#1e2139] rounded-2xl p-6 max-w-md w-full shadow-[0px_8px_32px_0px_rgba(0,0,0,0.8)] border border-[rgba(255,255,255,0.08)]"
+            className="rounded-2xl p-6 max-w-md w-full shadow-[0px_8px_32px_0px_rgba(0,0,0,0.8)] border"
+            style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[22px] font-bold text-[#e8edf5]">Cancel Session</h3>
+              <h3 className="text-[22px] font-bold" style={{ color: colors.textPrimary }}>Cancel Session</h3>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setShowCancelModal(false)}
-                className="w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.05)] flex items-center justify-center text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                style={{ backgroundColor: colors.borderPrimary, color: colors.textSecondary }}
               >
                 <X className="w-5 h-5" />
               </motion.button>
             </div>
 
-            <p className="text-[14px] text-[#a8b3cf] mb-4">
+            <p className="text-[14px] mb-4" style={{ color: colors.textSecondary }}>
               Are you sure you want to cancel this session?
             </p>
 
@@ -1003,7 +1082,8 @@ export default function SchedulePage() {
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="Enter reason for cancellation (optional)"
-                className="w-full bg-[#2a2f4a] rounded-xl px-4 py-3 text-[14px] text-[#e8edf5] placeholder:text-[#a8b3cf] border border-transparent focus:border-[#5b7ceb] focus:outline-none transition-colors"
+                className="w-full rounded-xl px-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
+                style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
               />
             </div>
 
@@ -1012,7 +1092,8 @@ export default function SchedulePage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowCancelModal(false)}
-                className="flex-1 bg-[rgba(255,255,255,0.05)] text-[#e8edf5] py-3 rounded-xl font-semibold"
+                className="flex-1 py-3 rounded-xl font-semibold"
+                style={{ backgroundColor: colors.borderPrimary, color: colors.textPrimary }}
               >
                 Cancel
               </motion.button>
@@ -1028,6 +1109,21 @@ export default function SchedulePage() {
           </motion.div>
         </div>
       )}
+
+      {/* Event Details Modal */}
+      <AnimatePresence>
+        {showEventModal && selectedEvent && (
+          <EventDetailsModal
+            event={selectedEvent}
+            onClose={() => {
+              setShowEventModal(false);
+              setSelectedEvent(null);
+            }}
+            onDelete={removeCalendarEvent}
+            onUpdate={updateCalendarEvent}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,36 +1,14 @@
-import { Link } from "react-router";
-import { useState } from "react";
-import { motion } from "motion/react";
-import { ChevronLeft, ArrowRight, BookOpen, Trophy } from "lucide-react";
+import { Link, useNavigate } from "react-router";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
-
-const subjectProgress = [
-  { 
-    id: 1, 
-    name: "Math 2A", 
-    progress: 75, 
-    lessons: 8, 
-    color: "rgb(59, 130, 246)",
-    bgColor: "rgba(59, 130, 246, 0.1)",
-  },
-  { 
-    id: 2, 
-    name: "Physics", 
-    progress: 60, 
-    lessons: 5, 
-    color: "rgb(20, 184, 166)",
-    bgColor: "rgba(20, 184, 166, 0.1)",
-  },
-  { 
-    id: 3, 
-    name: "Chemistry", 
-    progress: 40, 
-    lessons: 3, 
-    color: "rgb(139, 92, 246)",
-    bgColor: "rgba(139, 92, 246, 0.1)",
-  },
-];
+import { useState } from "react";
+import { motion } from "motion/react";
+import { ArrowLeft, TrendingUp, Award, Target, CheckCircle, BookOpen, ArrowRight, Trophy, RefreshCw, ExternalLink } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
+import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
+import { useCanvasAuth } from "../contexts/CanvasAuthContext";
+import { useAllCourseColors } from "../hooks/useCourseColor";
+import { CanvasLoginPromptModal } from "../components/CanvasLoginPromptModal";
 
 const achievements = [
   {
@@ -63,9 +41,50 @@ function ProgressBar({ percentage, color }: { percentage: number; color: string 
 
 export default function ProgressPage() {
   const [expandedSubject, setExpandedSubject] = useState<number | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const { colors, accentColor, mode } = useTheme();
+  const navigate = useNavigate();
+  const { courses, refreshCourses, isRefreshing, lastRefreshed } = useCanvasCourses();
+  const { isCanvasConnected } = useCanvasAuth();
+  const courseColors = useAllCourseColors();
+
+  const handleRefresh = async () => {
+    if (!isCanvasConnected) {
+      setShowLoginPrompt(true);
+      return;
+    }
+    await refreshCourses();
+  };
+
+  const handleCourseClick = (courseId: number) => {
+    if (!isCanvasConnected) {
+      setShowLoginPrompt(true);
+      return;
+    }
+    
+    if (expandedSubject === courseId) {
+      // Second click - navigate to Canvas classes page
+      navigate("/canvas-classes");
+    } else {
+      // First click - expand details
+      setExpandedSubject(courseId);
+    }
+  };
+
+  const handleOpenInCanvas = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isCanvasConnected) {
+      setShowLoginPrompt(true);
+      return;
+    }
+    navigate("/canvas-classes");
+  };
+
+  // Calculate total lessons
+  const totalLessons = courses.reduce((sum, course) => sum + (course.lessonsCompleted || 0), 0);
 
   return (
-    <div className="min-h-screen bg-[#2c3042] overflow-auto pb-20">
+    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
       <div className="max-w-md mx-auto">
         {/* Header */}
         <motion.div
@@ -78,24 +97,48 @@ export default function ProgressPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.05)] flex items-center justify-center cursor-pointer"
+                className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer"
+                style={{ backgroundColor: colors.bgTertiary }}
               >
-                <ChevronLeft className="w-6 h-6 text-[#e8edf5]" />
+                <ArrowLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
               </motion.button>
             </Link>
             <ProfileButton />
           </div>
 
           <div className="flex items-center justify-between">
-            <h1 className="text-[28px] font-bold text-[#e8edf5]">My Progress</h1>
+            <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Academic Info</h1>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="text-sm font-semibold text-[#5b7ceb] flex items-center gap-1 cursor-pointer"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer"
+              style={{ backgroundColor: colors.bgTertiary }}
             >
-              Take Quiz <ArrowRight className="w-4 h-4" />
+              <RefreshCw 
+                className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} 
+                style={{ color: accentColor.primary }} 
+              />
             </motion.button>
           </div>
+          
+          {isCanvasConnected && lastRefreshed && (
+            <p className="text-[12px] mt-1" style={{ color: colors.textSecondary }}>
+              Last updated: {new Date(lastRefreshed).toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit' 
+              })}
+            </p>
+          )}
+          
+          {!isCanvasConnected && (
+            <p className="text-[12px] mt-1" style={{ color: "#e13f2b" }}>
+              Canvas not connected • Sign in to sync courses
+            </p>
+          )}
         </motion.div>
 
         {/* Learning Journey Card */}
@@ -109,87 +152,146 @@ export default function ProgressPage() {
             <motion.div
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-gradient-to-br from-[#5b7ceb] to-[#4361d9] rounded-3xl p-6 shadow-lg cursor-pointer"
+              className="rounded-3xl p-6 shadow-lg cursor-pointer"
+              style={{ background: `linear-gradient(to bottom right, ${accentColor.primary}, ${accentColor.icon})` }}
             >
               <div className="flex items-center gap-2 mb-4">
-                <BookOpen className="w-5 h-5 text-white" />
-                <span className="text-white font-semibold">Your Learning Journey</span>
+                <BookOpen className="w-5 h-5" style={{ color: mode === "dark" ? "white" : "black" }} />
+                <span className="font-semibold" style={{ color: mode === "dark" ? "white" : "black" }}>Your Learning Journey</span>
               </div>
               <div className="flex items-center justify-around">
                 <div>
-                  <div className="text-[44px] font-bold text-white leading-tight">16</div>
-                  <div className="text-sm text-white/80">Lessons Completed</div>
+                  <div className="text-[44px] font-bold leading-tight" style={{ color: mode === "dark" ? "white" : "black" }}>{totalLessons}</div>
+                  <div className="text-sm" style={{ color: mode === "dark" ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.6)" }}>Lessons Completed</div>
                 </div>
-                <div className="w-px h-16 bg-white/20" />
+                <div className="w-px h-16" style={{ backgroundColor: mode === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)" }} />
                 <div>
-                  <div className="text-[44px] font-bold text-white leading-tight">24hrs</div>
-                  <div className="text-sm text-white/80">Total Study Time</div>
+                  <div className="text-[44px] font-bold leading-tight" style={{ color: mode === "dark" ? "white" : "black" }}>24hrs</div>
+                  <div className="text-sm" style={{ color: mode === "dark" ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.6)" }}>Total Study Time</div>
                 </div>
               </div>
             </motion.div>
           </Link>
         </motion.div>
 
-        {/* Subject Progress */}
+        {/* Subject Progress from Canvas */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="px-6 mb-6"
         >
-          <h2 className="text-lg font-semibold text-[#e8edf5] mb-4">Subject Progress</h2>
-          <div className="space-y-3">
-            {subjectProgress.map((subject, index) => (
-              <motion.div
-                key={subject.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + index * 0.1 }}
-                whileHover={{ scale: 1.01 }}
-                onClick={() => setExpandedSubject(expandedSubject === subject.id ? null : subject.id)}
-                className="bg-[#353a52] rounded-2xl p-5 cursor-pointer border border-[rgba(255,255,255,0.05)]"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-base font-semibold text-[#e8edf5] mb-1">
-                      {subject.name}
-                    </h3>
-                    <p className="text-xs text-[#a8b3cf]">
-                      {subject.lessons} lessons completed
-                    </p>
-                  </div>
-                  <div className="text-xl font-bold" style={{ color: subject.color }}>
-                    {subject.progress}%
-                  </div>
-                </div>
-                <ProgressBar percentage={subject.progress} color={subject.color} />
-                
-                {/* Expanded Details */}
-                <motion.div
-                  initial={false}
-                  animate={{ 
-                    height: expandedSubject === subject.id ? "auto" : 0,
-                    opacity: expandedSubject === subject.id ? 1 : 0,
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>My Courses</h2>
+            {isCanvasConnected ? (
+              <Link to="/canvas-classes">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-3 py-1.5 rounded-lg text-[13px] font-medium"
+                  style={{ 
+                    backgroundColor: accentColor.background,
+                    color: accentColor.primary
                   }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
                 >
-                  <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.08)]">
-                    <p className="text-sm text-[#a8b3cf] mb-2">Recent activities:</p>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-[#e8edf5]">Lesson {subject.lessons}</span>
-                        <span className="text-[#5b7ceb]">Completed</span>
+                  View All
+                </motion.button>
+              </Link>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowLoginPrompt(true)}
+                className="px-3 py-1.5 rounded-lg text-[13px] font-medium"
+                style={{ 
+                  backgroundColor: "#e13f2b20",
+                  color: "#e13f2b"
+                }}
+              >
+                Connect Canvas
+              </motion.button>
+            )}
+          </div>
+          <div className="space-y-3">
+            {courses.map((course, index) => {
+              const IconComponent = course.icon;
+              const courseColor = courseColors[course.id] || course.color;
+              return (
+                <motion.div
+                  key={course.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 + index * 0.1 }}
+                  whileHover={{ scale: 1.01 }}
+                  onClick={() => handleCourseClick(course.id)}
+                  className="rounded-2xl p-5 cursor-pointer border"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
+                >
+                  <div className="flex items-center gap-4 mb-3">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: courseColor }}
+                    >
+                      <IconComponent className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold mb-1 truncate" style={{ color: colors.textPrimary }}>
+                        {course.code}
+                      </h3>
+                      <p className="text-xs" style={{ color: colors.textSecondary }}>
+                        {course.lessonsCompleted || 0} lessons completed
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-xl font-bold" style={{ color: courseColor }}>
+                        {course.progress || 0}%
                       </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-[#e8edf5]">Quiz {subject.lessons - 1}</span>
-                        <span className="text-[#5b7ceb]">95% Score</span>
-                      </div>
+                      {expandedSubject === course.id && (
+                        <ExternalLink className="w-4 h-4" style={{ color: accentColor.primary }} />
+                      )}
                     </div>
                   </div>
+                  <ProgressBar percentage={course.progress || 0} color={courseColor} />
+                  
+                  {/* Expanded Details */}
+                  <motion.div
+                    initial={false}
+                    animate={{ 
+                      height: expandedSubject === course.id ? "auto" : 0,
+                      opacity: expandedSubject === course.id ? 1 : 0,
+                    }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-4 pt-4 border-t" style={{ borderColor: colors.borderPrimary }}>
+                      <p className="text-sm mb-2" style={{ color: colors.textSecondary }}>Recent activities:</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span style={{ color: colors.textPrimary }}>Lesson {course.lessonsCompleted || 0}</span>
+                          <span style={{ color: accentColor.primary }}>Completed</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span style={{ color: colors.textPrimary }}>Quiz {(course.lessonsCompleted || 1) - 1}</span>
+                          <span style={{ color: accentColor.primary }}>95% Score</span>
+                        </div>
+                      </div>
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="mt-3 px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer"
+                        style={{ backgroundColor: accentColor.primary }}
+                        onClick={handleOpenInCanvas}
+                      >
+                        <span className="text-sm font-medium text-white">
+                          {isCanvasConnected ? "Open in Canvas" : "Connect Canvas"}
+                        </span>
+                        <ExternalLink className="w-4 h-4 text-white" />
+                      </motion.div>
+                    </div>
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            ))}
+              );
+            })}
           </div>
         </motion.div>
 
@@ -200,7 +302,7 @@ export default function ProgressPage() {
           transition={{ delay: 0.4 }}
           className="px-6 mb-6"
         >
-          <h2 className="text-lg font-semibold text-[#e8edf5] mb-4">Recent Achievements</h2>
+          <h2 className="text-lg font-semibold mb-4" style={{ color: colors.textPrimary }}>Recent Achievements</h2>
           <div className="space-y-3">
             {achievements.map((achievement, index) => (
               <motion.div
@@ -209,23 +311,24 @@ export default function ProgressPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 + index * 0.1 }}
                 whileHover={{ scale: 1.02, x: 4 }}
-                className="bg-[#353a52] rounded-2xl p-4 border border-[rgba(255,255,255,0.05)] cursor-pointer"
+                className="rounded-2xl p-4 border cursor-pointer"
+                style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#f59e0b] to-[#d97706] flex items-center justify-center">
                     <Trophy className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-[15px] font-semibold text-[#e8edf5] mb-1">
+                    <h3 className="text-[15px] font-semibold mb-1" style={{ color: colors.textPrimary }}>
                       {achievement.title}
                     </h3>
-                    <p className="text-xs text-[#a8b3cf]">{achievement.date}</p>
+                    <p className="text-xs" style={{ color: colors.textSecondary }}>{achievement.date}</p>
                   </div>
                   <motion.div
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <div className="w-2 h-2 rounded-full bg-[#5b7ceb]" />
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor.primary }} />
                   </motion.div>
                 </div>
               </motion.div>
@@ -234,7 +337,8 @@ export default function ProgressPage() {
         </motion.div>
       </div>
 
-      <BottomNav currentPage="progress" />
+      <BottomNav currentPage="profile" />
+      <CanvasLoginPromptModal isOpen={showLoginPrompt} onClose={() => setShowLoginPrompt(false)} />
     </div>
   );
 }

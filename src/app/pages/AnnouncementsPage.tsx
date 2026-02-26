@@ -3,6 +3,7 @@ import { BottomNav } from "../components/BottomNav";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Filter, AlertCircle, BookOpen, Calendar, X } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
 
 const announcements = [
   {
@@ -77,6 +78,7 @@ export default function AnnouncementsPage() {
     const stored = localStorage.getItem('removedAnnouncementIds');
     return stored ? JSON.parse(stored) : [];
   });
+  const { colors, accentColor } = useTheme();
 
   const courses = ["CHEM 1A", "MATH 2A", "PHYS 7C", "WRIT 39B", "BIO SCI 93"];
 
@@ -103,7 +105,7 @@ export default function AnnouncementsPage() {
     : announcements.filter(a => selectedCourses.some(course => a.courseName.startsWith(course)));
 
   return (
-    <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-20">
+    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="px-6 pt-12 pb-6">
@@ -113,12 +115,13 @@ export default function AnnouncementsPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="w-10 h-10 rounded-full bg-[#1e2139] flex items-center justify-center"
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: colors.bgCard }}
                 >
-                  <ArrowLeft className="w-5 h-5 text-[#e8edf5]" />
+                  <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
                 </motion.button>
               </Link>
-              <h1 className="text-2xl font-bold text-[#e8edf5]">Announcements</h1>
+              <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>Announcements</h1>
             </div>
 
             {/* Filter Button */}
@@ -126,7 +129,8 @@ export default function AnnouncementsPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowFilter(!showFilter)}
-              className="w-10 h-10 rounded-full bg-[#5b7ceb] flex items-center justify-center"
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: accentColor.primary }}
             >
               <Filter className="w-5 h-5 text-white" />
             </motion.button>
@@ -138,29 +142,30 @@ export default function AnnouncementsPage() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-4 bg-[#1e2139] rounded-xl p-4 border border-[rgba(255,255,255,0.12)]"
+              className="mb-4 rounded-xl p-4 border"
+              style={{ backgroundColor: colors.bgCard, borderColor: colors.borderSecondary }}
             >
-              <p className="text-sm font-semibold text-[#e8edf5] mb-3">Filter by Course</p>
+              <p className="text-sm font-semibold mb-3" style={{ color: colors.textPrimary }}>Filter by Course</p>
               <div className="space-y-2">
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={selectAllCourses}
-                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                    selectedCourses.length === courses.length
-                      ? "bg-[#5b7ceb] text-white"
-                      : "bg-[#1a1d29] text-[#a8b3cf] hover:bg-[#252837]"
-                  }`}
+                  className="w-full text-left px-4 py-2 rounded-lg transition-colors"
+                  style={selectedCourses.length === courses.length
+                    ? { backgroundColor: accentColor.primary, color: "white" }
+                    : { backgroundColor: colors.bgPrimary, color: colors.textSecondary }
+                  }
                 >
                   <span className="text-sm font-medium">Select All</span>
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={deselectAllCourses}
-                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                    selectedCourses.length === 0
-                      ? "bg-[#5b7ceb] text-white"
-                      : "bg-[#1a1d29] text-[#a8b3cf] hover:bg-[#252837]"
-                  }`}
+                  className="w-full text-left px-4 py-2 rounded-lg transition-colors"
+                  style={selectedCourses.length === 0
+                    ? { backgroundColor: accentColor.primary, color: "white" }
+                    : { backgroundColor: colors.bgPrimary, color: colors.textSecondary }
+                  }
                 >
                   <span className="text-sm font-medium">Deselect All</span>
                 </motion.button>
@@ -169,11 +174,11 @@ export default function AnnouncementsPage() {
                     key={course}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => toggleCourse(course)}
-                    className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                      selectedCourses.includes(course)
-                        ? "bg-[#5b7ceb] text-white"
-                        : "bg-[#1a1d29] text-[#a8b3cf] hover:bg-[#252837]"
-                    }`}
+                    className="w-full text-left px-4 py-2 rounded-lg transition-colors"
+                    style={selectedCourses.includes(course)
+                      ? { backgroundColor: accentColor.primary, color: "white" }
+                      : { backgroundColor: colors.bgPrimary, color: colors.textSecondary }
+                    }
                   >
                     <span className="text-sm font-medium">{course}</span>
                   </motion.button>
@@ -189,8 +194,8 @@ export default function AnnouncementsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="flex items-center gap-2 mb-4"
             >
-              <span className="text-sm text-[#a8b3cf]">Active filters:</span>
-              <div className="bg-[#5b7ceb] px-3 py-1 rounded-full flex items-center gap-2">
+              <span className="text-sm" style={{ color: colors.textSecondary }}>Active filters:</span>
+              <div className="px-3 py-1 rounded-full flex items-center gap-2" style={{ backgroundColor: accentColor.primary }}>
                 <span className="text-xs font-medium text-white">{selectedCourses.length} {selectedCourses.length === 1 ? 'course' : 'courses'}</span>
                 <button
                   onClick={selectAllCourses}
@@ -207,7 +212,7 @@ export default function AnnouncementsPage() {
 
         {/* Announcements List */}
         <div className="px-6 space-y-4">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {filteredAnnouncements
               .filter((announcement) => !removedAnnouncementIds.includes(announcement.id))
               .length > 0 ? (
@@ -221,14 +226,15 @@ export default function AnnouncementsPage() {
                   exit={{ 
                     opacity: 0, 
                     x: -300,
-                    transition: { duration: 0.3 }
+                    transition: { duration: 0.25 }
                   }}
                   transition={{ 
                     delay: index * 0.05,
                     duration: 0.2
                   }}
                   whileHover={{ scale: 1.01 }}
-                  className="bg-[#1e2139] rounded-2xl p-5 border border-[rgba(255,255,255,0.12)] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] relative"
+                  className="rounded-2xl p-5 border shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] relative overflow-hidden"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderSecondary }}
                 >
                   {/* Ignore Button */}
                   <motion.button
@@ -238,9 +244,10 @@ export default function AnnouncementsPage() {
                       setRemovedAnnouncementIds([...removedAnnouncementIds, announcement.id]);
                       localStorage.setItem('removedAnnouncementIds', JSON.stringify([...removedAnnouncementIds, announcement.id]));
                     }}
-                    className="absolute top-4 right-4 w-7 h-7 rounded-full bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(236,72,153,0.2)] flex items-center justify-center transition-colors"
+                    className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+                    style={{ backgroundColor: colors.borderPrimary }}
                   >
-                    <X className="w-4 h-4 text-[#a8b3cf] hover:text-[#ec4899]" />
+                    <X className="w-4 h-4" style={{ color: colors.textSecondary }} />
                   </motion.button>
 
                   {/* Course Badge */}
@@ -249,21 +256,21 @@ export default function AnnouncementsPage() {
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: announcement.courseColor }}
                     />
-                    <span className="text-xs font-medium text-[#a8b3cf]">
+                    <span className="text-xs font-medium" style={{ color: colors.textSecondary }}>
                       {announcement.courseName}
                     </span>
-                    <span className="text-xs text-[#6b7280] ml-auto">
+                    <span className="text-xs ml-auto" style={{ color: colors.textTertiary }}>
                       {announcement.timestamp}
                     </span>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-base font-semibold text-[#e8edf5] mb-2">
+                  <h3 className="text-base font-semibold mb-2" style={{ color: colors.textPrimary }}>
                     {announcement.title}
                   </h3>
 
                   {/* Content */}
-                  <p className="text-sm text-[#a8b3cf] leading-relaxed">
+                  <p className="text-sm leading-relaxed" style={{ color: colors.textSecondary }}>
                     {announcement.content}
                   </p>
                 </motion.div>
@@ -272,9 +279,10 @@ export default function AnnouncementsPage() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="bg-[#1e2139] rounded-2xl p-8 border border-[rgba(255,255,255,0.08)] text-center"
+                className="rounded-2xl p-8 border text-center"
+                style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
               >
-                <p className="text-sm text-[#a8b3cf]">
+                <p className="text-sm" style={{ color: colors.textSecondary }}>
                   No announcements found for this course
                 </p>
               </motion.div>
@@ -283,7 +291,7 @@ export default function AnnouncementsPage() {
         </div>
       </div>
 
-      <BottomNav currentPage="canvas" />
+      <BottomNav />
     </div>
   );
 }

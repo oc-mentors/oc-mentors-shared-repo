@@ -1,12 +1,9 @@
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate } from "react-router";
 
 export function ProfileButton() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleClick = () => {
-    // Store the current location before navigating to profile
-    localStorage.setItem("previousPageBeforeProfile", location.pathname);
     navigate("/profile");
   };
 

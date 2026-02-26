@@ -1,13 +1,20 @@
 import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { motion } from "motion/react";
+import { ChevronLeft, ChevronRight, Calendar, Clock } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
+import { useCalendar } from "../contexts/CalendarContext";
 
 export default function BookingPage() {
   const navigate = useNavigate();
+  const { colors, accentColor } = useTheme();
+  const { addCalendarEvent, calendarEvents } = useCalendar();
   const [selectedDate, setSelectedDate] = useState<number>(3);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [currentMonth, setCurrentMonth] = useState(11); // December (0-indexed)
   const [currentYear, setCurrentYear] = useState(2025);
+  const [location, setLocation] = useState("Online");
 
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -75,6 +82,31 @@ export default function BookingPage() {
 
   const handleBookLesson = () => {
     if (selectedDate && selectedTime) {
+      const bookingDate = new Date(currentYear, currentMonth, selectedDate);
+      const dayOfWeek = bookingDate.getDay();
+      
+      // Calculate end time (30 minutes later)
+      const endTime = calculateEndTime(selectedTime, 30);
+      
+      // Generate unique ID
+      const newId = calendarEvents.length > 0 
+        ? Math.max(...calendarEvents.map(e => e.id)) + 1 
+        : 1;
+      
+      // Add event to calendar
+      addCalendarEvent({
+        id: newId,
+        type: "tutor",
+        title: "Tutor Session - Debra Peterson",
+        startTime: selectedTime,
+        endTime: endTime,
+        day: dayOfWeek,
+        date: bookingDate,
+        tutor: "Debra Peterson",
+        location: location,
+        color: "from-[#f59e0b] to-[#d97706]", // Orange gradient for tutor sessions
+      });
+
       // Show success message and navigate to schedule
       navigate("/schedule", {
         state: {
@@ -88,8 +120,32 @@ export default function BookingPage() {
     }
   };
 
+  // Helper function to calculate end time
+  const calculateEndTime = (startTime: string, durationMinutes: number): string => {
+    const [time, period] = startTime.split(" ");
+    let [hours, minutes] = time.split(":").map(Number);
+    
+    // Convert to 24-hour format
+    if (period === "PM" && hours !== 12) hours += 12;
+    if (period === "AM" && hours === 12) hours = 0;
+    
+    // Add duration
+    minutes += durationMinutes;
+    if (minutes >= 60) {
+      hours += Math.floor(minutes / 60);
+      minutes = minutes % 60;
+    }
+    
+    // Convert back to 12-hour format
+    const endPeriod = hours >= 12 ? "PM" : "AM";
+    let endHours = hours % 12;
+    if (endHours === 0) endHours = 12;
+    
+    return `${endHours}:${minutes.toString().padStart(2, "0")} ${endPeriod}`;
+  };
+
   return (
-    <div className="min-h-screen bg-[#2c3042] overflow-auto pb-20">
+    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
       <div className="max-w-md mx-auto">
         {/* Header with Back */}
         <div className="px-6 pt-3 pb-2">
@@ -97,9 +153,10 @@ export default function BookingPage() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.05)] flex items-center justify-center"
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: colors.bgTertiary }}
             >
-              <ChevronLeft className="w-6 h-6 text-[#e8edf5]" />
+              <ChevronLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
             </motion.button>
           </Link>
         </div>
@@ -112,9 +169,9 @@ export default function BookingPage() {
         >
           {/* Mentor Info */}
           <div className="text-center mb-4">
-            <p className="text-[14px] text-[#a8b3cf] mb-2">Debra Peterson</p>
-            <h1 className="text-[32px] font-bold text-[#e8edf5] mb-2">30 Minute Meeting</h1>
-            <div className="flex items-center justify-center gap-2 text-[#a8b3cf]">
+            <p className="text-[14px] mb-2" style={{ color: colors.textSecondary }}>Debra Peterson</p>
+            <h1 className="text-[32px] font-bold mb-2" style={{ color: colors.textPrimary }}>30 Minute Meeting</h1>
+            <div className="flex items-center justify-center gap-2" style={{ color: colors.textSecondary }}>
               <Clock className="w-4 h-4" />
               <span className="text-[14px]">30 min</span>
             </div>
@@ -128,28 +185,30 @@ export default function BookingPage() {
           transition={{ delay: 0.1 }}
           className="px-6 mb-6"
         >
-          <h2 className="text-[18px] font-semibold text-[#e8edf5] mb-4">Select a Day</h2>
+          <h2 className="text-[18px] font-semibold mb-4" style={{ color: colors.textPrimary }}>Select a Day</h2>
 
           {/* Calendar */}
-          <div className="bg-[#1e2139] rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]">
+          <div className="rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]" style={{ backgroundColor: colors.bgCard }}>
             {/* Month Navigation */}
             <div className="flex items-center justify-between mb-6">
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={prevMonth}
-                className="w-8 h-8 rounded-lg bg-[#2a2f4a] flex items-center justify-center"
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: colors.bgTertiary }}
               >
-                <ChevronLeft className="w-5 h-5 text-[#e8edf5]" />
+                <ChevronLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
               </motion.button>
-              <h3 className="text-[16px] font-semibold text-[#e8edf5]">
+              <h3 className="text-[16px] font-semibold" style={{ color: colors.textPrimary }}>
                 {monthNames[currentMonth]} {currentYear}
               </h3>
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={nextMonth}
-                className="w-8 h-8 rounded-lg bg-[#2a2f4a] flex items-center justify-center"
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: colors.bgTertiary }}
               >
-                <ChevronRight className="w-5 h-5 text-[#e8edf5]" />
+                <ChevronRight className="w-5 h-5" style={{ color: colors.textPrimary }} />
               </motion.button>
             </div>
 
@@ -157,7 +216,7 @@ export default function BookingPage() {
             <div className="grid grid-cols-7 gap-2 mb-3">
               {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
                 <div key={day} className="text-center">
-                  <span className="text-[12px] text-[#a8b3cf] font-medium">{day}</span>
+                  <span className="text-[12px] font-medium" style={{ color: colors.textSecondary }}>{day}</span>
                 </div>
               ))}
             </div>
@@ -171,13 +230,15 @@ export default function BookingPage() {
                   whileTap={dayObj.isCurrentMonth ? { scale: 0.95 } : {}}
                   onClick={() => dayObj.isCurrentMonth && setSelectedDate(dayObj.day)}
                   disabled={!dayObj.isCurrentMonth}
-                  className={`aspect-square rounded-lg flex items-center justify-center text-[14px] transition-all ${
-                    dayObj.isCurrentMonth
-                      ? selectedDate === dayObj.day
-                        ? "bg-[#5b7ceb] text-white font-semibold shadow-[0px_4px_12px_0px_rgba(91,124,235,0.4)]"
-                        : "text-[#e8edf5] hover:bg-[#2a2f4a]"
-                      : "text-[#4a4f6a]"
-                  }`}
+                  className="aspect-square rounded-lg flex items-center justify-center text-[14px] transition-all"
+                  style={{
+                    backgroundColor: dayObj.isCurrentMonth && selectedDate === dayObj.day ? accentColor.primary : "transparent",
+                    color: dayObj.isCurrentMonth
+                      ? selectedDate === dayObj.day ? "#ffffff" : colors.textPrimary
+                      : colors.textTertiary,
+                    fontWeight: dayObj.isCurrentMonth && selectedDate === dayObj.day ? 600 : 400,
+                    boxShadow: dayObj.isCurrentMonth && selectedDate === dayObj.day ? `0px 4px 12px 0px ${accentColor.primary}66` : "none",
+                  }}
                 >
                   {dayObj.day}
                 </motion.button>
@@ -193,7 +254,7 @@ export default function BookingPage() {
           transition={{ delay: 0.2 }}
           className="px-6 mb-6"
         >
-          <h2 className="text-[18px] font-semibold text-[#e8edf5] mb-4">Available Times</h2>
+          <h2 className="text-[18px] font-semibold mb-4" style={{ color: colors.textPrimary }}>Available Times</h2>
 
           <div className="grid grid-cols-2 gap-3">
             {availableTimes.map((time) => (
@@ -202,11 +263,12 @@ export default function BookingPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setSelectedTime(time)}
-                className={`py-4 rounded-xl text-[15px] font-medium transition-all ${
-                  selectedTime === time
-                    ? "bg-[#5b7ceb] text-white shadow-[0px_4px_12px_0px_rgba(91,124,235,0.4)]"
-                    : "bg-[#1e2139] text-[#e8edf5] hover:bg-[#2a2f4a]"
-                }`}
+                className="py-4 rounded-xl text-[15px] font-medium transition-all"
+                style={{
+                  backgroundColor: selectedTime === time ? accentColor.primary : colors.bgCard,
+                  color: selectedTime === time ? "#ffffff" : colors.textPrimary,
+                  boxShadow: selectedTime === time ? `0px 4px 12px 0px ${accentColor.primary}66` : "none",
+                }}
               >
                 {time}
               </motion.button>
@@ -226,11 +288,15 @@ export default function BookingPage() {
             whileTap={{ scale: selectedDate && selectedTime ? 0.98 : 1 }}
             onClick={handleBookLesson}
             disabled={!selectedDate || !selectedTime}
-            className={`w-full py-4 rounded-xl text-[16px] font-semibold transition-all ${
-              selectedDate && selectedTime
-                ? "bg-gradient-to-br from-[#4361d9] to-[#5b7ceb] text-white shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
-                : "bg-[#2a2f4a] text-[#6a7282] cursor-not-allowed"
-            }`}
+            className="w-full py-4 rounded-xl text-[16px] font-semibold transition-all"
+            style={{
+              background: selectedDate && selectedTime
+                ? `linear-gradient(to bottom right, ${accentColor.primary}, ${accentColor.hover})`
+                : colors.bgTertiary,
+              color: selectedDate && selectedTime ? "#ffffff" : colors.textTertiary,
+              boxShadow: selectedDate && selectedTime ? "0px 4px 16px 0px rgba(0,0,0,0.5)" : "none",
+              cursor: selectedDate && selectedTime ? "pointer" : "not-allowed",
+            }}
           >
             {selectedDate && selectedTime
               ? `Confirm Booking for ${monthNames[currentMonth]} ${selectedDate} at ${selectedTime}`
