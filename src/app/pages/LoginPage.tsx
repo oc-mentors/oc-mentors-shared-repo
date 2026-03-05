@@ -235,7 +235,7 @@ export default function LoginPage() {
                       <span>Please wait...</span>
                     </div>
                   ) : mode === "login" ? (
-                    "Sign In"
+                    "Sign in"
                   ) : (
                     "Create Account"
                   )}

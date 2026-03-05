@@ -1,0 +1,282 @@
+================================================================================
+                    OC MENTORS — PRODUCT SPECIFICATION
+================================================================================
+
+--------------------------------------------------------------------------------
+1. PRODUCT SPECIFICATION DESCRIPTION
+--------------------------------------------------------------------------------
+
+□ Check here if you have included your New Venture Competition Concept Paper 
+  in lieu of this section. (You may skip this section if you have included it.)
+
+Provide a specific description about your product's functionality and purpose, 
+focusing on the following:
+
+• Who are the users of this product?
+
+The users of this product include all college students, with a specific emphasis 
+on students who are in need of academic support. The platform also serves tutors, 
+TAs, and instructors who provide that support, as well as administrators who 
+manage the system. Students can use the app as learners; tutors and TAs use it 
+to manage availability, view students, and track analytics.
+
+• What can a user of the product accomplish with it and how?
+
+A user of our software can organize all of their coursework, plan study sessions, 
+connect with TAs, tutors, and other people to help them achieve their academic 
+goals. They can track their progress as a student and they can schedule online 
+or in-person tutoring sessions. Our app is an all-in-one student help app. 
+Specifically, users can:
+
+  - Browse and search tutors by subject and learning style, view profiles and 
+    reviews, and book one-on-one or recurring tutoring sessions.
+  - Connect their institution’s Canvas LMS account to see courses, assignments, 
+    and announcements in one place without switching between Canvas and the app.
+  - Use an in-app schedule and calendar to view upcoming sessions, past lessons, 
+    and study sessions, and join video sessions (e.g., Zoom/Google Meet) from 
+    the app.
+  - Message tutors, TAs, and peers through an in-app chat with support for 
+    attachments.
+  - Complete a learning style quiz and get matched with tutors whose teaching 
+    style fits their preferences (e.g., Visual, Auditory, Reading/Writing, 
+    Kinesthetic).
+  - Track academic progress by subject, view stats (lessons taken, hours studied, 
+    GPA), complete tasks, and earn achievements.
+  - Customize the experience with theme and accent color options (e.g., light/dark).
+  - Rate and review completed sessions to help other students choose tutors.
+
+Tutors can manage their availability, view their students, and see analytics; 
+they get a dedicated tutor home and tutor-specific routes.
+
+• What are the major operations it can perform?
+
+Major operations include:
+
+  - Scheduling, managing, and recording online or in-person tutoring sessions 
+    (book, cancel, complete, join via video link).
+  - Integrating Canvas information (courses, assignments, announcements, 
+    calendar events) via the Canvas LMS API (OAuth2) to bring a simpler and 
+    more organized user experience for students who may find Canvas cluttered 
+    and hard to navigate.
+  - A messaging system between students, TAs, and tutors, with conversations, 
+    real-time updates, and file/image attachments.
+  - An in-app schedule and calendar to help students stay organized (upcoming 
+    sessions, past lessons, study sessions, recurring classes).
+  - User authentication (register, login, profile) and role-based access 
+    (student, tutor, admin).
+  - Progress tracking (by subject, tasks, achievements, stats) and a learning 
+    style quiz with tutor matching.
+  - Reviews and ratings for completed sessions.
+  - Recommended resources and a personalized learning plan (e.g., “Start 
+    Today’s Learning Plan”).
+  - Theme customization and notification/course notification settings.
+
+• What is the user interface?
+
+The user interface is a modern, responsive web application built with React. 
+It is designed for use on desktop and mobile browsers (with a mobile-first, 
+single-column layout capped at max-width for larger screens).
+
+  - Navigation: A bottom navigation bar gives quick access to five main areas: 
+    Home, Tutors (browse/book tutors), Schedule (calendar and sessions), Chat 
+    (messages), and Canvas (linked courses, assignments, announcements). 
+    Additional entry points include Profile, Settings, Progress, and 
+    Learning Style Quiz. Tutor users see a dedicated Tutor Home and links to 
+    Tutor Students, Tutor Availability, and Tutor Analytics.
+
+  - Layout and design: The UI uses a clean, card-based layout with clear 
+    typography and spacing. Key surfaces include a personalized dashboard 
+    (e.g., “Hi, [Name]”, today’s plan, next session countdown), subject 
+    cards with icons and course colors, and lists for meetings, resources, 
+    and assignments. Buttons use an accent color (customizable) with subtle 
+    shadows and hover states. Motion (e.g., Framer Motion) is used for 
+    gentle animations on page load and interactions.
+
+  - Key screens and flows: 
+    - Splash and Login/Register for authentication.
+    - Home: greeting, “Start Today’s Learning Plan” CTA, today’s plan, 
+      upcoming meetings, subject shortcuts, recommended resources.
+    - Tutors: search, filters by subject, tutor cards (avatar, name, 
+      subject, rating, price), tutor detail with bio, availability, 
+      reviews, and “Book session.”
+    - Schedule: calendar view and list of upcoming/past sessions with 
+      options to join video, rate session, or view details.
+    - Chat: conversation list (with last message and unread state) and 
+      conversation view with message bubbles and attachments.
+    - Canvas: Canvas login/link flow, Canvas classes list, course-specific 
+      announcements and assignments (with due dates and status).
+    - Progress: subject progress, tasks, achievements, and stats.
+    - Learning Style Quiz: multiple-choice questions and result with 
+      learning style and matching.
+    - Settings: profile edit, theme customization, notifications, and 
+      Canvas connection status.
+  - Theming: Support for light and dark themes and user-selectable accent 
+    colors so the interface can match institutional or user preference.
+
+  - Technology: The UI is implemented with React (and React Router), 
+    TypeScript, Vite, Tailwind CSS, Radix UI and MUI components, Lucide 
+    icons, Recharts for charts, and Motion for animations. There are no 
+    native mobile apps; the product is a web app accessible via browser.
+
+
+--------------------------------------------------------------------------------
+2. PRODUCT SPECIFICATION — SOFTWARE AND HARDWARE REQUIREMENTS
+--------------------------------------------------------------------------------
+
+Describe the software/hardware requirements of your product. For example, 
+provide the operating system, 3rd party applications, and/or physical 
+components to make your product functional.
+
+SOFTWARE REQUIREMENTS
+
+  • Operating system (end user):
+    - Any modern OS that supports a current web browser: Windows 10/11, 
+      macOS 10.15+, Linux (recent distributions), iOS 14+, or Android 8+.
+    - No specific OS is required; the product runs in the browser.
+
+  • Web browser (end user):
+    - A modern, standards-compliant browser with JavaScript enabled:
+      Chrome/Edge (recommended), Firefox, Safari, or equivalent.
+    - Cookies and local storage enabled for authentication and preferences 
+      (e.g., theme, Canvas connection status).
+
+  • Development / deployment (for running the project):
+    - Node.js (LTS version, e.g., 18.x or 20.x) and npm (or pnpm) for 
+      installing dependencies and running the Vite dev server and build.
+    - A code editor or IDE (e.g., VS Code, Cursor) is optional for 
+      development only.
+
+  • Backend and third-party services:
+    - Firebase (Google): Used for authentication (email/password and optional 
+      providers), Cloud Firestore (users, tutors, sessions, conversations, 
+      messages, progress, reviews, resources), and Firebase Storage (avatars, 
+      chat attachments). A Firebase project must be created and configured 
+      (API key, auth domain, project ID, storage bucket, messaging sender ID, 
+      app ID) via environment variables (e.g., .env with VITE_FIREBASE_*).
+    - Canvas LMS (Instructure): For Canvas integration, the institution must 
+      expose the Canvas REST API and OAuth2 (authorization and token endpoints). 
+      The app uses OAuth2; it does not collect or store Canvas passwords. 
+      End users need a Canvas account at a supported institution.
+
+  • Optional / future:
+    - Video conferencing: Integration with a third-party service (e.g., Zoom 
+      or Google Meet) for “Join” links in sessions; no specific client 
+      installation required beyond the browser.
+    - (Optional) Cloud Functions for scheduled Canvas sync or server-side 
+      tasks; would require a Firebase Blaze plan if used.
+
+  • Build and tooling (included in the project):
+    - Vite 6.x (build and dev server).
+    - React 18.x, React Router 7.x, TypeScript.
+    - Tailwind CSS 4.x, Radix UI, MUI (Material UI) components, Lucide React, 
+      Motion (animation), Recharts, date-fns, react-hook-form, and other 
+      dependencies listed in package.json.
+
+HARDWARE REQUIREMENTS
+
+  • End user:
+    - A device (PC, laptop, tablet, or smartphone) with a display and 
+      internet connection capable of running a modern web browser.
+    - For video tutoring: microphone and camera (usually built-in or USB) 
+      and a stable internet connection; actual video runs in the browser 
+      or in the linked third-party video app.
+
+  • No dedicated server or special hardware is required for the product 
+    itself; backend services are provided by Firebase and the institution’s 
+    Canvas instance.
+
+
+--------------------------------------------------------------------------------
+3. PROPOSED DEMONSTRATION
+--------------------------------------------------------------------------------
+
+Use this section to describe your proposed product demo. The demo should be a 
+working prototype of some key functionality of the product that you are 
+designing and illustrate the competitive differentiation and/or technology 
+that you are relying on. This is just a “proposed demo.”
+
+PROPOSED DEMO OVERVIEW
+
+The demonstration will use the existing OC Mentors web application as a 
+working prototype. The demo will show a short, scripted flow that highlights 
+core value for students and the main differentiators: (1) Canvas integration 
+for a single, less cluttered view of courses and assignments, (2) tutor 
+discovery and session scheduling, (3) in-app messaging, and (4) progress 
+and personalization (learning style and theme). The goal is to show a 
+cohesive “all-in-one” student help experience in one product.
+
+COMPETITIVE DIFFERENTIATION AND TECHNOLOGY
+
+  • Canvas integration: Many students juggle Canvas and separate tutoring 
+    or planning tools. OC Mentors connects to Canvas via OAuth2 and surfaces 
+    courses, assignments (with due dates and status), and announcements 
+    inside the app. The demo will show linking Canvas (or a simulated state), 
+    then viewing “Canvas classes” and assignments in one place without 
+    leaving the app.
+
+  • Unified scheduling and sessions: Students can browse tutors by subject, 
+    see availability, book one-off or recurring sessions, and view everything 
+    on an in-app schedule with options to join video sessions. The demo will 
+    show the flow: Home → Tutors → select a tutor → Book session → Schedule 
+    view with the session and a “Join” (video) option.
+
+  • Messaging in one place: Communication with tutors and TAs happens inside 
+    the app. The demo will show the Chat list and a sample conversation to 
+    illustrate that students don’t need to switch to email or external chat 
+    apps.
+
+  • Personalization: The learning style quiz and theme customization show 
+    that the app adapts to the user (matching learning style and visual 
+    preference). The demo can briefly show the quiz result and theme 
+    settings to support this.
+
+DEMO FLOW (PROPOSED)
+
+  1. Opening: Start on Splash or Login; log in as a student (pre-created 
+     account).
+
+  2. Home: Show the dashboard with greeting, “Start Today’s Learning Plan” 
+     button, today’s plan, and upcoming sessions. Emphasize one place for 
+     plan and next session.
+
+  3. Canvas: Go to the Canvas section; show Canvas login/link (or that it’s 
+     already connected). Open Canvas classes and then assignments (or 
+     announcements) to show coursework and due dates in-app.
+
+  4. Tutors and booking: Go to Tutors, apply a subject filter or search, 
+     open a tutor profile (bio, rating, availability), and book a session 
+     (date/time). Show the session appearing on Schedule.
+
+  5. Schedule: Open Schedule; show the calendar/list with the newly booked 
+     session and a “Join” or “Video” action to illustrate online session 
+     access.
+
+  6. Chat: Open Chat, show conversation list and one conversation with 
+     messages (and optional attachment) to show in-app messaging with 
+     tutors/TAs.
+
+  7. (Optional) Progress: Briefly show Progress (e.g., subject progress or 
+     achievements) and/or Learning Style Quiz result to reinforce 
+     tracking and personalization.
+
+  8. (Optional) Settings: Show theme customization (light/dark, accent 
+     color) to illustrate user control over the interface.
+
+DELIVERABLES FOR THE DEMO
+
+  • A running instance of the web app (local or deployed), with Firebase 
+    configured and (if possible) a test Canvas OAuth2 app or sandbox for 
+    the Canvas steps.
+  • Pre-created test accounts: at least one student and one tutor, with 
+    sample sessions, messages, and (if available) Canvas-linked data.
+  • A stable internet connection and a browser (Chrome/Edge recommended) 
+    for the live demo; backup: short screen recording of the same flow.
+
+This proposed demonstration shows a working prototype of key functionality 
+and clearly illustrates the product’s differentiation (Canvas integration, 
+unified scheduling and messaging, and personalization) and the use of 
+modern web and cloud technology (React, Firebase, Canvas API).
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================

@@ -12,8 +12,9 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useAllCourseColors } from "../hooks/useCourseColor";
 import { subjects } from "../data/courses";
 import TutorHomePage from "./TutorHomePage";
-import imgDebra from "figma:asset/bae2b9e32f95456a531512097e56886125248d42.png";
-import imgAdam from "figma:asset/fb8793821e4226d9f0d16a152549611ddd4ca9f0.png";
+
+const imgDebra = "https://via.placeholder.com/150";
+const imgAdam = "https://via.placeholder.com/150";
 
 const meetings = [
   {
@@ -74,7 +75,7 @@ export default function HomePage() {
             className="space-y-3"
           >
             <h1 className="text-[44px] font-bold leading-tight" style={{ color: colors.textPrimary }}>
-              Hi, Daniyal 👋
+              Hi, {(user?.firstName || user?.name?.split(" ")[0] || user?.email?.split("@")[0] || "there")} 👋
             </h1>
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5" style={{ color: colors.textSecondary }} />

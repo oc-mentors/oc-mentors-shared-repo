@@ -60,7 +60,7 @@ export default function TutorHomePage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-[#e8edf5]">
-                Welcome back, {user?.name || "Tutor"}!
+                {user?.name || "Tutor"} Dashboard
               </h1>
               <p className="text-sm text-[#a8b3cf] mt-1">
                 {new Date().toLocaleDateString("en-US", { 
