@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import { LogOut, X } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useScrollLock } from "../hooks/useScrollLock";
 
 interface LogoutConfirmModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface LogoutConfirmModalProps {
 
 export function LogoutConfirmModal({ isOpen, onClose, onConfirm }: LogoutConfirmModalProps) {
   const { colors, accentColor } = useTheme();
+  useScrollLock(isOpen);
 
   if (!isOpen) return null;
 

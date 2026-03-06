@@ -3,6 +3,7 @@ import { X, Lock, Eye, EyeOff, Mail } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useScrollLock } from "../hooks/useScrollLock";
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -18,7 +19,8 @@ export function ChangePasswordModal({
   isForgotPassword = false 
 }: ChangePasswordModalProps) {
   const { colors, accentColor } = useTheme();
-  const { user, changePassword } = useAuth();
+  const { updatePassword } = useAuth();
+  useScrollLock(isOpen);
   
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -85,7 +87,7 @@ export function ChangePasswordModal({
 
       try {
         setLoading(true);
-        await changePassword(email, newPassword);
+        await updatePassword(email, newPassword);
         setSuccess(true);
         
         setTimeout(() => {
@@ -107,7 +109,7 @@ export function ChangePasswordModal({
     }
     
     // Validate current password matches stored password
-    const storedPassword = getStoredPassword(user?.email || "");
+    const storedPassword = getStoredPassword(email);
     if (storedPassword && currentPassword !== storedPassword) {
       setError("Current password is incorrect");
       return;
@@ -130,14 +132,7 @@ export function ChangePasswordModal({
 
     try {
       setLoading(true);
-      const emailToUse = user?.email;
-      
-      if (!emailToUse) {
-        setError("No email found");
-        return;
-      }
-
-      await changePassword(emailToUse, newPassword);
+      await updatePassword(email, newPassword);
       setSuccess(true);
       
       setTimeout(() => {

@@ -1,7 +1,6 @@
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useState, useRef, useEffect } from "react";
 import { BottomNav } from "../components/BottomNav";
-import { ProfileButton } from "../components/ProfileButton";
 import svgPaths from "../../imports/svg-in824s3fr2";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Check, ChevronLeft, Eye } from "lucide-react";

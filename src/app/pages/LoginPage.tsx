@@ -1,16 +1,33 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { Mail, Lock, User, GraduationCap, Users, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth, UserRole } from "../contexts/AuthContext";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
 
+// Slide direction variants: dir=1 → forward (role→form), dir=-1 → back (form→role)
+const panelVariants = {
+  enter: (dir: number) => ({
+    opacity: 0,
+    x: dir * 40,
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+  },
+  exit: (dir: number) => ({
+    opacity: 0,
+    x: dir * -40,
+    transition: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+  }),
+};
+
 export default function LoginPage() {
-  const navigate = useNavigate();
   const { login, signup } = useAuth();
   
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [slideDir, setSlideDir] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
@@ -19,22 +36,32 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const handleRoleSelect = (role: UserRole) => {
+    setSlideDir(1);
+    setSelectedRole(role);
+  };
+
+  const handleChangeRole = () => {
+    setSlideDir(-1);
+    setSelectedRole(null);
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRole) return;
     
     setIsLoading(true);
+    setShowForgotPasswordModal(false);
     try {
       if (mode === "login") {
         await login(email, password, selectedRole);
       } else {
         await signup(name, email, password, selectedRole);
       }
-      navigate("/");
+      // Auth context now handles showLoginAnimation + routing redirect
     } catch (error) {
       console.error("Auth error:", error);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -61,13 +88,16 @@ export default function LoginPage() {
           </p>
         </motion.div>
 
-        {/* Role Selection */}
-        <AnimatePresence mode="wait">
-          {!selectedRole && (
+        {/* Single AnimatePresence — role picker OR auth form */}
+        <AnimatePresence mode="wait" custom={slideDir}>
+          {!selectedRole ? (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              key="role-picker"
+              custom={slideDir}
+              variants={panelVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               className="mb-6"
             >
               <h2 className="text-lg font-semibold text-[#e8edf5] mb-4 text-center">
@@ -78,7 +108,7 @@ export default function LoginPage() {
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedRole("student")}
+                  onClick={() => handleRoleSelect("student")}
                   className="bg-[#1e2139] rounded-2xl p-6 border-2 border-transparent hover:border-[#5b7ceb] transition-all shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
                 >
                   <div className="flex flex-col items-center gap-3">
@@ -93,7 +123,7 @@ export default function LoginPage() {
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedRole("tutor")}
+                  onClick={() => handleRoleSelect("tutor")}
                   className="bg-[#1e2139] rounded-2xl p-6 border-2 border-transparent hover:border-[#8b5cf6] transition-all shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
                 >
                   <div className="flex flex-col items-center gap-3">
@@ -105,23 +135,17 @@ export default function LoginPage() {
                 </motion.button>
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Auth Form */}
-        <AnimatePresence mode="wait">
-          {selectedRole && (
+          ) : (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              key="auth-form"
+              custom={slideDir}
+              variants={panelVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
             >
               {/* Selected Role Badge */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mb-6 flex items-center justify-center gap-3"
-              >
+              <div className="mb-6 flex items-center justify-center gap-3">
                 <div className={`px-4 py-2 rounded-xl flex items-center gap-2 ${
                   selectedRole === "student" 
                     ? "bg-[#4361d9]/20 border border-[#4361d9]/40" 
@@ -139,12 +163,12 @@ export default function LoginPage() {
                   </span>
                 </div>
                 <button
-                  onClick={() => setSelectedRole(null)}
+                  onClick={handleChangeRole}
                   className="text-sm text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
                 >
                   Change
                 </button>
-              </motion.div>
+              </div>
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -235,7 +259,7 @@ export default function LoginPage() {
                       <span>Please wait...</span>
                     </div>
                   ) : mode === "login" ? (
-                    "Sign in"
+                    "Sign In"
                   ) : (
                     "Create Account"
                   )}

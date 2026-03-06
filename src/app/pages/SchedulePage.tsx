@@ -1,15 +1,22 @@
+import { useAllCourseColors } from "../hooks/useCourseColor";
+import { getEventColors } from "../utils/eventColors";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link, useNavigate, useLocation } from "react-router";
-import { ArrowLeft, Calendar, Star, Clock, Video, MessageSquare, X, ChevronLeft, ChevronRight, Plus, Repeat, Users, Edit2, Trash2, FileText, MapPin } from "lucide-react";
+import { Calendar, Clock, MapPin, Video, X, Plus, ChevronLeft, ChevronRight, Flag, ArrowLeft } from "lucide-react";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { CalendarMonthView } from "../components/CalendarMonthView";
 import { EventDetailsModal } from "../components/EventDetailsModal";
-import { useState, useEffect } from "react";
+import { AddEventModal } from "../components/AddEventModal";
+import type { SavedEventData } from "../components/AddEventModal";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useCalendar } from "../contexts/CalendarContext";
+
+const IGNORED_IDS_KEY   = 'ignoredAssignmentIds';
+const COMPLETED_IDS_KEY = 'completedAssignmentIds';
 
 interface Session {
   id: number;
@@ -39,6 +46,8 @@ interface CalendarEvent {
   courseName?: string;
   dueTime?: string;
   location?: string;
+  courseId?: number;
+  completed?: boolean;
 }
 
 interface User {
@@ -52,6 +61,7 @@ export default function SchedulePage() {
   const location = useLocation();
   const { user } = useAuth();
   const { colors, accentColor } = useTheme();
+  const courseColors = useAllCourseColors();
   const { 
     sessions, 
     calendarEvents, 
@@ -59,7 +69,8 @@ export default function SchedulePage() {
     removeCalendarEvent, 
     removedSessionIds, 
     addRemovedSessionId,
-    updateCalendarEvent 
+    updateCalendarEvent,
+    addCalendarEvent,
   } = useCalendar();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showBookingSuccess, setShowBookingSuccess] = useState(false);
@@ -79,6 +90,74 @@ export default function SchedulePage() {
 
   const isTutor = user?.role === "tutor" || user?.role === "admin";
 
+  // Day-view add-event state
+  const [showDayAddModal, setShowDayAddModal] = useState(false);
+  const [dayAddStartTime, setDayAddStartTime] = useState("");
+
+  // Convert slot label "8 AM" → "8:00 AM" to pre-fill AddEventModal
+  const slotToTime = (slot: string) => slot.replace(" ", ":00 ");
+
+  const handleDaySlotClick = (slotLabel: string) => {
+    setDayAddStartTime(slotToTime(slotLabel));
+    setShowDayAddModal(true);
+  };
+
+  const handleDayAddSave = (eventData: SavedEventData) => {
+    const baseId = Math.max(...calendarEvents.map(e => e.id), 0) + 1;
+
+    let color = "from-[#5b7ceb] to-[#7c3aed]";
+    if (eventData.type === "study") color = "from-[#14b8a6] to-[#06b6d4]";
+    else if (eventData.type === "tutor") color = "from-[#f59e0b] to-[#d97706]";
+
+    const isDeadlineEvent = eventData.type === "deadline";
+    const calType = isDeadlineEvent ? "assignment" : eventData.type;
+
+    // Custom hex color wins over Tailwind gradient fallback for all types
+    const eventColor = eventData.deadlineColor || (isDeadlineEvent ? "" : color);
+
+    if (eventData.recurring && eventData.recurringFrom && eventData.recurringUntil) {
+      const cursor = new Date(eventData.recurringFrom);
+      let idOffset = 0;
+      while (cursor <= eventData.recurringUntil) {
+        const eventDate = new Date(cursor);
+        addCalendarEvent({
+          id: baseId + idOffset,
+          type: calType,
+          title: eventData.title,
+          startTime: eventData.startTime,
+          endTime: eventData.endTime,
+          day: eventDate.getDay(),
+          date: eventDate,
+          location: eventData.location,
+          color: eventColor,
+          courseId: eventData.courseId,
+          courseName: eventData.courseName,
+          isUserCreated: true,
+        });
+        cursor.setDate(cursor.getDate() + 7);
+        idOffset++;
+      }
+    } else {
+      addCalendarEvent({
+        id: baseId,
+        type: calType,
+        title: eventData.title,
+        startTime: eventData.startTime,
+        endTime: eventData.endTime,
+        day: eventData.date.getDay(),
+        date: eventData.date,
+        location: eventData.location,
+        color: eventColor,
+        courseId: eventData.courseId,
+        courseName: eventData.courseName,
+        isUserCreated: true,
+      });
+    }
+
+    setShowDayAddModal(false);
+    setDayAddStartTime("");
+  };
+
   // New state for event editing and creation
   const [showEventModal, setShowEventModal] = useState(false);
   const [showQuickAddModal, setShowQuickAddModal] = useState(false);
@@ -95,37 +174,6 @@ export default function SchedulePage() {
     location: "",
     date: new Date(),
   });
-
-  // Assignments data to show on calendar
-  const assignments = [
-    {
-      id: 101,
-      courseName: "CHEM 1A: General Chemistry",
-      title: "Lab Report: Acid-Base Titration",
-      dueDate: "Feb 16, 2026",
-      dueTime: "11:59 PM",
-      status: "upcoming",
-      color: "from-[#8b5cf6] to-[#a855f7]",
-    },
-    {
-      id: 102,
-      courseName: "MATH 2A: Calculus I",
-      title: "Problem Set 5: Integration Techniques",
-      dueDate: "Feb 15, 2026",
-      dueTime: "11:59 PM",
-      status: "upcoming",
-      color: "from-[#3b82f6] to-[#6366f1]",
-    },
-    {
-      id: 103,
-      courseName: "PHYS 7C: Classical Mechanics",
-      title: "Midterm Exam Review",
-      dueDate: "Feb 14, 2026",
-      dueTime: "11:59 PM",
-      status: "urgent",
-      color: "from-[#14b8a6] to-[#06b6d4]",
-    },
-  ];
 
   // Available users for study session invites
   const availableUsers: User[] = [
@@ -224,11 +272,11 @@ export default function SchedulePage() {
     setCurrentDate(newDate);
   };
 
-  // Time slots for the calendar (8 AM to 10 PM)
+  // Time slots for the calendar (8 AM to 12 AM)
   const timeSlots = [
     "8 AM", "9 AM", "10 AM", "11 AM", "12 PM",
     "1 PM", "2 PM", "3 PM", "4 PM", "5 PM",
-    "6 PM", "7 PM", "8 PM", "9 PM", "10 PM"
+    "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM"
   ];
 
   // Convert time string to hour number for positioning
@@ -261,7 +309,9 @@ export default function SchedulePage() {
       (event) =>
         event.date.getDate() === date.getDate() &&
         event.date.getMonth() === date.getMonth() &&
-        event.date.getFullYear() === date.getFullYear()
+        event.date.getFullYear() === date.getFullYear() &&
+        // Completely hide ignored assignments from day view
+        !(event.type === "assignment" && ignoredIds.has(String(event.id)))
     );
   };
 
@@ -356,317 +406,591 @@ export default function SchedulePage() {
     return diffInMinutes <= 30 && diffInMinutes >= -60; // Can join 30 min before and up to 1 hour after start
   };
 
+  const [showTopFade, setShowTopFade] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Track ignored assignment ids so they're hidden in day view
+  const [ignoredIds, setIgnoredIds] = useState<Set<string>>(() => {
+    const stored = localStorage.getItem(IGNORED_IDS_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  });
+
+  useEffect(() => {
+    const handler = () => {
+      const stored = localStorage.getItem(IGNORED_IDS_KEY);
+      setIgnoredIds(stored ? new Set(JSON.parse(stored)) : new Set());
+    };
+    window.addEventListener('assignmentIgnored', handler);
+    return () => window.removeEventListener('assignmentIgnored', handler);
+  }, []);
+
+  // Track completed assignment ids — mirrors CalendarMonthView so the
+  // day view dims correctly whenever a completion is toggled from any view.
+  const [completedIds, setCompletedIds] = useState<Set<string>>(() => {
+    const stored = localStorage.getItem(COMPLETED_IDS_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  });
+
+  useEffect(() => {
+    const handler = () => {
+      const stored = localStorage.getItem(COMPLETED_IDS_KEY);
+      setCompletedIds(stored ? new Set(JSON.parse(stored)) : new Set());
+    };
+    window.addEventListener('assignmentCompleted', handler);
+    return () => window.removeEventListener('assignmentCompleted', handler);
+  }, []);
+
+  const handleContentScroll = () => {
+    if (scrollContainerRef.current) {
+      setShowTopFade(scrollContainerRef.current.scrollTop > 0);
+    }
+  };
+
   return (
-    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
-      <div className="max-w-md mx-auto">
+    <div className="h-screen overflow-hidden flex flex-col" style={{ backgroundColor: colors.bgPrimary }}>
+      <div className="max-w-md mx-auto w-full h-full flex flex-col">
         {/* Header with Profile Button */}
-        <div className="px-6 pt-12 pb-6">
+        <div className="flex-shrink-0 px-6 pt-12 pb-3">
           <div className="flex items-center justify-between">
             <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Schedule</h1>
             <ProfileButton />
           </div>
         </div>
 
-        {/* Schedule Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="px-6 pb-6"
-        >
-          <h2 className="text-[18px] font-semibold mb-4" style={{ color: colors.textPrimary }}>Upcoming</h2>
+        {/* Scrollable Content */}
+        <div className="relative flex-1 overflow-hidden">
+          {/* Top fade overlay */}
+          <AnimatePresence>
+            {showTopFade && (
+              <motion.div
+                key="top-fade"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-0 left-0 right-0 h-12 z-10 pointer-events-none"
+                style={{
+                  background: `linear-gradient(to bottom, ${colors.bgPrimary} 0%, transparent 100%)`,
+                }}
+              />
+            )}
+          </AnimatePresence>
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleContentScroll}
+            className="h-full overflow-y-auto pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+          >
+            {/* Schedule Content */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="px-6 pt-[9px] pb-6"
+            >
+              <h2 className="text-[18px] font-semibold mb-4" style={{ color: colors.textPrimary }}>Upcoming</h2>
 
-          <div className="space-y-4">
-            {upcomingSessions
-              .filter((session) => !removedSessionIds.includes(session.id))
-              .length > 0 ? (
-                upcomingSessions
+              <div className="space-y-4">
+                {upcomingSessions
                   .filter((session) => !removedSessionIds.includes(session.id))
-                  .map((session, index) => (
-                    <motion.div
-                      key={session.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0, x: 0 }}
-                      exit={{ opacity: 0, x: -300, transition: { duration: 0.15 } }}
-                      transition={{ 
-                        delay: index * 0.05,
-                        duration: 0.2
-                      }}
-                      className="rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border"
-                      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
-                    >
-                      {/* Tutor Info */}
-                      <div className="flex items-start gap-3 mb-3">
-                        <ImageWithFallback
-                          src={session.tutorAvatar}
-                          alt={session.tutor}
-                          className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <h3 className="text-[16px] font-semibold" style={{ color: colors.textPrimary }}>
-                              {session.subject}
-                            </h3>
-                            <span className="text-white text-[11px] font-medium px-2.5 py-1 rounded-full flex-shrink-0" style={{ backgroundColor: accentColor.primary }}>
-                              upcoming
-                            </span>
-                          </div>
-                          <p className="text-[13px]" style={{ color: colors.textSecondary }}>with {session.tutor}</p>
-                        </div>
-                      </div>
-
-                      {/* Session Details */}
-                      <div className="flex flex-wrap items-center gap-4 mb-4 text-[13px]" style={{ color: colors.textSecondary }}>
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5" />
-                          <span>{session.date}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>{session.time}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>{session.duration}</span>
-                        </div>
-                        {session.location && (
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3.5 h-3.5" />
-                            <span>{session.location}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-3">
-                        {/* Join Session Button */}
-                        <motion.button
-                          whileHover={isSessionJoinable(session.date, session.time) ? { scale: 1.01 } : {}}
-                          whileTap={isSessionJoinable(session.date, session.time) ? { scale: 0.99 } : {}}
-                          onClick={() => isSessionJoinable(session.date, session.time) && navigate("/video-session")}
-                          disabled={!isSessionJoinable(session.date, session.time)}
-                          className="flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all"
-                          style={isSessionJoinable(session.date, session.time)
-                            ? { backgroundColor: accentColor.primary, color: "white", cursor: "pointer" }
-                            : { backgroundColor: accentColor.primary + "4d", color: colors.textPrimary + "80", cursor: "not-allowed" }
-                          }
-                        >
-                          <Video className="w-4 h-4" />
-                          Join Session
-                        </motion.button>
-
-                        {/* Cancel Button */}
-                        <motion.button
-                          whileHover={{ scale: 1.01 }}
-                          whileTap={{ scale: 0.99 }}
-                          onClick={() => {
-                            setSessionToCancel(session);
-                            setShowCancelModal(true);
+                  .length > 0 ? (
+                    upcomingSessions
+                      .filter((session) => !removedSessionIds.includes(session.id))
+                      .map((session, index) => (
+                        <motion.div
+                          key={session.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0, x: 0 }}
+                          exit={{ opacity: 0, x: -300, transition: { duration: 0.15 } }}
+                          transition={{ 
+                            delay: index * 0.05,
+                            duration: 0.2
                           }}
-                          className="flex-1 bg-transparent text-[#ec4899] py-3 rounded-xl font-semibold flex items-center justify-center gap-2 border-2 border-[#ec4899]"
+                          className="rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border"
+                          style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
                         >
-                          <X className="w-4 h-4" />
-                          Cancel
-                        </motion.button>
+                          {/* Tutor Info */}
+                          <div className="flex items-start gap-3 mb-3">
+                            <ImageWithFallback
+                              src={session.tutorAvatar}
+                              alt={session.tutor}
+                              className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <h3 className="text-[16px] font-semibold" style={{ color: colors.textPrimary }}>
+                                  {session.subject}
+                                </h3>
+                                <span className="text-white text-[11px] font-medium px-2.5 py-1 rounded-full flex-shrink-0" style={{ backgroundColor: accentColor.primary }}>
+                                  upcoming
+                                </span>
+                              </div>
+                              <p className="text-[13px]" style={{ color: colors.textSecondary }}>with {session.tutor}</p>
+                            </div>
+                          </div>
+
+                          {/* Session Details */}
+                          <div className="flex flex-wrap items-center gap-4 mb-4 text-[13px]" style={{ color: colors.textSecondary }}>
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>{session.date}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>{session.time}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>{session.duration}</span>
+                            </div>
+                            {session.location && (
+                              <div className="flex items-center gap-1.5">
+                                <MapPin className="w-3.5 h-3.5" />
+                                <span>{session.location}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-3">
+                            {/* Join Session Button */}
+                            <motion.button
+                              whileHover={isSessionJoinable(session.date, session.time) ? { scale: 1.01 } : {}}
+                              whileTap={isSessionJoinable(session.date, session.time) ? { scale: 0.99 } : {}}
+                              onClick={() => isSessionJoinable(session.date, session.time) && navigate("/video-session")}
+                              disabled={!isSessionJoinable(session.date, session.time)}
+                              className="flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all"
+                              style={isSessionJoinable(session.date, session.time)
+                                ? { backgroundColor: accentColor.primary, color: "white", cursor: "pointer" }
+                                : { backgroundColor: accentColor.primary + "4d", color: colors.textPrimary + "80", cursor: "not-allowed" }
+                              }
+                            >
+                              <Video className="w-4 h-4" />
+                              Join Session
+                            </motion.button>
+
+                            {/* Cancel Button */}
+                            <motion.button
+                              whileHover={{ scale: 1.01 }}
+                              whileTap={{ scale: 0.99 }}
+                              onClick={() => {
+                                setSessionToCancel(session);
+                                setShowCancelModal(true);
+                              }}
+                              className="flex-1 bg-transparent text-[#ec4899] py-3 rounded-xl font-semibold flex items-center justify-center gap-2 border-2 border-[#ec4899]"
+                            >
+                              <X className="w-4 h-4" />
+                              Cancel
+                            </motion.button>
+                          </div>
+                        </motion.div>
+                      ))
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border text-center" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}>
+                        <p className="mb-4" style={{ color: colors.textSecondary }}>No upcoming sessions</p>
+                        <Link to="/book-session">
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className={`bg-gradient-to-r ${accentColor.gradient} text-white py-3 px-6 rounded-xl font-semibold inline-flex items-center justify-center gap-2`}
+                          >
+                            <Plus className="w-4 h-4" />
+                            Book Session
+                          </motion.button>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+              </div>
+            </motion.div>
+
+            {/* Month View Calendar Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="px-6 pb-6"
+            >
+              <CalendarMonthView
+                onDateSelect={(date) => setCurrentDate(date)}
+                selectedDate={currentDate}
+              />
+            </motion.div>
+
+            {/* Day View Calendar Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="px-6 pb-6"
+            >
+              <div className="rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}>
+                {/* Calendar Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-[20px] font-bold" style={{ color: colors.textPrimary }}>Calendar</h2>
+                  <div className="flex items-center gap-3">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={prevDay}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                      style={{ backgroundColor: colors.borderPrimary, color: colors.textPrimary }}
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </motion.button>
+                    <span className="text-[15px] font-semibold min-w-[180px] text-center" style={{ color: colors.textPrimary }}>
+                      {dayNamesFull[currentDate.getDay()]}, {monthNames[currentDate.getMonth()]} {currentDate.getDate()}
+                    </span>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={nextDay}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                      style={{ backgroundColor: colors.borderPrimary, color: colors.textPrimary }}
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* Single Day View */}
+                <div className="relative">
+                  {/* Clickable time slots */}
+                  {timeSlots.map((time) => (
+                    <motion.div
+                      key={time}
+                      className="flex group cursor-pointer"
+                      style={{ borderBottom: `1px solid ${colors.borderPrimary}`, minHeight: '70px' }}
+                      onClick={() => handleDaySlotClick(time)}
+                      whileHover={{ backgroundColor: accentColor.primary + "08" }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <div className="w-20 px-3 py-2 text-[13px] font-medium flex-shrink-0 flex items-start pt-3" style={{ color: colors.textSecondary }}>
+                        {time}
+                      </div>
+                      <div className="flex-1 relative px-2 py-1 flex items-center" style={{ borderLeft: `1px solid ${colors.borderPrimary}` }}>
+                        <Plus
+                          className="w-4 h-4 opacity-0 group-hover:opacity-30 transition-opacity absolute right-3 top-3"
+                          style={{ color: accentColor.primary }}
+                        />
                       </div>
                     </motion.div>
-                  ))
-              ) : (
-                <div className="space-y-3">
-                  <div className="rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border text-center" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}>
-                    <p className="mb-4" style={{ color: colors.textSecondary }}>No upcoming sessions</p>
-                    <Link to="/book-session">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`bg-gradient-to-r ${accentColor.gradient} text-white py-3 px-6 rounded-xl font-semibold inline-flex items-center justify-center gap-2`}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Book Session
-                      </motion.button>
-                    </Link>
+                  ))}
+
+                  {/* ── Event blocks + deadline strips — RIGHT side of divider ── */}
+                  <div className="absolute inset-0 pointer-events-none pl-20">
+                    <div className="relative h-full" style={{ borderLeft: `1px solid ${colors.borderPrimary}` }}>
+                      {/* ── Deadline strips + regular event blocks (unified) ── */}
+                      {(() => {
+                        const todayEvts    = getEventsForDate(currentDate);
+                        const deadlineEvts = todayEvts.filter(e => e.type === "assignment");
+                        const regularEvts  = todayEvts.filter(e => e.type !== "assignment");
+
+                        const SLOT_H   = 70;
+                        const HALF_H   = SLOT_H / 2;  // 35 px
+                        const STRIP_H  = 30;
+                        const LINE_GAP = 3;
+                        const GAP      = 3;
+
+                        // Which slot-hours have a regular event starting there
+                        const regularStartSlots = new Set<number>();
+                        regularEvts.forEach(evt => {
+                          regularStartSlots.add(Math.max(8, Math.min(23, Math.floor(timeToHour(evt.startTime)))));
+                        });
+
+                        // Which slot-hours have deadline events
+                        const deadlineSlotHours = new Set<number>();
+                        deadlineEvts.forEach(evt => {
+                          let rh = timeToHour(evt.startTime);
+                          if (rh < 8) rh = 23;
+                          deadlineSlotHours.add(Math.min(Math.floor(rh), 23));
+                        });
+
+                        // Helper: which half (top/bottom) does this deadline belong to
+                        const getHalf = (event: typeof deadlineEvts[0]): "t" | "b" => {
+                          let rawH = timeToHour(event.startTime);
+                          if (rawH < 8) rawH = 23;
+                          return Math.round((rawH % 1) * 60) >= 30 ? "b" : "t";
+                        };
+
+                        // ── Group by FULL SLOT HOUR (not half-slot) ──
+                        // This lets us inspect both halves together before deciding layout,
+                        // preventing a grid that expands to full-slot from silently covering
+                        // strips that were independently rendered in the other half.
+                        const slotGroups: Record<number, typeof deadlineEvts> = {};
+                        deadlineEvts.forEach(event => {
+                          let rawH = timeToHour(event.startTime);
+                          if (rawH < 8) rawH = 23;
+                          const slotHour = Math.min(Math.floor(rawH), 23);
+                          if (!slotGroups[slotHour]) slotGroups[slotHour] = [];
+                          slotGroups[slotHour].push(event);
+                        });
+
+                        // ── Build deadline nodes — one full slot at a time ──
+                        const deadlineNodes = Object.entries(slotGroups).flatMap(([hourStr, allSlotEvents]) => {
+                          const slotHour   = parseInt(hourStr);
+                          const slotTop    = (slotHour - 8) * SLOT_H;
+                          const hasRegular = regularStartSlots.has(slotHour);
+                          const LEFT       = hasRegular ? "calc(48% + 3px)" : 6;
+                          const RIGHT      = 6;
+
+                          const topGroup    = allSlotEvents.filter(e => getHalf(e) === "t");
+                          const bottomGroup = allSlotEvents.filter(e => getHalf(e) === "b");
+
+                          // If EITHER half needs to expand to full-slot (≥3 items),
+                          // merge ALL events from both halves into one single grid so
+                          // nothing from the other half is left orphaned underneath it.
+                          const needsFullSlot = topGroup.length >= 3 || bottomGroup.length >= 3;
+
+                          if (needsFullSlot) {
+                            const allEvents  = [...topGroup, ...bottomGroup];
+                            const count      = allEvents.length;
+                            const cols       = count <= 4 ? 2 : 3;
+                            const maxShown   = cols * 2;
+                            const containerH = SLOT_H - LINE_GAP * 2;
+                            const gridTop    = slotTop + LINE_GAP;
+
+                            return [(
+                              <div
+                                key={`grp-${slotHour}`}
+                                style={{
+                                  position: "absolute",
+                                  top: gridTop,
+                                  height: containerH,
+                                  left: LEFT,
+                                  right: RIGHT,
+                                  display: "grid",
+                                  gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                                  gridTemplateRows: "repeat(2, 1fr)",
+                                  gap: GAP,
+                                  zIndex: 5,
+                                }}
+                              >
+                                {allEvents.slice(0, maxShown).map((event, i) => {
+                                  const { gradient: grad } = getEventColors(event, courseColors);
+                                  const isLast   = i === maxShown - 1;
+                                  const overflow = allEvents.length - maxShown;
+                                  return (
+                                    <motion.div
+                                      key={event.id}
+                                      initial={{ opacity: 0, scale: 0.92 }}
+                                      animate={{ opacity: (event.completed || completedIds.has(String(event.id))) ? 0.35 : 1, scale: 1 }}
+                                      transition={{ delay: i * 0.04 }}
+                                      whileHover={{ scale: 1.03 }}
+                                      className="pointer-events-auto cursor-pointer rounded-lg shadow-md overflow-hidden relative"
+                                      style={{ background: grad }}
+                                      onClick={(e) => { e.stopPropagation(); handleEventClick(event); }}
+                                    >
+                                      <div className="flex items-center gap-1 px-1.5 h-full overflow-hidden">
+                                        <Flag className="w-3.5 h-3.5 text-white flex-shrink-0 opacity-90" />
+                                        <span className="text-[13px] font-bold text-white truncate leading-tight flex-1 min-w-0">
+                                          {event.title}
+                                        </span>
+                                        <span className="ml-auto text-[12px] text-white/80 flex-shrink-0 pl-1 font-semibold">
+                                          {event.startTime.replace(/\s*(am|pm)$/i, '')}
+                                        </span>
+                                      </div>
+                                      {isLast && overflow > 0 && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg">
+                                          <span className="text-[11px] font-bold text-white">+{overflow} more</span>
+                                        </div>
+                                      )}
+                                    </motion.div>
+                                  );
+                                })}
+                              </div>
+                            )];
+                          }
+
+                          // Neither half has ≥3 items — render each half independently.
+                          // The two halves occupy separate 35 px bands so they never overlap.
+                          const result: JSX.Element[] = [];
+
+                          const renderHalf = (group: typeof deadlineEvts, halfOffset: number) => {
+                            if (group.length === 0) return;
+                            const halfTop  = slotTop + halfOffset;
+                            const stripTop = halfTop + Math.round((HALF_H - STRIP_H) / 2); // +3 px
+
+                            if (group.length === 1) {
+                              const event = group[0];
+                              const { gradient: grad } = getEventColors(event, courseColors);
+                              result.push(
+                                <motion.div
+                                  key={event.id}
+                                  initial={{ opacity: 0, x: 8 }}
+                                  animate={{ opacity: (event.completed || completedIds.has(String(event.id))) ? 0.35 : 1, x: 0 }}
+                                  transition={{ delay: 0 }}
+                                  whileHover={{ scale: 1.02 }}
+                                  className="pointer-events-auto cursor-pointer flex items-center gap-1.5 px-2.5 rounded-lg shadow-md"
+                                  style={{
+                                    position: "absolute",
+                                    top: stripTop,
+                                    height: STRIP_H,
+                                    left: LEFT,
+                                    right: RIGHT,
+                                    background: grad,
+                                    zIndex: 5,
+                                  }}
+                                  onClick={(e) => { e.stopPropagation(); handleEventClick(event); }}
+                                >
+                                  <Flag className="w-3.5 h-3.5 text-white flex-shrink-0 opacity-90" />
+                                  <span className="text-[14px] font-bold text-white truncate leading-normal">
+                                    {event.title}
+                                  </span>
+                                  <span className="ml-auto text-[12px] text-white/85 flex-shrink-0 pl-1 font-semibold">
+                                    {event.startTime}
+                                  </span>
+                                </motion.div>
+                              );
+                            } else {
+                              // 2 items → two strips side-by-side within this half-slot
+                              group.forEach((event, i) => {
+                                const { gradient: grad } = getEventColors(event, courseColors);
+                                let leftPos:  string | number;
+                                let rightPos: string | number;
+                                if (hasRegular) {
+                                  leftPos  = i === 0 ? "calc(48% + 3px)" : "calc(74% + 3px)";
+                                  rightPos = i === 0 ? "calc(26% + 3px)" : RIGHT;
+                                } else {
+                                  leftPos  = i === 0 ? 6 : `calc(50% + ${GAP / 2}px)`;
+                                  rightPos = i === 0 ? `calc(50% + ${GAP / 2}px)` : RIGHT;
+                                }
+                                result.push(
+                                  <motion.div
+                                    key={event.id}
+                                    initial={{ opacity: 0, x: 8 }}
+                                    animate={{ opacity: (event.completed || completedIds.has(String(event.id))) ? 0.35 : 1, x: 0 }}
+                                    transition={{ delay: i * 0.06 }}
+                                    whileHover={{ scale: 1.02 }}
+                                    className="pointer-events-auto cursor-pointer flex items-center gap-1 px-2 rounded-lg shadow-md overflow-hidden"
+                                    style={{
+                                      position: "absolute",
+                                      top: stripTop,
+                                      height: STRIP_H,
+                                      left: leftPos,
+                                      right: rightPos,
+                                      background: grad,
+                                      zIndex: 5,
+                                    }}
+                                    onClick={(e) => { e.stopPropagation(); handleEventClick(event); }}
+                                  >
+                                    <Flag className="w-3 h-3 text-white flex-shrink-0 opacity-90" />
+                                    <span className="text-[13px] font-bold text-white truncate leading-tight flex-1 min-w-0">
+                                      {event.title}
+                                    </span>
+                                    <span className="ml-auto text-[12px] text-white/75 flex-shrink-0 pl-1 font-semibold">
+                                      {event.startTime}
+                                    </span>
+                                  </motion.div>
+                                );
+                              });
+                            }
+                          };
+
+                          renderHalf(topGroup, 0);
+                          renderHalf(bottomGroup, HALF_H);
+                          return result;
+                        });
+
+                        // ── Regular (non-deadline) event nodes ──
+                        const regularNodes = regularEvts.map((event, index) => {
+                          const style = getEventStyle(event);
+                          const durationHours = timeToHour(event.endTime) - timeToHour(event.startTime);
+                          const isMedium = durationHours >= 0.75;
+                          const TYPE_LABELS: Record<string, string> = {
+                            class: "Class",
+                            study: "Study",
+                            tutor: "Tutor",
+                          };
+                          const typeLabel = TYPE_LABELS[event.type] ?? event.type;
+
+                          // If a deadline shares this start-slot, narrow the block to the left
+                          // ~46 % so both are visible side-by-side rather than overlapping.
+                          const slotH = Math.max(8, Math.min(23, Math.floor(timeToHour(event.startTime))));
+                          const rightOverride = deadlineSlotHours.has(slotH) ? "54%" : "6px";
+
+                          return (
+                            <motion.div
+                              key={event.id}
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: index * 0.08 }}
+                              whileHover={{ scale: 1.02 }}
+                              className="absolute left-1.5 rounded-xl pointer-events-auto cursor-pointer shadow-lg overflow-hidden"
+                              style={{ ...style, background: getEventColors(event, courseColors).gradient, right: rightOverride, zIndex: 8 }}
+                              onClick={(e) => { e.stopPropagation(); handleEventClick(event); }}
+                            >
+                              <div className="h-full flex flex-col px-2.5 py-2 text-white overflow-hidden">
+                                <div className="flex items-center gap-1 mb-1 flex-shrink-0">
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-white/25 uppercase tracking-wider leading-none">
+                                    {typeLabel}
+                                  </span>
+                                </div>
+                                <p className="text-[13px] font-bold leading-tight flex-shrink-0 truncate">
+                                  {event.title}
+                                </p>
+                                {isMedium && (
+                                  <p className="text-[11px] opacity-75 mt-0.5 flex-shrink-0">
+                                    {event.startTime} – {event.endTime}
+                                  </p>
+                                )}
+                              </div>
+                            </motion.div>
+                          );
+                        });
+
+                        return [...deadlineNodes, ...regularNodes];
+                      })()}
+                    </div>
                   </div>
                 </div>
-              )}
-          </div>
-        </motion.div>
 
-        {/* Month View Calendar Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="px-6 pb-6"
-        >
-          <CalendarMonthView />
-        </motion.div>
 
-        {/* Day View Calendar Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="px-6 pb-6"
-        >
-          <div className="rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}>
-            {/* Calendar Header */}
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[20px] font-bold" style={{ color: colors.textPrimary }}>Calendar</h2>
-              <div className="flex items-center gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={prevDay}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-                  style={{ backgroundColor: colors.borderPrimary, color: colors.textPrimary }}
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </motion.button>
-                <span className="text-[15px] font-semibold min-w-[180px] text-center" style={{ color: colors.textPrimary }}>
-                  {dayNamesFull[currentDate.getDay()]}, {monthNames[currentDate.getMonth()]} {currentDate.getDate()}
-                </span>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={nextDay}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-                  style={{ backgroundColor: colors.borderPrimary, color: colors.textPrimary }}
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </motion.button>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Single Day View */}
-            <div className="relative">
-              {/* Time slots - no scroll */}
-              {timeSlots.map((time, index) => {
-                const dayEvents = getEventsForDate(currentDate);
-                const eventsAtThisTime = dayEvents.filter(event => {
-                  const eventStartHour = timeToHour(event.startTime);
-                  const slotHour = index + 8; // 8 AM is index 0
-                  return Math.floor(eventStartHour) === slotHour;
-                });
-
-                return (
-                  <div
-                    key={time}
-                    className="flex"
-                    style={{ borderBottom: `1px solid ${colors.borderPrimary}`, minHeight: '70px' }}
-                  >
-                    {/* Time label */}
-                    <div className="w-20 px-3 py-2 text-[13px] font-medium flex-shrink-0" style={{ color: colors.textSecondary }}>
-                      {time}
-                    </div>
-                    
-                    {/* Event area */}
-                    <div className="flex-1 relative px-2 py-1" style={{ borderLeft: `1px solid ${colors.borderPrimary}` }}>
-                      {/* Events will be positioned here */}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Event blocks overlaid */}
-              <div className="absolute inset-0 pointer-events-none pl-20">
-                <div className="relative h-full" style={{ borderLeft: `1px solid ${colors.borderPrimary}` }}>
-                  {getEventsForDate(currentDate).map((event, index) => {
-                    const style = getEventStyle(event);
-                    return (
-                      <motion.div
-                        key={event.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
-                        whileHover={{ scale: 1.02 }}
-                        className={`absolute left-2 right-2 rounded-xl p-4 pointer-events-auto cursor-pointer bg-gradient-to-br ${event.color} shadow-lg`}
-                        style={style}
-                        onClick={() => handleEventClick(event)}
-                      >
-                        <div className="text-white h-full flex flex-col">
-                          <div className="text-[15px] font-bold mb-1">
-                            {event.title}
-                          </div>
-                          <div className="text-[13px] opacity-90 mb-2">
-                            {event.startTime} - {event.endTime}
-                          </div>
-                          {event.tutor && (
-                            <div className="text-[12px] opacity-90 flex items-center gap-1.5">
-                              <span>with {event.tutor}</span>
-                            </div>
-                          )}
-                          {event.participants && (
-                            <div className="text-[12px] opacity-90 flex items-center gap-1.5 mt-1">
-                              <Users className="w-3.5 h-3.5" />
-                              <span>{event.participants.join(", ")}</span>
-                            </div>
-                          )}
-                          {event.location && (
-                            <div className="text-[12px] opacity-90 flex items-center gap-1.5 mt-1">
-                              <MapPin className="w-3.5 h-3.5" />
-                              <span>{event.location}</span>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 mt-5">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowRecurringModal(true)}
-                className={`flex-1 bg-gradient-to-r ${accentColor.gradient} text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2`}
-              >
-                <Repeat className="w-4 h-4" />
-                Recurring Class
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowStudySessionModal(true)}
-                className="flex-1 bg-gradient-to-r from-[#14b8a6] to-[#0891b2] text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_12px_0px_rgba(20,184,166,0.4)]"
-              >
-                <Users className="w-4 h-4" />
-                Study Session
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Past Lessons Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="px-6 pb-6"
-        >
-          <Link to="/past-lessons">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border flex items-center justify-between"
-              style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
+            {/* Past Lessons Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="px-6 pb-6"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: accentColor.primary + "33" }}>
-                  <Calendar className="w-6 h-6" style={{ color: accentColor.primary }} />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-lg font-semibold mb-1" style={{ color: colors.textPrimary }}>Past Lessons</h3>
-                  <p className="text-sm" style={{ color: colors.textSecondary }}>View your completed sessions</p>
-                </div>
-              </div>
-              <ArrowLeft className="w-5 h-5 rotate-180" style={{ color: colors.textSecondary }} />
-            </motion.button>
-          </Link>
-        </motion.div>
+              <Link to="/past-lessons">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border flex items-center justify-between"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: accentColor.primary + "33" }}>
+                      <Calendar className="w-6 h-6" style={{ color: accentColor.primary }} />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-lg font-semibold mb-1" style={{ color: colors.textPrimary }}>Past Lessons</h3>
+                      <p className="text-sm" style={{ color: colors.textSecondary }}>View your completed sessions</p>
+                    </div>
+                  </div>
+                  <ArrowLeft className="w-5 h-5 rotate-180" style={{ color: colors.textSecondary }} />
+                </motion.button>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
       </div>
+
+      {/* Day-view Add Event Modal */}
+      <AnimatePresence>
+        {showDayAddModal && (
+          <AddEventModal
+            date={currentDate}
+            defaultStartTime={dayAddStartTime}
+            onClose={() => { setShowDayAddModal(false); setDayAddStartTime(""); }}
+            onSave={handleDayAddSave}
+          />
+        )}
+      </AnimatePresence>
 
       <BottomNav currentPage="schedule" />
 
@@ -1110,11 +1434,11 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {/* Event Details Modal */}
+      {/* Event Details Modal — use live event from context so completed state reflects immediately */}
       <AnimatePresence>
         {showEventModal && selectedEvent && (
           <EventDetailsModal
-            event={selectedEvent}
+            event={calendarEvents.find(e => e.id === selectedEvent.id) ?? selectedEvent}
             onClose={() => {
               setShowEventModal(false);
               setSelectedEvent(null);

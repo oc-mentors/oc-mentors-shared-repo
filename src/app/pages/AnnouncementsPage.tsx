@@ -1,9 +1,20 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { BottomNav } from "../components/BottomNav";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Filter, AlertCircle, BookOpen, Calendar, X } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
+import { useAllCourseColors } from "../hooks/useCourseColor";
+
+// course code → id mapping
+const courseCodeToId: Record<string, number> = {
+  "CHEM 1A": 1,
+  "MATH 2A": 2,
+  "PHYS 7C": 3,
+  "WRIT 39B": 4,
+  "BIO SCI 93": 5,
+};
 
 const announcements = [
   {
@@ -79,8 +90,28 @@ export default function AnnouncementsPage() {
     return stored ? JSON.parse(stored) : [];
   });
   const { colors, accentColor } = useTheme();
+  const { isCourseIgnored } = useCanvasCourses();
+  const courseColors = useAllCourseColors();
 
-  const courses = ["CHEM 1A", "MATH 2A", "PHYS 7C", "WRIT 39B", "BIO SCI 93"];
+  // Top-fade scroll state
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const [showTopFade, setShowTopFade] = useState(false);
+  const handleListScroll = () => {
+    if (listContainerRef.current) {
+      setShowTopFade(listContainerRef.current.scrollTop > 0);
+    }
+  };
+
+  // Helper: get the dynamic color for an announcement based on its courseName
+  const getAnnouncementColor = (courseName: string, fallback: string) => {
+    const code = Object.keys(courseCodeToId).find(c => courseName.startsWith(c));
+    if (code) return courseColors[courseCodeToId[code]] || fallback;
+    return fallback;
+  };
+
+  const courses = ["CHEM 1A", "MATH 2A", "PHYS 7C", "WRIT 39B", "BIO SCI 93"].filter(
+    (code) => !isCourseIgnored(courseCodeToId[code])
+  );
 
   const toggleCourse = (course: string) => {
     setSelectedCourses(prev => {
@@ -102,13 +133,16 @@ export default function AnnouncementsPage() {
 
   const filteredAnnouncements = selectedCourses.length === 0
     ? []
-    : announcements.filter(a => selectedCourses.some(course => a.courseName.startsWith(course)));
+    : announcements.filter(a =>
+        selectedCourses.some(course => a.courseName.startsWith(course)) &&
+        !isCourseIgnored(courseCodeToId[Object.keys(courseCodeToId).find(code => a.courseName.startsWith(code)) || ""])
+      );
 
   return (
-    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
-      <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div className="px-6 pt-12 pb-6">
+    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: colors.bgPrimary }}>
+      <div className="max-w-md mx-auto w-full flex flex-col flex-1 overflow-hidden">
+        {/* ── Header (sticky, never scrolls) ── */}
+        <div className="px-6 pt-12 pb-3 flex-shrink-0">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <Link to="/canvas-classes">
@@ -210,84 +244,109 @@ export default function AnnouncementsPage() {
           )}
         </div>
 
-        {/* Announcements List */}
-        <div className="px-6 space-y-4">
+        {/* ── Scrollable list with top fade ── */}
+        <div className="relative flex-1 overflow-hidden">
+          {/* Top fade overlay */}
           <AnimatePresence>
-            {filteredAnnouncements
-              .filter((announcement) => !removedAnnouncementIds.includes(announcement.id))
-              .length > 0 ? (
-              filteredAnnouncements
-                .filter((announcement) => !removedAnnouncementIds.includes(announcement.id))
-                .map((announcement, index) => (
-                <motion.div
-                  key={announcement.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ 
-                    opacity: 0, 
-                    x: -300,
-                    transition: { duration: 0.25 }
-                  }}
-                  transition={{ 
-                    delay: index * 0.05,
-                    duration: 0.2
-                  }}
-                  whileHover={{ scale: 1.01 }}
-                  className="rounded-2xl p-5 border shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] relative overflow-hidden"
-                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderSecondary }}
-                >
-                  {/* Ignore Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => {
-                      setRemovedAnnouncementIds([...removedAnnouncementIds, announcement.id]);
-                      localStorage.setItem('removedAnnouncementIds', JSON.stringify([...removedAnnouncementIds, announcement.id]));
-                    }}
-                    className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
-                    style={{ backgroundColor: colors.borderPrimary }}
-                  >
-                    <X className="w-4 h-4" style={{ color: colors.textSecondary }} />
-                  </motion.button>
-
-                  {/* Course Badge */}
-                  <div className="flex items-center gap-2 mb-3 pr-8">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: announcement.courseColor }}
-                    />
-                    <span className="text-xs font-medium" style={{ color: colors.textSecondary }}>
-                      {announcement.courseName}
-                    </span>
-                    <span className="text-xs ml-auto" style={{ color: colors.textTertiary }}>
-                      {announcement.timestamp}
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-base font-semibold mb-2" style={{ color: colors.textPrimary }}>
-                    {announcement.title}
-                  </h3>
-
-                  {/* Content */}
-                  <p className="text-sm leading-relaxed" style={{ color: colors.textSecondary }}>
-                    {announcement.content}
-                  </p>
-                </motion.div>
-              ))
-            ) : (
+            {showTopFade && (
               <motion.div
+                key="top-fade"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="rounded-2xl p-8 border text-center"
-                style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
-              >
-                <p className="text-sm" style={{ color: colors.textSecondary }}>
-                  No announcements found for this course
-                </p>
-              </motion.div>
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-0 left-0 right-0 h-12 z-10 pointer-events-none"
+                style={{
+                  background: `linear-gradient(to bottom, ${colors.bgPrimary} 0%, transparent 100%)`,
+                }}
+              />
             )}
           </AnimatePresence>
+
+          <div
+            ref={listContainerRef}
+            onScroll={handleListScroll}
+            className="h-full overflow-y-auto px-6 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+          >
+            <div className="space-y-4">
+              <AnimatePresence>
+                {filteredAnnouncements
+                  .filter((announcement) => !removedAnnouncementIds.includes(announcement.id))
+                  .length > 0 ? (
+                  filteredAnnouncements
+                    .filter((announcement) => !removedAnnouncementIds.includes(announcement.id))
+                    .map((announcement, index) => (
+                    <motion.div
+                      key={announcement.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ 
+                        opacity: 0, 
+                        x: -300,
+                        transition: { duration: 0.25 }
+                      }}
+                      transition={{ 
+                        delay: index * 0.05,
+                        duration: 0.2
+                      }}
+                      whileHover={{ scale: 1.01 }}
+                      className="rounded-2xl p-5 border shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] relative overflow-hidden"
+                      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderSecondary }}
+                    >
+                      {/* Ignore Button */}
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => {
+                          setRemovedAnnouncementIds([...removedAnnouncementIds, announcement.id]);
+                          localStorage.setItem('removedAnnouncementIds', JSON.stringify([...removedAnnouncementIds, announcement.id]));
+                        }}
+                        className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+                        style={{ backgroundColor: colors.borderPrimary }}
+                      >
+                        <X className="w-4 h-4" style={{ color: colors.textSecondary }} />
+                      </motion.button>
+
+                      {/* Course Badge */}
+                      <div className="flex items-center gap-2 mb-3 pr-8">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: getAnnouncementColor(announcement.courseName, announcement.courseColor) }}
+                        />
+                        <span className="text-xs font-medium" style={{ color: colors.textSecondary }}>
+                          {announcement.courseName}
+                        </span>
+                        <span className="text-xs ml-auto" style={{ color: colors.textTertiary }}>
+                          {announcement.timestamp}
+                        </span>
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="text-base font-semibold mb-2" style={{ color: colors.textPrimary }}>
+                        {announcement.title}
+                      </h3>
+
+                      {/* Content */}
+                      <p className="text-sm leading-relaxed" style={{ color: colors.textSecondary }}>
+                        {announcement.content}
+                      </p>
+                    </motion.div>
+                  ))
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="rounded-2xl p-8 border text-center"
+                    style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
+                  >
+                    <p className="text-sm" style={{ color: colors.textSecondary }}>
+                      No announcements found for this course
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </div>
 

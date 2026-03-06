@@ -30,6 +30,14 @@ export default function TutorsPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
   const [showRightFade, setShowRightFade] = useState(true);
+  const [showTopFade, setShowTopFade] = useState(false);
+  const listContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleListScroll = () => {
+    if (listContainerRef.current) {
+      setShowTopFade(listContainerRef.current.scrollTop > 0);
+    }
+  };
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -151,7 +159,7 @@ export default function TutorsPage() {
         {/* Fixed Header Section */}
         <div className="flex-shrink-0 relative z-10" style={{ backgroundColor: colors.bgPrimary }}>
           {/* Header with Profile Button */}
-          <div className="px-6 pt-12 pb-6">
+          <div className="px-6 pt-12 pb-3">
             <div className="flex items-center justify-between">
               <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Find Tutors</h1>
               <ProfileButton />
@@ -163,7 +171,7 @@ export default function TutorsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="px-6 pb-4"
+            className="px-6 pt-4 pb-4"
           >
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
@@ -245,102 +253,124 @@ export default function TutorsPage() {
         </div>
 
         {/* Tutors List */}
-        <div className="flex-1 overflow-y-auto px-6 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-          <AnimatePresence mode="popLayout">
-            {filteredTutors.map((tutor, index) => (
+        <div className="relative flex-1 overflow-hidden">
+          {/* Top fade overlay */}
+          <AnimatePresence>
+            {showTopFade && (
               <motion.div
-                key={tutor.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ delay: 0.2 + index * 0.05 }}
-                layout
-                className="mb-4"
-              >
-                <Link to={`/tutor/${tutor.id}`}>
-                  <motion.div
-                    whileHover={{ scale: 1.01, y: -2 }}
-                    whileTap={{ scale: 0.99 }}
-                    className="rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border cursor-pointer"
-                    style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
-                  >
-                    <div className="flex gap-4">
-                      {/* Avatar */}
-                      <ImageWithFallback
-                        src={tutor.avatar}
-                        alt={tutor.name}
-                        className="w-14 h-14 rounded-full object-cover flex-shrink-0"
-                      />
+                key="top-fade"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-0 left-0 right-0 h-12 z-10 pointer-events-none"
+                style={{
+                  background: `linear-gradient(to bottom, ${colors.bgPrimary} 0%, transparent 100%)`,
+                }}
+              />
+            )}
+          </AnimatePresence>
+          <div
+            ref={listContainerRef}
+            onScroll={handleListScroll}
+            className="h-full overflow-y-auto px-6 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+          >
+            <AnimatePresence mode="popLayout">
+              {filteredTutors.map((tutor, index) => (
+                <motion.div
+                  key={tutor.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ delay: 0.2 + index * 0.05 }}
+                  layout
+                  className="mb-4"
+                >
+                  <Link to={`/tutor/${tutor.id}`}>
+                    <motion.div
+                      whileHover={{ scale: 1.01, y: -2 }}
+                      whileTap={{ scale: 0.99 }}
+                      className="rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] border cursor-pointer"
+                      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
+                    >
+                      <div className="flex gap-4">
+                        {/* Avatar */}
+                        <ImageWithFallback
+                          src={tutor.avatar}
+                          alt={tutor.name}
+                          className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                        />
 
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        {/* Name and Price */}
-                        <div className="flex items-start justify-between mb-1">
-                          <h3 className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
-                            {tutor.name}
-                          </h3>
-                          <span className="text-[11px] font-semibold flex-shrink-0 ml-2" style={{ color: accentColor.primary }}>
-                            {tutor.priceLevel}
-                          </span>
-                        </div>
-
-                        {/* University */}
-                        <p className="text-[11px] mb-2" style={{ color: colors.textSecondary }}>
-                          {tutor.university}
-                        </p>
-
-                        {/* Subjects & Learning Style */}
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {tutor.subjects.map((subject) => (
-                            <span
-                              key={subject}
-                              className="text-[10px] px-2 py-1 rounded"
-                              style={{ backgroundColor: `${accentColor.primary}20`, color: accentColor.primary }}
-                            >
-                              {subject}
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          {/* Name and Price */}
+                          <div className="flex items-start justify-between mb-1">
+                            <h3 className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
+                              {tutor.name}
+                            </h3>
+                            <span className="text-[11px] font-semibold flex-shrink-0 ml-2" style={{ color: accentColor.primary }}>
+                              {tutor.priceLevel}
                             </span>
-                          ))}
-                          <span className="text-[10px] px-2 py-1 rounded" style={{ backgroundColor: `${colors.textSecondary}20`, color: colors.textSecondary }}>
-                            • {tutor.learningStyle}
-                          </span>
-                        </div>
+                          </div>
 
-                        {/* Review */}
-                        <p className="text-[13px] italic line-clamp-2 mb-2" style={{ color: colors.textSecondary }}>
-                          "{tutor.review}"
-                        </p>
+                          {/* University */}
+                          <p className="text-[11px] mb-2" style={{ color: colors.textSecondary }}>
+                            {tutor.university}
+                          </p>
 
-                        {/* Rating */}
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-[#FFB800] fill-[#FFB800]" />
-                          <span className="text-[13px] font-semibold" style={{ color: colors.textPrimary }}>
-                            {tutor.rating.toFixed(1)}
-                          </span>
-                          <span className="text-[11px]" style={{ color: colors.textSecondary }}>
-                            ({tutor.reviewCount})
-                          </span>
+                          {/* Subjects & Learning Style */}
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {tutor.subjects.map((subject) => (
+                              <span
+                                key={subject}
+                                className="text-[10px] px-2 py-1 rounded"
+                                style={{ backgroundColor: `${accentColor.primary}20`, color: accentColor.primary }}
+                              >
+                                {subject}
+                              </span>
+                            ))}
+                            <span className="text-[10px] px-2 py-1 rounded" style={{ backgroundColor: `${colors.textSecondary}20`, color: colors.textSecondary }}>
+                              • {tutor.learningStyle}
+                            </span>
+                          </div>
+
+                          {/* Review */}
+                          <p className="text-[13px] italic line-clamp-2 mb-2" style={{ color: colors.textSecondary }}>
+                            "{tutor.review}"
+                          </p>
+
+                          {/* Rating */}
+                          <div className="flex items-center gap-1">
+                            <Star className="w-4 h-4 text-[#FFB800] fill-[#FFB800]" />
+                            <span className="text-[13px] font-semibold" style={{ color: colors.textPrimary }}>
+                              {tutor.rating.toFixed(1)}
+                            </span>
+                            <span className="text-[11px]" style={{ color: colors.textSecondary }}>
+                              ({tutor.reviewCount})
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </motion.div>
-                </Link>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+                    </motion.div>
+                  </Link>
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-          {/* Empty State */}
-          {filteredTutors.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-12"
-            >
-              <p className="text-[15px] mb-2" style={{ color: colors.textSecondary }}>No tutors found</p>
-              <p className="text-[13px]" style={{ color: colors.textSecondary, opacity: 0.7 }}>
-                Try adjusting your search or filters
-              </p>
-            </motion.div>
-          )}
+            {/* Empty State */}
+            {filteredTutors.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-12"
+              >
+                <p className="text-[15px] mb-2" style={{ color: colors.textSecondary }}>No tutors found</p>
+                <p className="text-[13px]" style={{ color: colors.textSecondary, opacity: 0.7 }}>
+                  Try adjusting your search or filters
+                </p>
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
 

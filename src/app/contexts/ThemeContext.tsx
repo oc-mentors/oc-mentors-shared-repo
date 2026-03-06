@@ -66,7 +66,7 @@ export const accentColors: AccentColor[] = [
   },
 ];
 
-interface ThemeColors {
+export interface ThemeColors {
   // Backgrounds
   bgPrimary: string;
   bgSecondary: string;

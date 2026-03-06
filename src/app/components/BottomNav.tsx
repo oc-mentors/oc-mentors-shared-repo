@@ -1,13 +1,15 @@
 import { motion } from "motion/react";
 import { Home, Users, Calendar, MessageCircle, BarChart3 } from "lucide-react";
 import { Link, useLocation } from "react-router";
-import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 
 interface BottomNavProps {
   currentPage?: string;
 }
+
+// Persists the last active main tab across renders/navigations
+let lastActiveMainTab = "home";
 
 // Canvas Logo Component
 function CanvasLogo({ className }: { className?: string }) {
@@ -19,50 +21,50 @@ function CanvasLogo({ className }: { className?: string }) {
   );
 }
 
+// Paths that are "overlay" pages — should not change the highlighted tab
+const OVERLAY_PATHS = ["/profile", "/progress", "/settings", "/learning-quiz"];
+
+// Map any pathname to a tab id
+function pathToTab(p: string): string {
+  if (p === "/home") return "home";
+  if (p === "/tutors" || p.startsWith("/tutor/") || p === "/booking" || p === "/tutor-students") return "tutors";
+  if (p === "/schedule" || p === "/video-session" || p === "/rate-session" || p === "/tutor-availability") return "schedule";
+  if (p === "/chat" || p.startsWith("/chat/")) return "chat";
+  if (p === "/canvas-classes" || p === "/canvas-login" || p === "/announcements" || p === "/assignments") return "canvas";
+  if (p === "/tutor-analytics") return "analytics";
+  return "home";
+}
+
 export function BottomNav({ currentPage }: BottomNavProps) {
   const location = useLocation();
-  const [isCanvasConnected, setIsCanvasConnected] = useState(false);
+  // Read synchronously — no useState/useEffect so there's no render-delay flicker
+  const isCanvasConnected = localStorage.getItem("canvasConnected") === "true";
   const { user } = useAuth();
   const { colors, accentColor } = useTheme();
 
-  // Check Canvas connection status from localStorage
-  useEffect(() => {
-    const connected = localStorage.getItem("canvasConnected") === "true";
-    setIsCanvasConnected(connected);
-  }, [location.pathname]);
-
-  // Determine which tab should be active based on the current route
-  const determineActivePage = () => {
-    if (currentPage) return currentPage;
-    
+  // Determine which tab should be active
+  const determineActivePage = (): string => {
     const path = location.pathname;
-    
-    // Profile pages - don't highlight any nav item
-    if (path === "/profile" || path === "/progress" || path === "/settings" || path === "/learning-quiz") {
-      return "";
-    }
-    
-    // Home pages
-    if (path === "/home") return "home";
-    
-    // Tutors/Students pages
-    if (path === "/tutors" || path.startsWith("/tutor/") || path === "/booking" || path === "/tutor-students") return "tutors";
-    
-    // Schedule pages
-    if (path === "/schedule" || path === "/video-session" || path === "/rate-session" || path === "/tutor-availability") return "schedule";
-    
-    // Chat pages
-    if (path === "/chat" || path.startsWith("/chat/")) return "chat";
 
-    // Canvas pages (including announcements and assignments)
-    if (path === "/canvas-classes" || path === "/canvas-login" || path === "/announcements" || path === "/assignments") return "canvas";
-    
-    // Analytics pages (tutor)
-    if (path === "/tutor-analytics") return "analytics";
-    
-    return "home";
+    if (currentPage) {
+      // Record the active main tab whenever we're not on an overlay page
+      if (currentPage !== "profile") {
+        lastActiveMainTab = currentPage;
+      }
+      return currentPage;
+    }
+
+    // On overlay pages, keep the last remembered main tab highlighted
+    if (OVERLAY_PATHS.includes(path)) {
+      return lastActiveMainTab;
+    }
+
+    // On a main/sub page, record and return the active tab
+    const tab = pathToTab(path);
+    lastActiveMainTab = tab;
+    return tab;
   };
-  
+
   const current = determineActivePage();
 
   // Different nav items for tutors vs students

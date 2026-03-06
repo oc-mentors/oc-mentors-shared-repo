@@ -77,7 +77,7 @@ export default function PastLessonsPage() {
     <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="px-6 pt-12 pb-6">
+        <div className="px-6 pt-12 pb-3">
           <div className="flex items-center gap-4 mb-6">
             <Link to="/schedule">
               <motion.button

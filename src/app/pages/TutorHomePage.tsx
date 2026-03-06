@@ -56,11 +56,11 @@ export default function TutorHomePage() {
     <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-20">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="px-6 pt-12 pb-6">
+        <div className="px-6 pt-12 pb-3">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-[#e8edf5]">
-                {user?.name || "Tutor"} Dashboard
+                Welcome back, {user?.name || "Tutor"}!
               </h1>
               <p className="text-sm text-[#a8b3cf] mt-1">
                 {new Date().toLocaleDateString("en-US", { 

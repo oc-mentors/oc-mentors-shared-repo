@@ -20,6 +20,14 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: any) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
+    
+    // If it's a context provider error (likely due to hot reload), reload the page
+    if (error.message && error.message.includes('must be used within a') && error.message.includes('Provider')) {
+      console.log('Detected context provider error, reloading page to clear module cache...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    }
   }
 
   render() {

@@ -24,6 +24,7 @@ export interface Conversation {
   pinned: boolean;
   pinnedAt?: number; // Timestamp when pinned
   role: "tutor" | "professor" | "ta" | "peer"; // Role/relation to student
+  tutorId?: number; // ID matching TutorDetailPage tutorsData — only set for role === "tutor"
 }
 
 interface ConversationsContextType {
@@ -51,6 +52,7 @@ const defaultConversations: Conversation[] = [
     unread: true,
     pinned: false,
     role: "tutor",
+    tutorId: 1,
   },
   {
     id: 2,
@@ -95,6 +97,7 @@ const defaultConversations: Conversation[] = [
     unread: false,
     pinned: false,
     role: "tutor",
+    tutorId: 2,
   },
   {
     id: 6,
@@ -106,6 +109,7 @@ const defaultConversations: Conversation[] = [
     unread: false,
     pinned: false,
     role: "tutor",
+    tutorId: 3,
   },
   {
     id: 7,
@@ -117,6 +121,7 @@ const defaultConversations: Conversation[] = [
     unread: false,
     pinned: false,
     role: "tutor",
+    tutorId: 5,
   },
 ];
 
@@ -369,7 +374,15 @@ const defaultMessages: Record<number, Message[]> = {
 export function ConversationsProvider({ children }: { children: ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>(() => {
     const stored = localStorage.getItem('conversations_v2');
-    return stored ? JSON.parse(stored) : defaultConversations;
+    if (!stored) return defaultConversations;
+    const parsed: Conversation[] = JSON.parse(stored);
+    // Migrate: backfill tutorId onto any tutor conversation that is missing it
+    const tutorIdMap: Record<number, number> = { 1: 1, 5: 2, 6: 3, 7: 5 };
+    return parsed.map(c =>
+      c.role === 'tutor' && c.tutorId == null && tutorIdMap[c.id] != null
+        ? { ...c, tutorId: tutorIdMap[c.id] }
+        : c
+    );
   });
 
   const [conversationMessages, setConversationMessages] = useState<Record<number, Message[]>>(() => {

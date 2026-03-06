@@ -70,7 +70,7 @@ export default function TutorStudentsPage() {
     <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-20">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="px-6 pt-12 pb-6">
+        <div className="px-6 pt-12 pb-3">
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={() => navigate(-1)}

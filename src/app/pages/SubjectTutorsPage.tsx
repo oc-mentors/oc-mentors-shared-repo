@@ -1,6 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router";
 import { ArrowLeft, Star, MapPin, Clock, Calendar, Video, MessageSquare, DollarSign } from "lucide-react";
-import { ProfileButton } from "../components/ProfileButton";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -212,7 +211,7 @@ export default function SubjectTutorsPage() {
                 <ArrowLeft className="w-5 h-5" />
               </motion.button>
             </Link>
-            <ProfileButton />
+            {/* ProfileButton removed — subpage */}
           </div>
           <h1 className="text-[28px] font-bold text-[#e8edf5] mb-2">
             {subjectDisplay} Tutors

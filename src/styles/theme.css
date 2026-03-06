@@ -179,3 +179,14 @@
     line-height: 1.5;
   }
 }
+
+/* ── Mobile app: hide all scrollbars globally so layout never shifts ── */
+*,
+*::before,
+*::after {
+  scrollbar-width: none;       /* Firefox */
+  -ms-overflow-style: none;    /* IE / Edge */
+}
+*::-webkit-scrollbar {
+  display: none;               /* Chrome / Safari / WebKit */
+}

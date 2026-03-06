@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { X, Lock } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNavigate } from "react-router";
+import { useScrollLock } from "../hooks/useScrollLock";
 
 interface CanvasLoginPromptModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface CanvasLoginPromptModalProps {
 export function CanvasLoginPromptModal({ isOpen, onClose }: CanvasLoginPromptModalProps) {
   const { colors, accentColor } = useTheme();
   const navigate = useNavigate();
+  useScrollLock(isOpen);
 
   const handleLogin = () => {
     onClose();

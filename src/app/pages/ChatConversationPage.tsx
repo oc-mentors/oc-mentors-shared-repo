@@ -46,6 +46,7 @@ export default function ChatConversationPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [showTopFade, setShowTopFade] = useState(false);
 
   const handleMessagesScroll = () => {
@@ -60,6 +61,13 @@ export default function ChatConversationPage() {
       navigate('/chat', { replace: true });
     }
   }, [currentConversation, navigate]);
+
+  // Scroll to the bottom instantly on first load
+  useEffect(() => {
+    if (currentConversation && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "instant" });
+    }
+  }, [currentConversation?.id]);
 
   // Early return if no conversation (will redirect via useEffect)
   if (!currentConversation) {
@@ -102,6 +110,7 @@ export default function ChatConversationPage() {
 
   const handleReply = (message: Message) => {
     setReplyingTo(message);
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, type: "image" | "file") => {
@@ -148,15 +157,19 @@ export default function ChatConversationPage() {
           {/* Profile Photo and Name - Centered */}
           <div className="flex flex-col items-center gap-2 pt-2">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={currentConversation.role === 'tutor' ? { scale: 1.05 } : {}}
+              whileTap={currentConversation.role === 'tutor' ? { scale: 0.95 } : {}}
               onClick={() => {
+                if (currentConversation.role !== 'tutor') return;
+                // Use tutorId if set (pre-seeded conversations), otherwise fall back to id
+                // (dynamically created conversations use tutor.id as conversation id)
+                const targetTutorId = currentConversation.tutorId ?? conversationId;
                 // Store navigation context in sessionStorage
                 sessionStorage.setItem('tutorNavSource', 'chat');
                 sessionStorage.setItem('tutorNavChatId', conversationId.toString());
-                navigate(`/tutor/${conversationId}`);
+                navigate(`/tutor/${targetTutorId}`);
               }}
-              className="cursor-pointer"
+              className={currentConversation.role === 'tutor' ? "cursor-pointer" : "cursor-default"}
             >
               <ImageWithFallback
                 src={currentConversation.avatar}
@@ -326,6 +339,7 @@ export default function ChatConversationPage() {
             {/* Text Input */}
             <div className="flex-1 rounded-full px-5 py-3" style={{ backgroundColor: colors.bgTertiary }}>
               <input
+                ref={inputRef}
                 type="text"
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}

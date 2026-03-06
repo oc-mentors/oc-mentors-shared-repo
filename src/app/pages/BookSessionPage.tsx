@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { ArrowLeft, BookOpen, ChevronRight } from "lucide-react";
-import { ProfileButton } from "../components/ProfileButton";
+// ProfileButton removed — subpage
 
 interface Course {
   id: string;
@@ -76,7 +76,7 @@ export default function BookSessionPage() {
                 <ArrowLeft className="w-5 h-5" />
               </motion.button>
             </Link>
-            <ProfileButton />
+            {/* ProfileButton removed — subpage */}
           </div>
           <h1 className="text-[28px] font-bold text-[#e8edf5] mb-2">Book a Session</h1>
           <p className="text-[15px] text-[#a8b3cf]">

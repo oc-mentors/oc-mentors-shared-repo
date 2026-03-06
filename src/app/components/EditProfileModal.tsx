@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from "motion/react";
-import { X, Camera } from "lucide-react";
+import { X, Camera, Trash2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { AvatarWithInitials } from "./AvatarWithInitials";
+import { useScrollLock } from "../hooks/useScrollLock";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -12,9 +13,10 @@ interface EditProfileModalProps {
 
 export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   const { colors, accentColor } = useTheme();
-  
+  useScrollLock(isOpen);
+
   if (!isOpen) return null;
-  
+
   return <EditProfileModalContent isOpen={isOpen} onClose={onClose} />;
 }
 
@@ -73,6 +75,13 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
     fileInputRef.current?.click();
   };
 
+  const handleRemovePicture = () => {
+    setFormData((prev) => ({
+      ...prev,
+      avatar: "",
+    }));
+  };
+
   const handleSave = () => {
     const fullName = `${formData.firstName} ${formData.lastName}`.trim();
     updateUser({
@@ -81,7 +90,7 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
       name: fullName || user.name,
       university: formData.university,
       email: formData.email,
-      avatar: formData.avatar || user.avatar,
+      avatar: formData.avatar,
     });
     onClose();
   };
@@ -134,10 +143,12 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
                 {/* Avatar Section */}
                 <div className="flex flex-col items-center gap-3">
                   <div className="relative">
-                    <ImageWithFallback
-                      src={formData.avatar || user.avatar || ""}
-                      alt={`${formData.firstName} ${formData.lastName}`}
-                      className="w-24 h-24 rounded-full object-cover"
+                    <AvatarWithInitials
+                      src={formData.avatar}
+                      firstName={formData.firstName}
+                      lastName={formData.lastName}
+                      name={user.name}
+                      className="w-24 h-24 rounded-full object-cover text-[28px]"
                     />
                     <motion.button
                       whileTap={{ scale: 0.9 }}
@@ -157,9 +168,28 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
                       className="hidden"
                     />
                   </div>
-                  <p className="text-[12px]" style={{ color: colors.textSecondary }}>
-                    Tap to change photo
-                  </p>
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-[12px]" style={{ color: colors.textSecondary }}>
+                      Tap to change photo
+                    </p>
+                    {/* Remove Picture Button */}
+                    {formData.avatar && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleRemovePicture}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
+                        style={{ 
+                          backgroundColor: "#FF453A20",
+                          color: "#FF453A"
+                        }}
+                        type="button"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Remove Picture
+                      </motion.button>
+                    )}
+                  </div>
                 </div>
 
                 {/* First Name */}

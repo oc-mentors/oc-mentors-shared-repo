@@ -15,6 +15,14 @@ export default function MessagesPage() {
   const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
   const [roleFilter, setRoleFilter] = useState<"all" | "tutor" | "professor" | "ta" | "peer">("all");
   const { colors, accentColor } = useTheme();
+  const [showTopFade, setShowTopFade] = useState(false);
+  const listContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleListScroll = () => {
+    if (listContainerRef.current) {
+      setShowTopFade(listContainerRef.current.scrollTop > 0);
+    }
+  };
 
   const togglePin = (id: number, event?: React.MouseEvent) => {
     event?.stopPropagation();
@@ -98,7 +106,7 @@ export default function MessagesPage() {
         {/* Fixed Header Section */}
         <div className="flex-shrink-0 relative z-10" style={{ backgroundColor: colors.bgPrimary }}>
           {/* Header with Profile Button */}
-          <div className="px-6 pt-12 pb-6">
+          <div className="px-6 pt-12 pb-3">
             <div className="flex items-center justify-between">
               <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Messages</h1>
               <ProfileButton />
@@ -176,120 +184,142 @@ export default function MessagesPage() {
         </div>
 
         {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto px-6 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-          <AnimatePresence mode="popLayout">
-            {filteredConversations.map((conversation, index) => (
+        <div className="relative flex-1 overflow-hidden">
+          {/* Top fade overlay */}
+          <AnimatePresence>
+            {showTopFade && (
               <motion.div
-                key={conversation.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ delay: 0.1 + index * 0.05 }}
-                layout
-                className="relative mb-3"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  className="relative rounded-2xl p-4 border shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
-                  style={{
-                    backgroundColor: colors.bgCard,
-                    borderColor: conversation.pinned ? `${accentColor.primary}50` : colors.borderPrimary
-                  }}
-                >
-                  {/* Pinned Indicator */}
-                  {conversation.pinned && (
-                    <motion.div
-                      initial={{ scale: 0, rotate: -45 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      className="absolute top-3 right-3 z-10"
-                    >
-                      <Pin className="w-4 h-4" style={{ color: accentColor.primary }} fill={accentColor.primary} />
-                    </motion.div>
-                  )}
-
-                  <Link to={`/chat/${conversation.id}`} state={{ conversation }} className="block">
-                    <div className="flex items-start gap-4">
-                      {/* Avatar with Unread Badge */}
-                      <div className="relative flex-shrink-0">
-                        <ImageWithFallback
-                          src={conversation.avatar}
-                          alt={conversation.name}
-                          className="w-[60px] h-[60px] rounded-full object-cover"
-                        />
-                        {conversation.unread && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="absolute top-0 right-0 w-[14px] h-[14px] rounded-full border-2"
-                            style={{ backgroundColor: accentColor.primary, borderColor: colors.bgPrimary }}
-                          />
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0 pt-1">
-                        <div className="flex items-start justify-between mb-1">
-                          <h3
-                            className={`text-[16px] ${conversation.unread ? 'font-semibold' : 'font-medium'}`}
-                            style={{ color: colors.textPrimary }}
-                          >
-                            {conversation.name}
-                          </h3>
-                          <span
-                            className="text-[12px] ml-2 flex-shrink-0"
-                            style={{
-                              color: conversation.unread ? accentColor.primary : colors.textSecondary,
-                              fontWeight: conversation.unread ? 600 : 400
-                            }}
-                          >
-                            {conversation.timestamp}
-                          </span>
-                        </div>
-                        <p className="text-[13px] mb-1 leading-[19.5px]" style={{ color: colors.textSecondary }}>
-                          {conversation.university}
-                        </p>
-                        <p
-                          className={`text-[14px] leading-[21px] line-clamp-1 ${conversation.unread ? 'font-medium' : ''}`}
-                          style={{ color: conversation.unread ? colors.textPrimary : colors.textSecondary }}
-                        >
-                          {conversation.message}
-                        </p>
-                      </div>
-
-                      {/* Spacer for menu button */}
-                      <div className="w-8 flex-shrink-0" />
-                    </div>
-                  </Link>
-
-                  {/* Menu Button - Outside Link */}
-                  <div className="absolute top-4 right-4 flex-shrink-0">
-                    <motion.button
-                      whileTap={{ scale: 0.9 }}
-                      onClick={(e) => handleMenuClick(conversation.id, e)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors z-30"
-                      style={{ backgroundColor: 'transparent' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bgTertiary}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                      <MoreVertical className="w-5 h-5" style={{ color: colors.textSecondary }} />
-                    </motion.button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            ))}
+                key="top-fade"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-0 left-0 right-0 h-12 z-10 pointer-events-none"
+                style={{
+                  background: `linear-gradient(to bottom, ${colors.bgPrimary} 0%, transparent 100%)`,
+                }}
+              />
+            )}
           </AnimatePresence>
+          <div
+            ref={listContainerRef}
+            onScroll={handleListScroll}
+            className="h-full overflow-y-auto px-6 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+          >
+            <AnimatePresence mode="popLayout">
+              {filteredConversations.map((conversation, index) => (
+                <motion.div
+                  key={conversation.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ delay: 0.1 + index * 0.05 }}
+                  layout
+                  className="relative mb-3"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="relative rounded-2xl p-4 border shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
+                    style={{
+                      backgroundColor: colors.bgCard,
+                      borderColor: conversation.pinned ? `${accentColor.primary}50` : colors.borderPrimary
+                    }}
+                  >
+                    {/* Pinned Indicator */}
+                    {conversation.pinned && (
+                      <motion.div
+                        initial={{ scale: 0, rotate: -45 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        className="absolute top-3 right-3 z-10"
+                      >
+                        <Pin className="w-4 h-4" style={{ color: accentColor.primary }} fill={accentColor.primary} />
+                      </motion.div>
+                    )}
 
-          {/* Empty State */}
-          {filteredConversations.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-12"
-            >
-              <p className="text-[15px]" style={{ color: colors.textSecondary }}>No conversations found</p>
-            </motion.div>
-          )}
+                    <Link to={`/chat/${conversation.id}`} state={{ conversation }} className="block">
+                      <div className="flex items-start gap-4">
+                        {/* Avatar with Unread Badge */}
+                        <div className="relative flex-shrink-0">
+                          <ImageWithFallback
+                            src={conversation.avatar}
+                            alt={conversation.name}
+                            className="w-[60px] h-[60px] rounded-full object-cover"
+                          />
+                          {conversation.unread && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute top-0 right-0 w-[14px] h-[14px] rounded-full border-2"
+                              style={{ backgroundColor: accentColor.primary, borderColor: colors.bgPrimary }}
+                            />
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0 pt-1">
+                          <div className="flex items-start justify-between mb-1">
+                            <h3
+                              className={`text-[16px] ${conversation.unread ? 'font-semibold' : 'font-medium'}`}
+                              style={{ color: colors.textPrimary }}
+                            >
+                              {conversation.name}
+                            </h3>
+                            <span
+                              className="text-[12px] ml-2 flex-shrink-0"
+                              style={{
+                                color: conversation.unread ? accentColor.primary : colors.textSecondary,
+                                fontWeight: conversation.unread ? 600 : 400
+                              }}
+                            >
+                              {conversation.timestamp}
+                            </span>
+                          </div>
+                          <p className="text-[13px] mb-1 leading-[19.5px]" style={{ color: colors.textSecondary }}>
+                            {conversation.role === "tutor" ? "Tutor" : conversation.role === "professor" ? "Professor" : conversation.role === "ta" ? "TA" : "Peer"}
+                          </p>
+                          <p
+                            className={`text-[14px] leading-[21px] line-clamp-1 ${conversation.unread ? 'font-medium' : ''}`}
+                            style={{ color: conversation.unread ? colors.textPrimary : colors.textSecondary }}
+                          >
+                            {conversation.message}
+                          </p>
+                        </div>
+
+                        {/* Spacer for menu button */}
+                        <div className="w-8 flex-shrink-0" />
+                      </div>
+                    </Link>
+
+                    {/* Menu Button - Outside Link */}
+                    <div className="absolute top-4 right-4 flex-shrink-0">
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => handleMenuClick(conversation.id, e)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors z-30"
+                        style={{ backgroundColor: 'transparent' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bgTertiary}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <MoreVertical className="w-5 h-5" style={{ color: colors.textSecondary }} />
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {/* Empty State */}
+            {filteredConversations.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-12"
+              >
+                <p className="text-[15px]" style={{ color: colors.textSecondary }}>No conversations found</p>
+              </motion.div>
+            )}
+          </div>
         </div>
 
         {/* Click outside to close menu */}

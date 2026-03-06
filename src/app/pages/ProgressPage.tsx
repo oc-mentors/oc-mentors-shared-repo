@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "react-router";
 import { BottomNav } from "../components/BottomNav";
-import { ProfileButton } from "../components/ProfileButton";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { ArrowLeft, TrendingUp, Award, Target, CheckCircle, BookOpen, ArrowRight, Trophy, RefreshCw, ExternalLink } from "lucide-react";
@@ -47,6 +46,9 @@ export default function ProgressPage() {
   const { courses, refreshCourses, isRefreshing, lastRefreshed } = useCanvasCourses();
   const { isCanvasConnected } = useCanvasAuth();
   const courseColors = useAllCourseColors();
+  const { isCourseIgnored } = useCanvasCourses();
+
+  const visibleCourses = courses.filter((c) => !isCourseIgnored(c.id));
 
   const handleRefresh = async () => {
     if (!isCanvasConnected) {
@@ -81,7 +83,7 @@ export default function ProgressPage() {
   };
 
   // Calculate total lessons
-  const totalLessons = courses.reduce((sum, course) => sum + (course.lessonsCompleted || 0), 0);
+  const totalLessons = visibleCourses.reduce((sum, course) => sum + (course.lessonsCompleted || 0), 0);
 
   return (
     <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
@@ -90,7 +92,7 @@ export default function ProgressPage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-6 pt-12 pb-6"
+          className="px-6 pt-12 pb-3"
         >
           <div className="flex items-center justify-between mb-2">
             <Link to="/">
@@ -103,7 +105,7 @@ export default function ProgressPage() {
                 <ArrowLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
               </motion.button>
             </Link>
-            <ProfileButton />
+            {/* ProfileButton removed — subpage */}
           </div>
 
           <div className="flex items-center justify-between">
@@ -213,7 +215,7 @@ export default function ProgressPage() {
             )}
           </div>
           <div className="space-y-3">
-            {courses.map((course, index) => {
+            {visibleCourses.map((course, index) => {
               const IconComponent = course.icon;
               const courseColor = courseColors[course.id] || course.color;
               return (

@@ -1,7 +1,7 @@
 
-  # OC Mentors Project - Final (Copy)
+  # OC Mentors Project
 
-  This is a code bundle for OC Mentors Project - Final (Copy). The original project is available at https://www.figma.com/design/6CDSOduuTo4AZZpkv5cflY/OC-Mentors-Project---Final--Copy-.
+  This is a code bundle for OC Mentors Project. The original project is available at https://www.figma.com/design/6CDSOduuTo4AZZpkv5cflY/OC-Mentors-Project.
 
   ## Running the code
 

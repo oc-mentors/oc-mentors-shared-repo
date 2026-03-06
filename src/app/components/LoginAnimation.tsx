@@ -1,8 +1,12 @@
 import { motion } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 
-export function LogoutAnimation() {
-  const { colors } = useTheme();
+export function LoginAnimation() {
+  const { colors, accentColor } = useTheme();
+  const { user } = useAuth();
+
+  const firstName = user?.name?.split(" ")[0] || "there";
 
   return (
     <motion.div
@@ -13,7 +17,7 @@ export function LogoutAnimation() {
     >
       <div className="max-w-md w-full text-center">
 
-        {/* Circle + wave icon */}
+        {/* Circle + checkmark */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -26,8 +30,7 @@ export function LogoutAnimation() {
               initial={{ scale: 0, opacity: 0.8 }}
               animate={{ scale: 1.5, opacity: 0 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
-              className="absolute inset-0 rounded-full"
-              style={{ backgroundColor: "#FF453A" }}
+              className={`absolute inset-0 rounded-full bg-gradient-to-br ${accentColor.gradient}`}
             />
 
             {/* Main circle */}
@@ -35,28 +38,27 @@ export function LogoutAnimation() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.05 }}
-              className="absolute inset-0 rounded-full"
-              style={{
-                background: "linear-gradient(135deg, #FF453A, #FF6B6B)",
-                boxShadow: "0 0 48px rgba(255, 69, 58, 0.45)",
-              }}
+              className={`absolute inset-0 rounded-full bg-gradient-to-br ${accentColor.gradient}`}
+              style={{ boxShadow: `0 0 48px ${colors.accent}55` }}
             />
 
-            {/* Waving hand emoji rendered as SVG path / text */}
-            <motion.div
-              className="absolute inset-0 flex items-center justify-center"
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
+            {/* Checkmark */}
+            <svg
+              className="absolute inset-0 w-full h-full p-8"
+              viewBox="0 0 52 52"
+              fill="none"
             >
-              <motion.span
-                className="text-4xl select-none"
-                animate={{ rotate: [0, 20, -10, 20, 0] }}
-                transition={{ delay: 0.35, duration: 0.7, ease: "easeInOut" }}
-              >
-                👋
-              </motion.span>
-            </motion.div>
+              <motion.path
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.35, delay: 0.2, ease: "easeOut" }}
+                d="M14.1 27.2l7.1 7.2 16.7-16.8"
+                stroke="white"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
         </motion.div>
 
@@ -67,10 +69,10 @@ export function LogoutAnimation() {
           transition={{ delay: 0.3, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
           <h2 className="text-2xl font-bold mb-1.5" style={{ color: colors.textPrimary }}>
-            See you soon!
+            Welcome back, {firstName}!
           </h2>
           <p className="text-sm" style={{ color: colors.textSecondary }}>
-            You've been signed out of OC Mentors
+            Taking you to your dashboard…
           </p>
         </motion.div>
 

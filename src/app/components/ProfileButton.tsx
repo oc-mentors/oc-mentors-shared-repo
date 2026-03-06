@@ -1,27 +1,28 @@
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
-import { useTheme } from "../contexts/ThemeContext";
+import { AvatarWithInitials } from "./AvatarWithInitials";
 
 export function ProfileButton() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
-  const { accentColor } = useTheme();
 
   const handleClick = () => {
-    navigate("/profile");
+    navigate("/profile", { state: { from: location.pathname } });
   };
-
-  const initialsSource = user?.firstName || user?.name || user?.email || "";
-  const initial =
-    initialsSource.trim().charAt(0).toUpperCase() || "U";
 
   return (
     <div
       onClick={handleClick}
-      className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer shadow-lg"
-      style={{ backgroundColor: accentColor.primary }}
+      className="cursor-pointer"
     >
-      <span className="text-white font-bold text-sm">{initial}</span>
+      <AvatarWithInitials
+        src={user?.avatar}
+        firstName={user?.firstName}
+        lastName={user?.lastName}
+        name={user?.name}
+        className="w-16 h-16 rounded-full object-cover text-base shadow-lg"
+      />
     </div>
   );
 }

@@ -2,7 +2,6 @@ import { Link } from "react-router";
 import { useState } from "react";
 import { BottomNav } from "../components/BottomNav";
 import svgPaths from "../../imports/svg-2ctauirw4p";
-import { ProfileButton } from "../components/ProfileButton";
 import { EditProfileModal } from "../components/EditProfileModal";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
 import { motion } from "motion/react";
@@ -22,10 +21,9 @@ export default function SettingsPage() {
     <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
       <div className="max-w-md mx-auto">
         {/* Header with Profile Button */}
-        <div className="px-6 pt-12 pb-6">
+        <div className="px-6 pt-12 pb-3">
           <div className="flex items-center justify-between">
             <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Settings</h1>
-            <ProfileButton />
           </div>
         </div>
 

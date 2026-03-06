@@ -1,12 +1,14 @@
+import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
+import { canvasCourses } from "../data/courses";
+import { useScrollLock } from "../hooks/useScrollLock";
 import { Link, useParams, useNavigate } from "react-router";
-import { ArrowLeft, Bell, BellOff, Palette, Check } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Palette, Check, EyeOff, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { BottomNav } from "../components/BottomNav";
 import { ToggleSwitch } from "../components/ToggleSwitch";
 import { useTheme, accentColors } from "../contexts/ThemeContext";
 import { useCourseColor } from "../hooks/useCourseColor";
-import { canvasCourses } from "../data/courses";
 
 interface NotificationSettings {
   announcements: boolean;
@@ -58,6 +60,25 @@ export default function CourseNotificationSettingsPage() {
   const { accentColor } = useTheme();
   const course = canvasCourses.find((c) => c.id === Number(courseId));
   const [courseColor, setCourseColorValue] = useCourseColor(Number(courseId) || 1);
+  const { isCourseIgnored, ignoreCourse, unignoreCourse } = useCanvasCourses();
+  const courseIdNum = Number(courseId) || 1;
+  const ignored = isCourseIgnored(courseIdNum);
+  const [showIgnoreConfirm, setShowIgnoreConfirm] = useState(false);
+
+  useScrollLock(showIgnoreConfirm);
+
+  const handleIgnoreToggle = () => {
+    if (!ignored) {
+      setShowIgnoreConfirm(true);
+    } else {
+      unignoreCourse(courseIdNum);
+    }
+  };
+
+  const confirmIgnore = () => {
+    ignoreCourse(courseIdNum);
+    setShowIgnoreConfirm(false);
+  };
 
   const [settings, setSettings] = useState<NotificationSettings>(defaultSettings);
   const [allEnabled, setAllEnabled] = useState(false);
@@ -119,7 +140,7 @@ export default function CourseNotificationSettingsPage() {
     <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-20">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="px-6 pt-12 pb-6">
+        <div className="px-6 pt-12 pb-3">
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={() => navigate(-1)}
@@ -148,6 +169,75 @@ export default function CourseNotificationSettingsPage() {
             </div>
           </div>
 
+          {/* Course Visibility */}
+          <h3 className="text-sm font-semibold text-[#a8b3cf] mb-3 uppercase tracking-wider">
+            Course Visibility
+          </h3>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl border overflow-hidden mb-6"
+            style={{
+              backgroundColor: ignored ? "rgba(239,68,68,0.08)" : "#1e2139",
+              borderColor: ignored ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.12)",
+            }}
+          >
+            <div className="p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-300"
+                    style={{ backgroundColor: ignored ? "rgba(239,68,68,0.15)" : "#2a2f45" }}
+                  >
+                    {ignored
+                      ? <EyeOff className="w-5 h-5" style={{ color: "#ef4444" }} />
+                      : <Eye className="w-5 h-5 text-[#a8b3cf]" />
+                    }
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[14px] font-semibold text-[#e8edf5]">
+                      Ignore Course
+                    </p>
+                    <p className="text-[12px] mt-0.5 text-[#a8b3cf]">
+                      {ignored
+                        ? "Hidden from classes, assignments & home"
+                        : "Hide this course everywhere in the app"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleIgnoreToggle}
+                  className="relative w-[51px] h-[31px] rounded-full transition-colors flex-shrink-0"
+                  style={{ backgroundColor: ignored ? "#ef4444" : "#2a2f45" }}
+                >
+                  <motion.div
+                    animate={{ x: ignored ? 20 : 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className="absolute left-[3px] top-[3px] w-[25px] h-[25px] bg-white rounded-full shadow-md"
+                  />
+                </button>
+              </div>
+
+              {ignored && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="mt-4 pt-4 border-t border-[rgba(239,68,68,0.2)]"
+                >
+                  <p className="text-[12px] text-[#ef4444] leading-relaxed">
+                    This course is currently hidden. It won't appear in My Classes, Assignments, Announcements, or the subject picker on Home. Toggle off to restore it.
+                  </p>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Settings sections — greyed out when course is ignored */}
+          <div
+            className="transition-opacity duration-300"
+            style={{ opacity: ignored ? 0.35 : 1, pointerEvents: ignored ? "none" : "auto" }}
+          >
           {/* Enable All Toggle */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -275,10 +365,60 @@ export default function CourseNotificationSettingsPage() {
           <div className="mt-6 bg-[#1e2139] rounded-xl p-4 border border-[rgba(255,255,255,0.08)]">
             <p className="text-xs text-[#a8b3cf] leading-relaxed">
               <span className="font-semibold text-[#e8edf5]">Note:</span> These settings only
-              apply to {course.code}. You can customize notifications for each course
+              apply to {course.code}. You can customize settings for each course
               individually.
             </p>
           </div>
+          </div>
+
+          {/* Confirm Ignore Modal */}
+          <AnimatePresence>
+            {showIgnoreConfirm && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-8"
+                style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+                onClick={() => setShowIgnoreConfirm(false)}
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 60 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 60 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full max-w-md rounded-3xl p-6"
+                  style={{ backgroundColor: "#1e2139", border: "1px solid rgba(239,68,68,0.3)" }}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(239,68,68,0.15)" }}>
+                      <EyeOff className="w-5 h-5" style={{ color: "#ef4444" }} />
+                    </div>
+                    <h3 className="text-[16px] font-bold text-[#e8edf5]">Ignore {course?.code}?</h3>
+                  </div>
+                  <p className="text-[13px] text-[#a8b3cf] mb-6 leading-relaxed">
+                    This course will be hidden from My Classes, Assignments, Announcements, and the subject picker on the Home screen. You can restore it anytime from these settings.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowIgnoreConfirm(false)}
+                      className="flex-1 py-3 rounded-2xl text-[14px] font-semibold text-[#a8b3cf]"
+                      style={{ backgroundColor: "#2a2f45" }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={confirmIgnore}
+                      className="flex-1 py-3 rounded-2xl text-[14px] font-semibold text-white"
+                      style={{ backgroundColor: "#ef4444" }}
+                    >
+                      Ignore Course
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
