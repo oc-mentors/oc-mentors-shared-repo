@@ -201,16 +201,16 @@ export default function HomePage() {
               className="px-6 mb-8"
             >
               <h3 className="text-lg font-bold mb-4" style={{ color: colors.textPrimary }}>Choose a subject</h3>
-              <div className="flex justify-center gap-3 flex-wrap py-2">
+              <div className="flex gap-4 overflow-x-auto pb-2 -mx-6 px-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {visibleSubjects.map((subject, index) => (
-                  <Link key={subject.name} to="/tutors">
+                  <Link key={subject.name} to={`/tutors?subject=${encodeURIComponent(subject.name)}`} className="flex-shrink-0">
                     <motion.button
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.4 + index * 0.05 }}
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer"
+                      className="flex flex-col items-center gap-2 cursor-pointer"
                     >
                       <div
                         className="w-[70px] h-[70px] rounded-2xl flex items-center justify-center transition-all duration-300"

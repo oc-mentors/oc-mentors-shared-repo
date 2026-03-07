@@ -8,6 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import { LogoutConfirmModal } from "../components/LogoutConfirmModal";
+import { EditProfileModal } from "../components/EditProfileModal";
 import { LEARNING_STYLE_QUIZ_QUESTIONS, getQuizAnswerText } from "../lib/learningStyleQuiz";
 
 // ── Quiz Q&A section (questions + selected answers from DB or indices) ─────────
@@ -347,6 +348,7 @@ export default function ProfilePage() {
   const { colors, accentColor } = useTheme();
   const learningStyle = user?.learningStyle ?? localStorage.getItem("learningStyleResult");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [helpExpanded, setHelpExpanded] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showBugReport, setShowBugReport] = useState(false);
@@ -387,11 +389,16 @@ export default function ProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           className="px-6 pt-8 pb-8 flex flex-col items-center"
         >
-          {/* Profile Image with Edit Badge */}
+          {/* Profile Image – tap to upload or change photo */}
           <div className="relative mb-6">
-            <motion.div
+            <motion.button
+              type="button"
+              onClick={() => setShowEditProfileModal(true)}
               whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
               transition={{ type: "spring", stiffness: 300 }}
+              className="block rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2"
+              style={{ outlineColor: accentColor.primary } as React.CSSProperties}
             >
               <AvatarWithInitials
                 src={user?.avatar}
@@ -400,15 +407,17 @@ export default function ProfilePage() {
                 name={user?.name}
                 className="w-[130px] h-[130px] rounded-full object-cover shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] text-[45px]"
               />
-            </motion.div>
+            </motion.button>
             {/* Edit Badge */}
-            <motion.div
+            <motion.button
+              type="button"
+              onClick={() => setShowEditProfileModal(true)}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring" }}
-              className="absolute bottom-0 right-0 w-9 h-9 rounded-full shadow-[0px_4px_24px_0px_rgba(91,124,235,0.25)] flex items-center justify-center"
-              style={{ 
-                background: `linear-gradient(to bottom right, ${accentColor.primary}, ${accentColor.hover})` 
+              className="absolute bottom-0 right-0 w-9 h-9 rounded-full shadow-[0px_4px_24px_0px_rgba(91,124,235,0.25)] flex items-center justify-center focus:outline-none"
+              style={{
+                background: `linear-gradient(to bottom right, ${accentColor.primary}, ${accentColor.hover})`
               }}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 18 18">
@@ -420,7 +429,7 @@ export default function ProfilePage() {
                   strokeWidth="1.67"
                 />
               </svg>
-            </motion.div>
+            </motion.button>
           </div>
 
           {/* Name */}
@@ -760,6 +769,10 @@ export default function ProfilePage() {
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
         onConfirm={handleLogoutConfirm}
+      />
+      <EditProfileModal
+        isOpen={showEditProfileModal}
+        onClose={() => setShowEditProfileModal(false)}
       />
 
       {/* Feedback modal */}

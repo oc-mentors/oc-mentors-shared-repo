@@ -1,20 +1,30 @@
 import { motion, AnimatePresence } from "motion/react";
 import { Search, SlidersHorizontal, Star, MapPin, BookOpen } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTutors } from "../contexts/TutorsContext";
 
-const subjects = ["All", "Math", "Science", "English", "History", "Writing", "Chemistry", "Physics", "Biology"];
+const SUBJECT_FILTERS = ["All", "Chem", "Math", "Physics", "Writing", "Biology", "History"];
 
 export default function TutorsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const subjectFromUrl = searchParams.get("subject") ?? "";
+  const initialSubject =
+    subjectFromUrl && SUBJECT_FILTERS.includes(subjectFromUrl) ? subjectFromUrl : "All";
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("All");
+  const [selectedSubject, setSelectedSubject] = useState(initialSubject);
   const { colors, accentColor } = useTheme();
   const { tutors, isLoading, error } = useTutors();
+
+  useEffect(() => {
+    const sub = searchParams.get("subject") ?? "";
+    setSelectedSubject(sub && SUBJECT_FILTERS.includes(sub) ? sub : "All");
+  }, [searchParams]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
@@ -107,7 +117,7 @@ export default function TutorsPage() {
                 onScroll={handleScroll}
                 className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
               >
-                {subjects.map((subject, index) => (
+                {SUBJECT_FILTERS.map((subject, index) => (
                   <motion.button
                     key={subject}
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -115,7 +125,10 @@ export default function TutorsPage() {
                     transition={{ delay: 0.15 + index * 0.03 }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setSelectedSubject(subject)}
+                    onClick={() => {
+                      setSelectedSubject(subject);
+                      setSearchParams(subject === "All" ? {} : { subject });
+                    }}
                     className="px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all cursor-pointer flex-shrink-0"
                     style={{
                       backgroundColor: selectedSubject === subject ? accentColor.primary : colors.bgTertiary,
