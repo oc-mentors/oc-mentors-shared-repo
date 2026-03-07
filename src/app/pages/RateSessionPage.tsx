@@ -55,9 +55,9 @@ export default function RateSessionPage() {
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="px-6 pt-3 pb-2">
-          <Link to="/schedule">
+          <button type="button" onClick={() => navigate(-1)} className="cursor-pointer">
             <ArrowLeft className="w-5 h-5 text-[#e8edf5]" />
-          </Link>
+          </button>
         </div>
 
         {/* Header */}

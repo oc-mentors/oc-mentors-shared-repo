@@ -67,15 +67,14 @@ export default function BookSessionPage() {
         {/* Header */}
         <div className="px-6 pt-12 pb-6">
           <div className="flex items-center justify-between mb-2">
-            <Link to="/schedule">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.05)] flex items-center justify-center text-[#e8edf5] hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </motion.button>
-            </Link>
+            <motion.button
+              onClick={() => navigate(-1)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.05)] flex items-center justify-center text-[#e8edf5] hover:bg-[rgba(255,255,255,0.1)] transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </motion.button>
             {/* ProfileButton removed — subpage */}
           </div>
           <h1 className="text-[28px] font-bold text-[#e8edf5] mb-2">Book a Session</h1>
