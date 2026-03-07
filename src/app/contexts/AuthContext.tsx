@@ -9,7 +9,7 @@ import {
   GoogleAuthProvider,
 } from "firebase/auth";
 import { doc, getDocFromServer, setDoc, updateDoc } from "firebase/firestore";
-import { auth, db, firestoreReady } from "../lib/firebase";
+import { auth, db, firestoreReady, isFirebaseConfigured } from "../lib/firebase";
 
 export type UserRole = "student" | "tutor" | "admin";
 
@@ -62,6 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearLogoutAnimation = () => setShowLogoutAnimation(false);
 
   useEffect(() => {
+    if (!isFirebaseConfigured || !auth) {
+      setIsLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
         setUser(null);
@@ -82,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         await firestoreReady;
+        if (!db) return;
         const userRef = doc(db, "users", firebaseUser.uid);
         console.log("[Auth] Loading user profile from Firestore (default)...", firebaseUser.uid);
         const snap = await getDocFromServer(userRef);
@@ -136,19 +141,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     const uid = cred.user.uid;
 
+    // Parse full name into first + last for initials avatar (no photo until they upload one)
+    const parts = name.trim().split(/\s+/);
+    const firstName = parts[0] ?? "";
+    const lastName = parts.slice(1).join(" ") ?? "";
+
     const newUser: User = {
       id: uid,
       name,
+      firstName: firstName || undefined,
+      lastName: lastName || undefined,
       email,
       role,
-      avatar:
-        role === "student"
-          ? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"
-          : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
+      // No avatar on signup – show initials with colored background; user can add photo later
     };
 
     await firestoreReady;
-    await setDoc(doc(db, "users", uid), newUser);
+    if (db) {
+      await setDoc(doc(db, "users", uid), newUser);
+    }
     console.log("[Auth] Profile saved to Firestore.");
     setUser(newUser);
     setShowLoginAnimation(true);
@@ -161,10 +172,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateUser = (updates: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...updates };
-      setUser(updatedUser);
-      updateDoc(doc(db, "users", user.id), updates);
+    if (!user) return;
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    if (db) {
+      try {
+        updateDoc(doc(db, "users", user.id), updates);
+      } catch (err) {
+        console.error("[Auth] updateUser failed:", err);
+      }
     }
   };
 

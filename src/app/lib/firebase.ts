@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore, enableNetwork } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,22 +14,22 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-if (!firebaseConfig.apiKey) {
-  throw new Error(
-    "Missing Firebase config. Copy .env.example to .env.local and add your Firebase web config from the Firebase Console."
-  );
-}
+export const isFirebaseConfigured =
+  !!firebaseConfig.apiKey &&
+  !!firebaseConfig.projectId &&
+  !!firebaseConfig.authDomain;
 
 /** Firestore Native (default database) for user profiles. */
 export const FIRESTORE_DATABASE_ID = "(default)";
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : (null as unknown as ReturnType<typeof initializeApp>);
+export const auth = app ? getAuth(app) : (null as unknown as ReturnType<typeof getAuth>);
+export const db = app ? getFirestore(app) : (null as unknown as ReturnType<typeof getFirestore>);
+export const storage = app ? getStorage(app) : (null as unknown as ReturnType<typeof getStorage>);
 
 /** Wait for this before any Firestore read/write so we don't get "client is offline". */
 export const firestoreReady =
-  typeof window !== "undefined"
+  isFirebaseConfigured && db && typeof window !== "undefined"
     ? enableNetwork(db)
         .then(() => {
           console.log(
@@ -44,6 +45,6 @@ export const firestoreReady =
 
 // Analytics only in browser
 export const analytics =
-  typeof window !== "undefined" ? getAnalytics(app) : null;
+  isFirebaseConfigured && app && typeof window !== "undefined" ? getAnalytics(app) : null;
 
 export default app;

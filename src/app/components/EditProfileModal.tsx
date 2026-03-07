@@ -1,10 +1,12 @@
 import { motion, AnimatePresence } from "motion/react";
-import { X, Camera, Trash2 } from "lucide-react";
+import { X, Camera, Trash2, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { AvatarWithInitials } from "./AvatarWithInitials";
 import { useScrollLock } from "../hooks/useScrollLock";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "../lib/firebase";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -24,7 +26,9 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
   const { colors, accentColor } = useTheme();
   const { user, updateUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -54,20 +58,50 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
     }));
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Check if it's an image
-      if (file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setFormData((prev) => ({
-            ...prev,
-            avatar: reader.result as string,
-          }));
-        };
-        reader.readAsDataURL(file);
+    e.target.value = "";
+    setUploadError(null);
+    if (!file || !file.type.startsWith("image/")) return;
+    if (!user?.id) return;
+
+    if (storage) {
+      setUploadingAvatar(true);
+      try {
+        const path = `avatars/${user.id}/${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, path);
+        await uploadBytes(storageRef, file);
+        const downloadUrl = await getDownloadURL(storageRef);
+        setFormData((prev) => ({ ...prev, avatar: downloadUrl }));
+        // Persist avatar immediately so it shows without clicking Save
+        updateUser({ avatar: downloadUrl });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Avatar upload failed:", err);
+        setUploadError(
+          "Upload failed. In Firebase Console, enable Storage and add rules to allow uploads (e.g. allow write: if request.auth.uid == userId)."
+        );
+        // Fallback: show image locally via data URL so they can at least see it (Save will store URL in Firestore; avoid huge data URLs)
+        const sizeMb = file.size / (1024 * 1024);
+        if (sizeMb < 0.5) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setFormData((prev) => ({ ...prev, avatar: reader.result as string }));
+            updateUser({ avatar: reader.result as string });
+          };
+          reader.readAsDataURL(file);
+        }
+      } finally {
+        setUploadingAvatar(false);
       }
+    } else {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setFormData((prev) => ({ ...prev, avatar: dataUrl }));
+        if (dataUrl.length < 500_000) updateUser({ avatar: dataUrl });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -153,11 +187,16 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       onClick={handleCameraClick}
-                      className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center shadow-lg"
+                      disabled={uploadingAvatar}
+                      className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center shadow-lg disabled:opacity-70"
                       style={{ backgroundColor: accentColor.primary }}
                       type="button"
                     >
-                      <Camera className="w-4 h-4 text-white" />
+                      {uploadingAvatar ? (
+                        <Loader2 className="w-4 h-4 text-white animate-spin" />
+                      ) : (
+                        <Camera className="w-4 h-4 text-white" />
+                      )}
                     </motion.button>
                     {/* Hidden file input */}
                     <input
@@ -170,8 +209,13 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
                   </div>
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-[12px]" style={{ color: colors.textSecondary }}>
-                      Tap to change photo
+                      {uploadingAvatar ? "Uploading…" : "Tap to change photo"}
                     </p>
+                    {uploadError && (
+                      <p className="text-[12px] text-center max-w-[260px]" style={{ color: "#ef4444" }}>
+                        {uploadError}
+                      </p>
+                    )}
                     {/* Remove Picture Button */}
                     {formData.avatar && (
                       <motion.button
