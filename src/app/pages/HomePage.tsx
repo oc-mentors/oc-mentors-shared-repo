@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router";
-import { Clock } from "lucide-react";
+import { Clock, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
@@ -43,9 +43,14 @@ const resources = [
   { id: 3, image: "https://images.unsplash.com/photo-1756829007483-414057ed33cd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaHlzaWNzJTIwc2NpZW5jZSUyMGVkdWNhdGlvbnxlbnwxfHx8fDE3NzA4MjM1NDV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", title: "Physics Guide" },
 ];
 
+type SubjectItem = { name: string; courseId: number; defaultColor: string; icon: string };
+
 export default function HomePage() {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [hoveredSubject, setHoveredSubject] = useState<string | null>(null);
+  const [customSubjects, setCustomSubjects] = useState<SubjectItem[]>([]);
+  const [addSubjectOpen, setAddSubjectOpen] = useState(false);
+  const [newSubjectName, setNewSubjectName] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
   const { colors, accentColor } = useTheme();
@@ -61,6 +66,20 @@ export default function HomePage() {
   };
 
   const visibleSubjects = subjects.filter((s) => !isCourseIgnored(s.courseId));
+  const allDisplaySubjects: SubjectItem[] = [...visibleSubjects, ...customSubjects];
+
+  const handleAddSubject = () => {
+    const name = newSubjectName.trim();
+    if (!name) return;
+    const exists = allDisplaySubjects.some((s) => s.name.toLowerCase() === name.toLowerCase());
+    if (exists) return;
+    setCustomSubjects((prev) => [
+      ...prev,
+      { name, courseId: 1000 + prev.length, defaultColor: "rgb(100, 116, 139)", icon: "writing" },
+    ]);
+    setNewSubjectName("");
+    setAddSubjectOpen(false);
+  };
 
   if (user && (user.role === "tutor" || user.role === "admin")) {
     return <TutorHomePage />;
@@ -200,10 +219,28 @@ export default function HomePage() {
               transition={{ delay: 0.4 }}
               className="px-6 mb-8"
             >
-              <h3 className="text-lg font-bold mb-4" style={{ color: colors.textPrimary }}>Choose a subject</h3>
-              <div className="flex justify-center gap-3 flex-wrap py-2">
-                {visibleSubjects.map((subject, index) => (
-                  <Link key={subject.name} to="/tutors">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-lg font-bold" style={{ color: colors.textPrimary }}>Choose a subject</h3>
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setAddSubjectOpen(true)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 border-2"
+                  style={{ backgroundColor: accentColor.primary, color: "white", borderColor: accentColor.primary, boxShadow: `0 2px 8px ${accentColor.primary}50` }}
+                  aria-label="Create a subject"
+                  title="Create a subject"
+                >
+                  <Plus className="w-4 h-4" strokeWidth={2.5} />
+                </motion.button>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-2 -mx-6 px-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {allDisplaySubjects.map((subject, index) => (
+                  <Link
+                    key={subject.courseId >= 1000 ? `custom-${subject.name}` : subject.name}
+                    to={subject.courseId >= 1000 ? "/tutors?subject=All" : `/tutors?subject=${encodeURIComponent(subject.name)}`}
+                    className="flex-shrink-0"
+                  >
                     <motion.button
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -228,6 +265,53 @@ export default function HomePage() {
                   </Link>
                 ))}
               </div>
+              {addSubjectOpen && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                  style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+                  onClick={() => setAddSubjectOpen(false)}
+                >
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="rounded-2xl p-6 w-full max-w-sm shadow-xl"
+                    style={{ backgroundColor: colors.bgCard }}
+                  >
+                    <h4 className="text-lg font-bold mb-1" style={{ color: colors.textPrimary }}>Create a subject</h4>
+                    <p className="text-sm mb-3" style={{ color: colors.textSecondary }}>Enter a new subject to add to your list.</p>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Subject name</label>
+                    <input
+                      type="text"
+                      value={newSubjectName}
+                      onChange={(e) => setNewSubjectName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddSubject()}
+                      placeholder="e.g. Spanish, Art, Music"
+                      className="w-full rounded-xl px-4 py-3 mb-4 outline-none border-2 focus:border-[#5b7ceb]"
+                      style={{ backgroundColor: colors.bgPrimary, color: colors.textPrimary, borderColor: colors.bgTertiary }}
+                    />
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => { setAddSubjectOpen(false); setNewSubjectName(""); }}
+                        className="flex-1 py-2.5 rounded-xl font-semibold"
+                        style={{ backgroundColor: colors.bgTertiary, color: colors.textSecondary }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddSubject}
+                        disabled={!newSubjectName.trim()}
+                        className="flex-1 py-2.5 rounded-xl font-semibold text-white disabled:opacity-50"
+                        style={{ backgroundColor: accentColor.primary }}
+                      >
+                        Create
+                      </button>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
             </motion.div>
 
             <motion.div
