@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableNetwork } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -19,9 +19,28 @@ if (!firebaseConfig.apiKey) {
   );
 }
 
+/** Firestore Native (default database) for user profiles. */
+export const FIRESTORE_DATABASE_ID = "(default)";
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+/** Wait for this before any Firestore read/write so we don't get "client is offline". */
+export const firestoreReady =
+  typeof window !== "undefined"
+    ? enableNetwork(db)
+        .then(() => {
+          console.log(
+            "[Firebase] Using Firestore Native (default) | Project:",
+            firebaseConfig.projectId,
+            "| In Console: Firestore Database → (default) → Data / Rules."
+          );
+        })
+        .catch((err) => {
+          console.warn("[Firebase] enableNetwork failed:", err?.message ?? err);
+        })
+    : Promise.resolve();
 
 // Analytics only in browser
 export const analytics =

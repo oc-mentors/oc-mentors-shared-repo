@@ -13,8 +13,10 @@ import { useAllCourseColors } from "../hooks/useCourseColor";
 import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
 import { subjects } from "../data/courses";
 import TutorHomePage from "./TutorHomePage";
-const imgDebra = "https://via.placeholder.com/150";
-const imgAdam = "https://via.placeholder.com/150";
+// Inline placeholder (no external request) to avoid ERR_NAME_NOT_RESOLVED
+const imgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect fill='%23e2e8f0' width='150' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
+const imgDebra = imgPlaceholder;
+const imgAdam = imgPlaceholder;
 
 const meetings = [
   {

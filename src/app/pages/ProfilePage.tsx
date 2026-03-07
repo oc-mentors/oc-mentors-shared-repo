@@ -8,6 +8,64 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import { LogoutConfirmModal } from "../components/LogoutConfirmModal";
+import { LEARNING_STYLE_QUIZ_QUESTIONS, getQuizAnswerText } from "../lib/learningStyleQuiz";
+
+// ── Quiz Q&A section (questions + selected answers) ───────────────────────────
+function QuizAnswersSection({
+  answers,
+  colors,
+  accentColor,
+}: {
+  answers: number[];
+  colors: { bgCard: string; textPrimary: string; textSecondary: string; borderSecondary: string };
+  accentColor: { primary: string };
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="rounded-2xl shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] overflow-hidden" style={{ backgroundColor: colors.bgCard }}>
+      <motion.button
+        whileTap={{ scale: 0.99 }}
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full p-4 flex items-center justify-between"
+      >
+        <span className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
+          Your quiz answers
+        </span>
+        <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown className="w-5 h-5" style={{ color: colors.textSecondary }} />
+        </motion.div>
+      </motion.button>
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 space-y-4 border-t" style={{ borderColor: colors.borderSecondary }}>
+              {LEARNING_STYLE_QUIZ_QUESTIONS.map((q, i) => {
+                const optionIndex = answers[i] ?? -1;
+                const answerText = getQuizAnswerText(i, optionIndex);
+                return (
+                  <div key={q.id} className="pt-4">
+                    <p className="text-[13px] font-medium mb-1" style={{ color: colors.textSecondary }}>
+                      {i + 1}. {q.question}
+                    </p>
+                    <p className="text-[14px]" style={{ color: colors.textPrimary }}>
+                      {answerText || "—"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 // ── Contact Us modal ─────────────────────────────────────────────────────────
 function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -282,17 +340,12 @@ export default function ProfilePage() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { colors, accentColor } = useTheme();
-  const [learningStyle, setLearningStyle] = useState<string | null>(null);
+  const learningStyle = user?.learningStyle ?? localStorage.getItem("learningStyleResult");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [helpExpanded, setHelpExpanded] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showBugReport, setShowBugReport] = useState(false);
   const [showContact, setShowContact] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("learningStyleResult");
-    setLearningStyle(saved);
-  }, []);
 
   const handleBack = () => {
     navigate(-1);
@@ -554,6 +607,11 @@ export default function ProfilePage() {
                 <ChevronRight className="w-5 h-5" style={{ color: colors.textSecondary }} />
               </motion.div>
             </Link>
+          )}
+
+          {/* Your quiz Q&A — when user has completed the quiz and we have answers */}
+          {learningStyle && user?.learningStyleAnswers && user.learningStyleAnswers.length > 0 && (
+            <QuizAnswersSection answers={user.learningStyleAnswers} colors={colors} accentColor={accentColor} />
           )}
 
           {/* Settings */}

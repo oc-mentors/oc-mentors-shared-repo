@@ -2,7 +2,7 @@ import { LoginAnimation } from "./components/LoginAnimation";
 import { LogoutAnimation } from "./components/LogoutAnimation";
 import { AnimatePresence } from "motion/react";
 import { useEffect } from "react";
-import { HashRouter, Routes, Route, Navigate } from "react-router";
+import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CalendarProvider } from "./contexts/CalendarContext";
@@ -40,6 +40,7 @@ import BookSessionPage from "./pages/BookSessionPage";
 import SubjectTutorsPage from "./pages/SubjectTutorsPage";
 import CourseNotificationSettingsPage from "./pages/CourseNotificationSettingsPage";
 import ThemeCustomizationPage from "./pages/ThemeCustomizationPage";
+import AcademicInfoPage from "./pages/AcademicInfoPage";
 
 export default function App() {
   return (
@@ -83,7 +84,17 @@ function SafeAppRoutes() {
 }
 
 function AppRoutes() {
-  const { isAuthenticated, isLoading, showLoginAnimation, clearLoginAnimation, showLogoutAnimation, clearLogoutAnimation } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, isLoading, user, profileLoaded, showLoginAnimation, clearLoginAnimation, showLogoutAnimation, clearLogoutAnimation } = useAuth();
+
+  // Redirect to Learning Style Quiz first when user has no quiz result (app start or after signup)
+  useEffect(() => {
+    if (!user || !profileLoaded || user.learningStyle) return;
+    const pathname = location.pathname || "/";
+    if (pathname === "/learning-quiz" || pathname === "/login" || pathname === "/splash") return;
+    navigate("/learning-quiz", { replace: true });
+  }, [user, profileLoaded, location.pathname, navigate]);
 
   // Auto-dismiss the login animation after 1.3 s, then AnimatePresence fades it out over 0.55 s
   useEffect(() => {
@@ -155,6 +166,7 @@ function AppRoutes() {
         <Route path="/book-session/:subject" element={isAuthenticated ? <SubjectTutorsPage /> : <Navigate to="/login" replace />} />
         <Route path="/course/:courseId/notifications" element={isAuthenticated ? <CourseNotificationSettingsPage /> : <Navigate to="/login" replace />} />
         <Route path="/theme-customization" element={isAuthenticated ? <ThemeCustomizationPage /> : <Navigate to="/login" replace />} />
+        <Route path="/academic-info" element={isAuthenticated ? <AcademicInfoPage /> : <Navigate to="/login" replace />} />
         
         {/* Tutor-specific Routes */}
         <Route path="/tutor-students" element={isAuthenticated ? <TutorStudentsPage /> : <Navigate to="/login" replace />} />

@@ -96,7 +96,7 @@ export default function SettingsPage() {
               </motion.button>
 
               {/* Academic Information */}
-              <Link to="/progress">
+              <Link to="/academic-info">
                 <motion.button
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}

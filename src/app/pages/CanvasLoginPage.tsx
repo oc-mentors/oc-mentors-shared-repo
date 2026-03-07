@@ -2,6 +2,7 @@ import { useNavigate } from "react-router";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useCanvasAuth } from "../contexts/CanvasAuthContext";
+import { BottomNav } from "../components/BottomNav";
 
 export default function CanvasLoginPage() {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ export default function CanvasLoginPage() {
 
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-[#1a1d29] flex items-center justify-center px-6">
+      <div className="min-h-screen bg-[#1a1d29] flex flex-col items-center justify-center px-6 pb-20">
         <div className="max-w-md w-full text-center">
           <motion.div
             initial={{ scale: 0 }}
@@ -111,12 +112,13 @@ export default function CanvasLoginPage() {
             ))}
           </motion.div>
         </div>
+        <BottomNav currentPage="canvas" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1d29] flex items-center justify-center px-6">
+    <div className="min-h-screen bg-[#1a1d29] flex flex-col items-center justify-center px-6 pb-20">
       <div className="max-w-md w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -233,6 +235,7 @@ export default function CanvasLoginPage() {
           </p>
         </motion.div>
       </div>
+      <BottomNav currentPage="canvas" />
     </div>
   );
 }

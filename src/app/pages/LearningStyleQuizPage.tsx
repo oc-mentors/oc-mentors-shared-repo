@@ -5,63 +5,19 @@ import svgPaths from "../../imports/svg-in824s3fr2";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Check, ChevronLeft, Eye } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import type { LearningStyle } from "../contexts/AuthContext";
+import { LEARNING_STYLE_QUIZ_QUESTIONS as quizQuestions } from "../lib/learningStyleQuiz";
 
-interface QuizQuestion {
-  id: number;
-  question: string;
-  options: string[];
-}
-
-const quizQuestions: QuizQuestion[] = [
-  {
-    id: 1,
-    question: "When learning something new, I prefer to:",
-    options: [
-      "Watch a video or diagram",
-      "Listen to someone explain it",
-      "Read about it in a textbook or article",
-      "Do hands-on practice",
-    ],
-  },
-  {
-    id: 2,
-    question: "I remember information best when I:",
-    options: [
-      "See pictures and charts",
-      "Hear it spoken aloud",
-      "Write notes about it",
-      "Practice or experience it",
-    ],
-  },
-  {
-    id: 3,
-    question: "When studying, I prefer to:",
-    options: [
-      "Look at diagrams and visual aids",
-      "Discuss topics with others",
-      "Read textbooks and articles",
-      "Work on practice problems",
-    ],
-  },
-  {
-    id: 4,
-    question: "I understand concepts better through:",
-    options: [
-      "Visual demonstrations",
-      "Verbal explanations",
-      "Written instructions",
-      "Hands-on activities",
-    ],
-  },
-];
-
-const learningStyles = ["Visual", "Auditory", "Reading/Writing", "Kinesthetic"];
+const learningStyles: LearningStyle[] = ["Visual", "Auditory", "Reading/Writing", "Kinesthetic"];
 
 export default function LearningStyleQuizPage() {
   const navigate = useNavigate();
+  const { user, updateUser } = useAuth();
   const [searchParams] = useSearchParams();
   const isRetake = searchParams.get("retake") === "true";
-  const savedResult = localStorage.getItem("learningStyleResult");
+  // For logged-in users, only use profile — never localStorage (so new accounts always see the quiz)
+  const savedResult = (user?.learningStyle ?? null) as LearningStyle | null;
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -115,13 +71,21 @@ export default function LearningStyleQuizPage() {
     return learningStyles[maxIndex];
   };
 
-  // Save result to localStorage when results are shown
+  // Save result + answers to Firestore (user profile) and localStorage when results are shown (once)
+  const savedToBackendRef = useRef(false);
   useEffect(() => {
-    if (showResults) {
-      const result = getResult();
-      localStorage.setItem("learningStyleResult", result);
+    if (!showResults || savedToBackendRef.current || selectedAnswers.length < quizQuestions.length) return;
+    const result = getResult() as LearningStyle;
+    localStorage.setItem("learningStyleResult", result);
+    if (user?.id) {
+      savedToBackendRef.current = true;
+      updateUser({
+        learningStyle: result,
+        learningStyleAnswers: [...selectedAnswers],
+        learningStyleCompletedAt: new Date().toISOString(),
+      });
     }
-  }, [showResults]);
+  }, [showResults, user?.id, updateUser, selectedAnswers]);
 
   if (showResults) {
     const result = getResult();
@@ -409,6 +373,17 @@ export default function LearningStyleQuizPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Intro for new users */}
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="px-6 text-[15px] mb-4"
+          style={{ color: colors.textSecondary }}
+        >
+          Tell us a bit more about how you learn best — we’ll use this to personalize your experience.
+        </motion.p>
 
         {/* Progress Bar */}
         <div className="px-6 mb-8">

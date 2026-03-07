@@ -1,4 +1,14 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
+import {
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  writeBatch,
+} from "firebase/firestore";
+import { db, firestoreReady } from "../lib/firebase";
+import { useAuth } from "./AuthContext";
 
 export interface Message {
   id: number;
@@ -371,96 +381,174 @@ const defaultMessages: Record<number, Message[]> = {
   ],
 };
 
+// Firestore: users/{uid}/conversations/{convId}, users/{uid}/conversations/{convId}/messages/{msgId}
+// Rules: allow read, write if request.auth != null && request.auth.uid == uid (for users/{uid}/conversations and subcollections)
+const CONVERSATIONS_COLLECTION = "conversations";
+const MESSAGES_COLLECTION = "messages";
+
+function conversationRef(uid: string, conversationId: number) {
+  return doc(db, "users", uid, CONVERSATIONS_COLLECTION, String(conversationId));
+}
+function messagesRef(uid: string, conversationId: number) {
+  return collection(db, "users", uid, CONVERSATIONS_COLLECTION, String(conversationId), MESSAGES_COLLECTION);
+}
+function messageRef(uid: string, conversationId: number, messageId: number) {
+  return doc(db, "users", uid, CONVERSATIONS_COLLECTION, String(conversationId), MESSAGES_COLLECTION, String(messageId));
+}
+
 export function ConversationsProvider({ children }: { children: ReactNode }) {
-  const [conversations, setConversations] = useState<Conversation[]>(() => {
-    const stored = localStorage.getItem('conversations_v2');
-    if (!stored) return defaultConversations;
-    const parsed: Conversation[] = JSON.parse(stored);
-    // Migrate: backfill tutorId onto any tutor conversation that is missing it
-    const tutorIdMap: Record<number, number> = { 1: 1, 5: 2, 6: 3, 7: 5 };
-    return parsed.map(c =>
-      c.role === 'tutor' && c.tutorId == null && tutorIdMap[c.id] != null
-        ? { ...c, tutorId: tutorIdMap[c.id] }
-        : c
-    );
-  });
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversationMessages, setConversationMessages] = useState<Record<number, Message[]>>({});
+  const [loaded, setLoaded] = useState(false);
 
-  const [conversationMessages, setConversationMessages] = useState<Record<number, Message[]>>(() => {
-    const stored = localStorage.getItem('conversationMessages_v2');
-    return stored ? JSON.parse(stored) : defaultMessages;
-  });
-
+  // Load from Firestore when user is ready; seed with defaults if empty
   useEffect(() => {
-    localStorage.setItem('conversations_v2', JSON.stringify(conversations));
-  }, [conversations]);
+    if (!user?.id) {
+      setConversations([]);
+      setConversationMessages({});
+      setLoaded(true);
+      return;
+    }
 
-  useEffect(() => {
-    localStorage.setItem('conversationMessages_v2', JSON.stringify(conversationMessages));
-  }, [conversationMessages]);
+    const uid = user.id;
 
-  const addConversation = (conversation: Conversation) => {
-    setConversations(prev => {
-      if (prev.some(c => c.id === conversation.id)) {
-        return prev;
+    (async () => {
+      await firestoreReady;
+      try {
+        const convSnap = await getDocs(collection(db, "users", uid, CONVERSATIONS_COLLECTION));
+        if (convSnap.empty) {
+          // Seed: write default conversations and messages to Firestore
+          const batch = writeBatch(db);
+          for (const c of defaultConversations) {
+            const ref = conversationRef(uid, c.id);
+            batch.set(ref, { ...c, id: c.id });
+          }
+          await batch.commit();
+          for (const c of defaultConversations) {
+            const msgs = defaultMessages[c.id];
+            if (msgs?.length) {
+              const msgBatch = writeBatch(db);
+              for (const m of msgs) {
+                msgBatch.set(messageRef(uid, c.id, m.id), { ...m, id: m.id });
+              }
+              await msgBatch.commit();
+            }
+          }
+          setConversations(defaultConversations);
+          setConversationMessages(defaultMessages);
+        } else {
+          const convs: Conversation[] = [];
+          const msgsMap: Record<number, Message[]> = {};
+          for (const d of convSnap.docs) {
+            const data = d.data() as Conversation;
+            convs.push({ ...data, id: data.id });
+            const msgSnap = await getDocs(messagesRef(uid, data.id));
+            msgsMap[data.id] = msgSnap.docs
+              .map(md => ({ ...md.data(), id: (md.data() as Message).id } as Message))
+              .sort((a, b) => a.id - b.id);
+          }
+          convs.sort((a, b) => a.id - b.id);
+          setConversations(convs);
+          setConversationMessages(msgsMap);
+        }
+      } catch (e) {
+        console.error("[Conversations] Load/seed failed:", e);
+      } finally {
+        setLoaded(true);
       }
+    })();
+  }, [user?.id]);
+
+  const addConversation = useCallback((conversation: Conversation) => {
+    setConversations(prev => {
+      if (prev.some(c => c.id === conversation.id)) return prev;
       return [conversation, ...prev];
     });
+    setConversationMessages(prev =>
+      prev[conversation.id] ? prev : { ...prev, [conversation.id]: [] }
+    );
+    if (user?.id) {
+      firestoreReady.then(() =>
+        setDoc(conversationRef(user.id, conversation.id), { ...conversation, id: conversation.id })
+      ).catch(e => console.error("[Conversations] addConversation write failed:", e));
+    }
+  }, [user?.id]);
 
-    setConversationMessages(prev => {
-      if (!prev[conversation.id]) {
-        return {
-          ...prev,
-          [conversation.id]: [],
-        };
-      }
-      return prev;
-    });
-  };
-
-  const updateConversation = (id: number, updates: Partial<Conversation>) => {
+  const updateConversation = useCallback((id: number, updates: Partial<Conversation>) => {
     setConversations(prev =>
       prev.map(conv => (conv.id === id ? { ...conv, ...updates } : conv))
     );
-  };
+    if (user?.id) {
+      firestoreReady.then(() =>
+        setDoc(conversationRef(user.id, id), { ...updates, id }, { merge: true })
+      ).catch(e => console.error("[Conversations] updateConversation write failed:", e));
+    }
+  }, [user?.id]);
 
-  const deleteConversation = (id: number) => {
+  const deleteConversation = useCallback(async (id: number) => {
     setConversations(prev => prev.filter(c => c.id !== id));
     setConversationMessages(prev => {
       const { [id]: _, ...rest } = prev;
       return rest;
     });
-  };
+    if (user?.id) {
+      try {
+        await firestoreReady;
+        const msgSnap = await getDocs(messagesRef(user.id, id));
+        for (const d of msgSnap.docs) await deleteDoc(d.ref);
+        await deleteDoc(conversationRef(user.id, id));
+      } catch (e) {
+        console.error("[Conversations] deleteConversation failed:", e);
+      }
+    }
+  }, [user?.id]);
 
-  const getConversation = (id: number) => {
+  const getConversation = useCallback((id: number) => {
     return conversations.find(c => c.id === id);
-  };
+  }, [conversations]);
 
-  const hasConversation = (id: number) => {
+  const hasConversation = useCallback((id: number) => {
     return conversations.some(c => c.id === id);
-  };
+  }, [conversations]);
 
-  const getMessages = (conversationId: number) => {
+  const getMessages = useCallback((conversationId: number) => {
     return conversationMessages[conversationId] || [];
-  };
+  }, [conversationMessages]);
 
-  const addMessage = (conversationId: number, message: Message) => {
+  const addMessage = useCallback((conversationId: number, message: Message) => {
     setConversationMessages(prev => ({
       ...prev,
       [conversationId]: [...(prev[conversationId] || []), message],
     }));
+    setConversations(prev =>
+      prev.map(c => c.id === conversationId ? { ...c, message: message.text, timestamp: message.time } : c)
+    );
+    if (user?.id) {
+      firestoreReady.then(async () => {
+        await setDoc(messageRef(user.id, conversationId, message.id), { ...message, id: message.id });
+        await setDoc(
+          conversationRef(user.id, conversationId),
+          { message: message.text, timestamp: message.time, id: conversationId },
+          { merge: true }
+        );
+      }).catch(e => console.error("[Conversations] addMessage write failed:", e));
+    }
+  }, [user?.id]);
 
-    updateConversation(conversationId, {
-      message: message.text,
-      timestamp: message.time,
-    });
-  };
-
-  const setMessagesForConversation = (conversationId: number, messages: Message[]) => {
-    setConversationMessages(prev => ({
-      ...prev,
-      [conversationId]: messages,
-    }));
-  };
+  const setMessagesForConversation = useCallback((conversationId: number, messages: Message[]) => {
+    setConversationMessages(prev => ({ ...prev, [conversationId]: messages }));
+    if (user?.id) {
+      firestoreReady.then(async () => {
+        const ref = messagesRef(user.id, conversationId);
+        const snap = await getDocs(ref);
+        for (const d of snap.docs) await deleteDoc(d.ref);
+        for (const m of messages) {
+          await setDoc(messageRef(user.id, conversationId, m.id), { ...m, id: m.id });
+        }
+      }).catch(e => console.error("[Conversations] setMessagesForConversation failed:", e));
+    }
+  }, [user?.id]);
 
   return (
     <ConversationsContext.Provider

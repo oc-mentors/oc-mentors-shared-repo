@@ -23,13 +23,15 @@ const panelVariants = {
 };
 
 export default function LoginPage() {
-  const { login, signup } = useAuth();
+  const { login, signup, loginWithGoogle } = useAuth();
   
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [slideDir, setSlideDir] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   
   // Form fields
@@ -40,11 +42,13 @@ export default function LoginPage() {
   const handleRoleSelect = (role: UserRole) => {
     setSlideDir(1);
     setSelectedRole(role);
+    setError(null);
   };
 
   const handleChangeRole = () => {
     setSlideDir(-1);
     setSelectedRole(null);
+    setError(null);
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,17 +56,55 @@ export default function LoginPage() {
     if (!selectedRole) return;
     
     setIsLoading(true);
+    setError(null);
     setShowForgotPasswordModal(false);
+
+    const timeoutMs = 15000;
+    const timeoutId = setTimeout(() => {
+      setError("This is taking longer than usual. Check your connection and try again.");
+      setIsLoading(false);
+    }, timeoutMs);
+
     try {
       if (mode === "login") {
         await login(email, password, selectedRole);
       } else {
         await signup(name, email, password, selectedRole);
       }
-      // Auth context now handles showLoginAnimation + routing redirect
-    } catch (error) {
-      console.error("Auth error:", error);
+    } catch (err: unknown) {
+      const message = err && typeof err === "object" && "code" in err
+        ? (err as { code: string }).code === "auth/invalid-credential" || (err as { code: string }).code === "auth/wrong-password"
+          ? "Wrong email or password."
+          : (err as { code: string }).code === "auth/user-not-found"
+            ? "No account with this email."
+            : (err as { code: string }).code === "auth/email-already-in-use"
+              ? "This email is already registered. Try signing in."
+              : (err as { code: string }).code === "auth/weak-password"
+                ? "Password should be at least 6 characters."
+                : "Something went wrong. Please try again."
+        : "Something went wrong. Please try again.";
+      setError(message);
+    } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (!selectedRole) return;
+    setIsGoogleLoading(true);
+    setError(null);
+    try {
+      await loginWithGoogle(selectedRole);
+    } catch (err: unknown) {
+      const message = err && typeof err === "object" && "code" in err
+        ? (err as { code: string }).code === "auth/popup-closed-by-user"
+          ? "Sign-in was cancelled."
+          : "Something went wrong with Google sign-in. Try again."
+        : "Something went wrong. Please try again.";
+      setError(message);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -229,6 +271,12 @@ export default function LoginPage() {
                   </button>
                 </div>
 
+                {error && (
+                  <p className="text-sm text-red-400 bg-red-500/10 rounded-xl px-4 py-2">
+                    {error}
+                  </p>
+                )}
+
                 {/* Forgot Password Link */}
                 {mode === "login" && (
                   <div className="mt-4 text-center">
@@ -243,12 +291,12 @@ export default function LoginPage() {
 
                 {/* Submit Button */}
                 <motion.button
-                  whileHover={{ scale: isFormValid ? 1.02 : 1 }}
-                  whileTap={{ scale: isFormValid ? 0.98 : 1 }}
+                  whileHover={{ scale: isFormValid && !isGoogleLoading ? 1.02 : 1 }}
+                  whileTap={{ scale: isFormValid && !isGoogleLoading ? 0.98 : 1 }}
                   type="submit"
-                  disabled={!isFormValid || isLoading}
+                  disabled={!isFormValid || isLoading || isGoogleLoading}
                   className={`w-full rounded-2xl py-4 font-semibold text-white shadow-lg transition-all ${
-                    isFormValid
+                    isFormValid && !isGoogleLoading
                       ? "bg-gradient-to-r from-[#4361d9] to-[#5b7ceb] hover:shadow-[0px_8px_24px_0px_rgba(67,97,217,0.4)]"
                       : "bg-[#2a2f45] cursor-not-allowed opacity-50"
                   }`}
@@ -262,6 +310,39 @@ export default function LoginPage() {
                     "Sign In"
                   ) : (
                     "Create Account"
+                  )}
+                </motion.button>
+
+                {/* Google Sign-In */}
+                <motion.button
+                  whileHover={{ scale: isGoogleLoading || isLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: isGoogleLoading || isLoading ? 1 : 0.98 }}
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading || isLoading}
+                  className="w-full rounded-2xl py-3.5 flex items-center justify-center gap-3 font-semibold transition-all shadow-[0px_4px_16px_0px_rgba(0,0,0,0.4)]"
+                  style={{
+                    backgroundColor: "#ffffff",
+                    color: "#3c4043",
+                    opacity: isLoading ? 0.5 : 1,
+                  }}
+                >
+                  {isGoogleLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin text-[#4285F4]" />
+                      <span>Signing in with Google...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                        <path fill="none" d="M0 0h48v48H0z"/>
+                      </svg>
+                      <span>{mode === "login" ? "Sign in with Google" : "Sign up with Google"}</span>
+                    </>
                   )}
                 </motion.button>
               </form>
