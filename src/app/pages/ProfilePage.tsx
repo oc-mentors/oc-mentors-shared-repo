@@ -624,13 +624,6 @@ export default function ProfilePage() {
             </Link>
           )}
 
-          {/* Your quiz Q&A — when user has completed the quiz and we have answers */}
-          {learningStyle && (user?.learningStyleQuestionAnswers?.length ? (
-            <QuizAnswersSection questionAnswers={user.learningStyleQuestionAnswers} colors={colors} accentColor={accentColor} />
-          ) : user?.learningStyleAnswers && user.learningStyleAnswers.length > 0 ? (
-            <QuizAnswersSection answers={user.learningStyleAnswers} colors={colors} accentColor={accentColor} />
-          ) : null)}
-
           {/* Settings */}
           <Link to="/settings">
             <motion.div

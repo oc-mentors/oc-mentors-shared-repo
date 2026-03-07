@@ -1,29 +1,51 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import { BottomNav } from "../components/BottomNav";
 import svgPaths from "../../imports/svg-2ctauirw4p";
 import { EditProfileModal } from "../components/EditProfileModal";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
-import { motion } from "motion/react";
-import { ArrowLeft, ChevronRight, Bell, Mail, Volume2, Lock, Shield, LogOut, Globe, Palette, Moon, Sun, Check } from "lucide-react";
-import { useTheme, accentColors } from "../contexts/ThemeContext";
+import { motion, AnimatePresence } from "motion/react";
+import { ArrowLeft, ChevronRight, ChevronDown, Bell, Mail, Globe, Moon, Sun, Eye, Ear, BookOpen, Hand, Layers, Target, RefreshCw } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import { LEARNING_STYLE_QUIZ_QUESTIONS, getQuizAnswerText } from "../lib/learningStyleQuiz";
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(true);
-  const { mode, accentColor, setMode, setAccentColor, toggleMode, colors } = useTheme();
-  const [showThemeModal, setShowThemeModal] = useState(false);
-  const [showAccentModal, setShowAccentModal] = useState(false);
+  const { mode, accentColor, colors } = useTheme();
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [quizAnswersExpanded, setQuizAnswersExpanded] = useState(false);
+
+  const learningStyle = user?.learningStyle ?? (typeof localStorage !== "undefined" ? localStorage.getItem("learningStyleResult") : null);
+  const hasQuizAnswers = !!(user?.learningStyleQuestionAnswers?.length ?? (user?.learningStyleAnswers?.length ?? 0));
+  const quizItems = user?.learningStyleQuestionAnswers?.length
+    ? user.learningStyleQuestionAnswers.map((qa, i) => ({ key: i, question: qa.question, answer: qa.answer }))
+    : (user?.learningStyleAnswers ?? []).map((_, i) => ({
+        key: i,
+        question: LEARNING_STYLE_QUIZ_QUESTIONS[i]?.question ?? "",
+        answer: getQuizAnswerText(i, user?.learningStyleAnswers?.[i] ?? -1) || "—",
+      }));
 
   return (
     <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
       <div className="max-w-md mx-auto">
-        {/* Header with Profile Button */}
+        {/* Header with back arrow */}
         <div className="px-6 pt-12 pb-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Settings</h1>
+            <motion.button
+              onClick={() => navigate(-1)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: colors.bgTertiary }}
+            >
+              <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
+            </motion.button>
+            <h1 className="text-[28px] font-bold flex-1 text-center mr-10" style={{ color: colors.textPrimary }}>Settings</h1>
           </div>
         </div>
 
@@ -94,6 +116,96 @@ export default function SettingsPage() {
                 </div>
                 <ChevronRight className="w-5 h-5" style={{ color: colors.textSecondary }} />
               </motion.button>
+
+              {/* Learning style — learner type + quiz answers (only here in Settings) */}
+              <div className="rounded-2xl shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] overflow-hidden" style={{ backgroundColor: colors.bgCard }}>
+                {learningStyle ? (
+                  <>
+                    <div className="p-4 flex items-center justify-between">
+                      <Link to="/learning-quiz" className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${accentColor.primary}20` }}>
+                          {learningStyle === "Visual" && <Eye className="w-5 h-5" style={{ color: accentColor.primary }} />}
+                          {learningStyle === "Auditory" && <Ear className="w-5 h-5" style={{ color: accentColor.primary }} />}
+                          {learningStyle === "Reading/Writing" && <BookOpen className="w-5 h-5" style={{ color: accentColor.primary }} />}
+                          {learningStyle === "Kinesthetic" && <Hand className="w-5 h-5" style={{ color: accentColor.primary }} />}
+                          {learningStyle === "Mixed" && <Layers className="w-5 h-5" style={{ color: accentColor.primary }} />}
+                        </div>
+                        <span className="text-[15px] font-medium truncate" style={{ color: colors.textPrimary }}>
+                          {learningStyle} Learner
+                        </span>
+                      </Link>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Link to="/learning-quiz?retake=true">
+                          <motion.div whileTap={{ scale: 0.9 }} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: colors.bgTertiary }}>
+                            <RefreshCw className="w-4 h-4" style={{ color: colors.textSecondary }} />
+                          </motion.div>
+                        </Link>
+                        <Link to="/learning-quiz">
+                          <ChevronRight className="w-5 h-5" style={{ color: colors.textSecondary }} />
+                        </Link>
+                      </div>
+                    </div>
+                    {hasQuizAnswers && (
+                      <>
+                        <motion.button
+                          whileTap={{ scale: 0.99 }}
+                          onClick={() => setQuizAnswersExpanded((v) => !v)}
+                          className="w-full px-4 pb-4 pt-0 flex items-center justify-between"
+                        >
+                          <span className="text-[13px] font-medium" style={{ color: colors.textSecondary }}>
+                            Your quiz answers
+                          </span>
+                          <motion.div animate={{ rotate: quizAnswersExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                            <ChevronDown className="w-5 h-5" style={{ color: colors.textSecondary }} />
+                          </motion.div>
+                        </motion.button>
+                        <AnimatePresence initial={false}>
+                          {quizAnswersExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.25 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="px-4 pb-4 space-y-4 border-t" style={{ borderColor: colors.borderSecondary }}>
+                                {quizItems.map((item, i) => (
+                                  <div key={item.key} className="pt-4">
+                                    <p className="text-[13px] font-medium mb-1" style={{ color: colors.textSecondary }}>
+                                      {i + 1}. {item.question}
+                                    </p>
+                                    <p className="text-[14px]" style={{ color: colors.textPrimary }}>
+                                      {item.answer}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <Link to="/learning-quiz">
+                    <motion.div
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full p-4 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ backgroundColor: colors.bgTertiary }}>
+                          <Target className="w-5 h-5 text-[#AD46FF]" />
+                        </div>
+                        <span className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
+                          Take Learning Style Quiz
+                        </span>
+                      </div>
+                      <ChevronRight className="w-5 h-5" style={{ color: colors.textSecondary }} />
+                    </motion.div>
+                  </Link>
+                )}
+              </div>
 
               {/* Academic Information */}
               <Link to="/academic-info">

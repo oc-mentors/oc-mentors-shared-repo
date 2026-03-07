@@ -95,16 +95,15 @@ export default function ProgressPage() {
           className="px-6 pt-12 pb-3"
         >
           <div className="flex items-center justify-between mb-2">
-            <Link to="/">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer"
-                style={{ backgroundColor: colors.bgTertiary }}
-              >
-                <ArrowLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
-              </motion.button>
-            </Link>
+            <motion.button
+              onClick={() => navigate(-1)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer"
+              style={{ backgroundColor: colors.bgTertiary }}
+            >
+              <ArrowLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
+            </motion.button>
             {/* ProfileButton removed — subpage */}
           </div>
 
