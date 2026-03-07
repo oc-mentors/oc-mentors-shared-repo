@@ -67,21 +67,29 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
 
     if (storage) {
       setUploadingAvatar(true);
+      const UPLOAD_TIMEOUT_MS = 20000; // 20 seconds
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Upload timed out. Is Firebase Storage enabled?")), UPLOAD_TIMEOUT_MS)
+      );
       try {
+        console.log("[Avatar] Upload starting:", file.name, file.size, "bytes");
         const path = `avatars/${user.id}/${Date.now()}_${file.name}`;
         const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, file);
+        await Promise.race([uploadBytes(storageRef, file), timeoutPromise]);
+        console.log("[Avatar] uploadBytes done, getting URL...");
         const downloadUrl = await getDownloadURL(storageRef);
+        console.log("[Avatar] Success, URL length:", downloadUrl.length);
         setFormData((prev) => ({ ...prev, avatar: downloadUrl }));
-        // Persist avatar immediately so it shows without clicking Save
         updateUser({ avatar: downloadUrl });
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
-        console.error("Avatar upload failed:", err);
+        const code = err && typeof err === "object" && "code" in err ? String((err as { code: string }).code) : "";
+        console.error("[Avatar] Upload failed:", code || message, err);
         setUploadError(
-          "Upload failed. In Firebase Console, enable Storage and add rules to allow uploads (e.g. allow write: if request.auth.uid == userId)."
+          code
+            ? `${code}: ${message}`
+            : message || "Upload failed. In Firebase Console enable Storage and deploy storage.rules."
         );
-        // Fallback: show image locally via data URL so they can at least see it (Save will store URL in Firestore; avoid huge data URLs)
         const sizeMb = file.size / (1024 * 1024);
         if (sizeMb < 0.5) {
           const reader = new FileReader();
@@ -95,6 +103,7 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
         setUploadingAvatar(false);
       }
     } else {
+      console.warn("[Avatar] Firebase Storage not available (storage is null). Using data URL.");
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
