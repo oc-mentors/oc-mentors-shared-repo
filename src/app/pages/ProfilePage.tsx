@@ -3,24 +3,33 @@ import { BottomNav } from "../components/BottomNav";
 import { AvatarWithInitials } from "../components/AvatarWithInitials";
 import svgPaths from "../../imports/svg-ncbm4ttepm";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, ChevronRight, TrendingUp, Target, Settings, HelpCircle, LogOut, Eye, Ear, BookOpen, Hand, RefreshCw, Lightbulb, Bug, Send, CheckCircle, X, ChevronDown, Mail, Clock, Copy, ExternalLink } from "lucide-react";
+import { ArrowLeft, ChevronRight, TrendingUp, Target, Settings, HelpCircle, LogOut, Eye, Ear, BookOpen, Hand, Layers, RefreshCw, Lightbulb, Bug, Send, CheckCircle, X, ChevronDown, Mail, Clock, Copy, ExternalLink } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import { LogoutConfirmModal } from "../components/LogoutConfirmModal";
 import { LEARNING_STYLE_QUIZ_QUESTIONS, getQuizAnswerText } from "../lib/learningStyleQuiz";
 
-// ── Quiz Q&A section (questions + selected answers) ───────────────────────────
+// ── Quiz Q&A section (questions + selected answers from DB or indices) ─────────
 function QuizAnswersSection({
   answers,
+  questionAnswers,
   colors,
   accentColor,
 }: {
-  answers: number[];
+  answers?: number[];
+  questionAnswers?: { question: string; answer: string }[];
   colors: { bgCard: string; textPrimary: string; textSecondary: string; borderSecondary: string };
   accentColor: { primary: string };
 }) {
   const [expanded, setExpanded] = useState(false);
+  const items = questionAnswers?.length
+    ? questionAnswers.map((qa, i) => ({ key: i, question: qa.question, answer: qa.answer }))
+    : (answers ?? []).map((_, i) => ({
+        key: i,
+        question: LEARNING_STYLE_QUIZ_QUESTIONS[i]?.question ?? "",
+        answer: getQuizAnswerText(i, answers![i] ?? -1) || "—",
+      }));
   return (
     <div className="rounded-2xl shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] overflow-hidden" style={{ backgroundColor: colors.bgCard }}>
       <motion.button
@@ -45,20 +54,16 @@ function QuizAnswersSection({
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 space-y-4 border-t" style={{ borderColor: colors.borderSecondary }}>
-              {LEARNING_STYLE_QUIZ_QUESTIONS.map((q, i) => {
-                const optionIndex = answers[i] ?? -1;
-                const answerText = getQuizAnswerText(i, optionIndex);
-                return (
-                  <div key={q.id} className="pt-4">
-                    <p className="text-[13px] font-medium mb-1" style={{ color: colors.textSecondary }}>
-                      {i + 1}. {q.question}
-                    </p>
-                    <p className="text-[14px]" style={{ color: colors.textPrimary }}>
-                      {answerText || "—"}
-                    </p>
-                  </div>
-                );
-              })}
+              {items.map((item, i) => (
+                <div key={item.key} className="pt-4">
+                  <p className="text-[13px] font-medium mb-1" style={{ color: colors.textSecondary }}>
+                    {i + 1}. {item.question}
+                  </p>
+                  <p className="text-[14px]" style={{ color: colors.textPrimary }}>
+                    {item.answer}
+                  </p>
+                </div>
+              ))}
             </div>
           </motion.div>
         )}
@@ -567,6 +572,7 @@ export default function ProfilePage() {
                   {learningStyle === "Auditory" && <Ear className="w-5 h-5" style={{ color: accentColor.primary }} />}
                   {learningStyle === "Reading/Writing" && <BookOpen className="w-5 h-5" style={{ color: accentColor.primary }} />}
                   {learningStyle === "Kinesthetic" && <Hand className="w-5 h-5" style={{ color: accentColor.primary }} />}
+                  {learningStyle === "Mixed" && <Layers className="w-5 h-5" style={{ color: accentColor.primary }} />}
                 </div>
                 <span className="text-[15px] font-medium truncate" style={{ color: colors.textPrimary }}>
                   {learningStyle} Learner
@@ -610,9 +616,11 @@ export default function ProfilePage() {
           )}
 
           {/* Your quiz Q&A — when user has completed the quiz and we have answers */}
-          {learningStyle && user?.learningStyleAnswers && user.learningStyleAnswers.length > 0 && (
+          {learningStyle && (user?.learningStyleQuestionAnswers?.length ? (
+            <QuizAnswersSection questionAnswers={user.learningStyleQuestionAnswers} colors={colors} accentColor={accentColor} />
+          ) : user?.learningStyleAnswers && user.learningStyleAnswers.length > 0 ? (
             <QuizAnswersSection answers={user.learningStyleAnswers} colors={colors} accentColor={accentColor} />
-          )}
+          ) : null)}
 
           {/* Settings */}
           <Link to="/settings">

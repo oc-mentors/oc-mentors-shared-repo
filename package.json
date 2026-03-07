@@ -6,7 +6,10 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "seed-users": "node scripts/seed-users.js"
+    "seed-users": "node scripts/seed-users.js",
+    "seed-tutors": "node scripts/seed-tutors.js",
+    "clear-all": "node scripts/clear-all.js",
+    "reset-and-seed": "node scripts/clear-all.js && node scripts/seed-users.js && node scripts/seed-tutors.js"
   },
   "dependencies": {
     "firebase": "^11.0.2",

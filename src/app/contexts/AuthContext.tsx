@@ -8,12 +8,13 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
 } from "firebase/auth";
-import { doc, getDocFromServer, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDocFromServer, setDoc, updateDoc, deleteField } from "firebase/firestore";
 import { auth, db, firestoreReady } from "../lib/firebase";
+import { LEARNING_STYLE_QUIZ_QUESTIONS, getQuizAnswerText } from "../lib/learningStyleQuiz";
 
 export type UserRole = "student" | "tutor" | "admin";
 
-export type LearningStyle = "Visual" | "Auditory" | "Reading/Writing" | "Kinesthetic";
+export type LearningStyle = "Visual" | "Auditory" | "Reading/Writing" | "Kinesthetic" | "Mixed";
 
 export interface User {
   id: string;
@@ -27,6 +28,8 @@ export interface User {
   learningStyle?: LearningStyle;
   /** Option index (0–3) per question; length = number of quiz questions */
   learningStyleAnswers?: number[];
+  /** Human-readable Q&A stored in DB (question text + selected answer text) */
+  learningStyleQuestionAnswers?: { question: string; answer: string }[];
   learningStyleCompletedAt?: unknown; // Firestore Timestamp when persisted
 }
 
@@ -89,6 +92,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const data = snap.data() as User;
           setUser({ ...data, id: firebaseUser.uid });
           console.log("[Auth] Profile loaded:", data.email ?? data.name);
+          // One-time migration: replace numeric learningStyleAnswers with literal Q&A in Firestore
+          const indices = data.learningStyleAnswers;
+          if (Array.isArray(indices) && indices.length > 0 && !(data.learningStyleQuestionAnswers?.length)) {
+            const questionAnswers = LEARNING_STYLE_QUIZ_QUESTIONS.slice(0, indices.length).map((q, i) => ({
+              question: q.question,
+              answer: getQuizAnswerText(i, indices[i] ?? -1) || "—",
+            }));
+            try {
+              await updateDoc(userRef, {
+                learningStyleQuestionAnswers: questionAnswers,
+                learningStyleAnswers: deleteField(),
+              });
+              setUser((prev) => prev ? { ...prev, learningStyleQuestionAnswers: questionAnswers, learningStyleAnswers: undefined } : null);
+            } catch (e) {
+              console.warn("[Auth] Quiz answers migration failed:", e);
+            }
+          }
         } else {
           console.log("[Auth] No profile yet, creating...");
           await setDoc(userRef, minimalUser);
@@ -164,7 +184,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       const updatedUser = { ...user, ...updates };
       setUser(updatedUser);
-      updateDoc(doc(db, "users", user.id), updates);
+      const firestoreUpdates: Record<string, unknown> = { ...updates };
+      if (updates.learningStyleQuestionAnswers != null && updates.learningStyleQuestionAnswers.length > 0) {
+        firestoreUpdates.learningStyleAnswers = deleteField();
+      }
+      updateDoc(doc(db, "users", user.id), firestoreUpdates);
     }
   };
 

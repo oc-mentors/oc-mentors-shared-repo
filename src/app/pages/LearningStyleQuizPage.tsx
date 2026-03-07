@@ -3,11 +3,11 @@ import { useState, useRef, useEffect } from "react";
 import { BottomNav } from "../components/BottomNav";
 import svgPaths from "../../imports/svg-in824s3fr2";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, Check, ChevronLeft, Eye } from "lucide-react";
+import { ArrowLeft, Check, ChevronLeft, Eye, Layers } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import type { LearningStyle } from "../contexts/AuthContext";
-import { LEARNING_STYLE_QUIZ_QUESTIONS as quizQuestions } from "../lib/learningStyleQuiz";
+import { LEARNING_STYLE_QUIZ_QUESTIONS as quizQuestions, getQuizAnswerText } from "../lib/learningStyleQuiz";
 
 const learningStyles: LearningStyle[] = ["Visual", "Auditory", "Reading/Writing", "Kinesthetic"];
 
@@ -61,17 +61,20 @@ export default function LearningStyleQuizPage() {
     }, 400);
   };
 
-  const getResult = () => {
-    // If showing saved result (not a retake), use the saved value
+  const getResult = (): LearningStyle => {
     if (!isRetake && savedResult && selectedAnswers.length === 0) return savedResult;
     if (selectedAnswers.length === 0) return "Visual";
     const counts = [0, 0, 0, 0];
     selectedAnswers.forEach((answer) => counts[answer]++);
-    const maxIndex = counts.indexOf(Math.max(...counts));
-    return learningStyles[maxIndex];
+    const maxCount = Math.max(...counts);
+    const tiedIndices = counts
+      .map((c, i) => (c === maxCount ? i : -1))
+      .filter((i) => i >= 0);
+    if (tiedIndices.length > 1) return "Mixed";
+    return learningStyles[tiedIndices[0]];
   };
 
-  // Save result + answers to Firestore (user profile) and localStorage when results are shown (once)
+  // Save result + literal Q&A text only (no numeric indices) to Firestore when results are shown (once)
   const savedToBackendRef = useRef(false);
   useEffect(() => {
     if (!showResults || savedToBackendRef.current || selectedAnswers.length < quizQuestions.length) return;
@@ -79,9 +82,13 @@ export default function LearningStyleQuizPage() {
     localStorage.setItem("learningStyleResult", result);
     if (user?.id) {
       savedToBackendRef.current = true;
+      const questionAnswers = quizQuestions.map((q, i) => ({
+        question: q.question,
+        answer: getQuizAnswerText(i, selectedAnswers[i] ?? -1) || "—",
+      }));
       updateUser({
         learningStyle: result,
-        learningStyleAnswers: [...selectedAnswers],
+        learningStyleQuestionAnswers: questionAnswers,
         learningStyleCompletedAt: new Date().toISOString(),
       });
     }
@@ -99,6 +106,8 @@ export default function LearningStyleQuizPage() {
               <path d={svgPaths.p23cbedc0} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="5" />
             </svg>
           );
+        case "Mixed":
+          return <Layers className="w-20 h-20 text-white" />;
         default:
           return <Eye className="w-20 h-20 text-white" />;
       }
@@ -114,6 +123,8 @@ export default function LearningStyleQuizPage() {
           return "You learn best through reading and writing. Textbooks, notes, and written exercises help you absorb and retain knowledge";
         case "Kinesthetic":
           return "You learn best through hands-on experience. Practical activities, experiments, and physical engagement help you absorb and retain knowledge";
+        case "Mixed":
+          return "You learn well in many ways — visual, auditory, reading/writing, and hands-on. Mix different methods to keep studying effective and engaging.";
         default:
           return "";
       }
@@ -144,6 +155,12 @@ export default function LearningStyleQuizPage() {
             { emoji: "🔬", title: "Do Experiments", description: "Hands-on practice makes concepts click" },
             { emoji: "🏃", title: "Take Active Breaks", description: "Move around between study sessions to stay focused" },
             { emoji: "🧩", title: "Use Physical Models", description: "Build or manipulate objects to understand concepts" },
+          ];
+        case "Mixed":
+          return [
+            { emoji: "🔄", title: "Rotate Methods", description: "Switch between videos, notes, and practice to reinforce learning" },
+            { emoji: "📚", title: "Combine Inputs", description: "Read, then discuss, then try it — use more than one style per topic" },
+            { emoji: "✨", title: "Match the Task", description: "Use visuals for concepts, hands-on for skills, writing for recall" },
           ];
         default:
           return [];

@@ -6,19 +6,7 @@ import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useTheme } from "../contexts/ThemeContext";
-
-interface Tutor {
-  id: number;
-  name: string;
-  avatar: string;
-  university: string;
-  subjects: string[];
-  learningStyle: string;
-  rating: number;
-  reviewCount: number;
-  priceLevel: string;
-  review: string;
-}
+import { useTutors } from "../contexts/TutorsContext";
 
 const subjects = ["All", "Math", "Science", "English", "History", "Writing", "Chemistry", "Physics", "Biology"];
 
@@ -26,6 +14,7 @@ export default function TutorsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("All");
   const { colors, accentColor } = useTheme();
+  const { tutors, isLoading, error } = useTutors();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
@@ -54,93 +43,6 @@ export default function TutorsPage() {
     window.addEventListener('resize', handleScroll);
     return () => window.removeEventListener('resize', handleScroll);
   }, []);
-
-  const tutors: Tutor[] = [
-    {
-      id: 1,
-      name: "Debra Peterson",
-      avatar: "https://images.unsplash.com/photo-1600081687786-ce51e1e49ec7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjB3b21hbiUyMG1lbnRvciUyMHR1dG9yfGVufDF8fHx8MTc3MDkyOTIyOHww&ixlib=rb-4.1.0&q=80&w=1080",
-      university: "University of California, Irvine",
-      subjects: ["Math"],
-      learningStyle: "Visual Learning",
-      rating: 4.5,
-      reviewCount: 127,
-      priceLevel: "$$$",
-      review: "Debra is the best Math tutor I ever had! She helped me pass Math 2A!",
-    },
-    {
-      id: 2,
-      name: "Adam Smith",
-      avatar: "https://images.unsplash.com/photo-1621533463397-f292bd0745f9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBtYW4lMjBtZW50b3IlMjBidXNpbmVzc3xlbnwxfHx8fDE3NzA5MjkyMjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      university: "University of California, Irvine",
-      subjects: ["Math"],
-      learningStyle: "Auditory Learning",
-      rating: 4.8,
-      reviewCount: 203,
-      priceLevel: "$$",
-      review: "Adam explains complex concepts clearly and is very patient!",
-    },
-    {
-      id: 3,
-      name: "Maarya Khan",
-      avatar: "https://images.unsplash.com/photo-1655814563963-0fe0a7d6c279?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMHNjaWVudGlzdCUyMHJlc2VhcmNoZXJ8ZW58MXx8fHwxNzcwOTI5MjI5fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      university: "University of California, Irvine",
-      subjects: ["Math", "Writing"],
-      learningStyle: "Reading & Writing",
-      rating: 5.0,
-      reviewCount: 89,
-      priceLevel: "$",
-      review: "Very affordable and helpful! Great for calculus students.",
-    },
-    {
-      id: 4,
-      name: "James Chen",
-      avatar: "https://images.unsplash.com/photo-1532272278764-53cd1fe53f72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx5b3VuZyUyMHByb2Zlc3Npb25hbCUyMG1hbiUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MDkwNTA3NHww&ixlib=rb-4.1.0&q=80&w=1080",
-      university: "University of California, Irvine",
-      subjects: ["Science", "Chemistry", "Biology"],
-      learningStyle: "Hands-on Practice",
-      rating: 4.7,
-      reviewCount: 156,
-      priceLevel: "$$",
-      review: "Fantastic tutor for Chemistry and Biology!",
-    },
-    {
-      id: 5,
-      name: "Emily Rodriguez",
-      avatar: "https://images.unsplash.com/photo-1649589244330-09ca58e4fa64?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMHByb2Zlc3Npb25hbCUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MDg5MjQ1M3ww&ixlib=rb-4.1.0&q=80&w=1080",
-      university: "University of California, Irvine",
-      subjects: ["Science", "Physics"],
-      learningStyle: "Visual Learning",
-      rating: 4.9,
-      reviewCount: 178,
-      priceLevel: "$$$",
-      review: "Amazing at explaining complex concepts!",
-    },
-    {
-      id: 6,
-      name: "Sarah Martinez",
-      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMHByb2Zlc3Npb25hbCUyMHNtaWxlfGVufDF8fHx8MTc3MDkzNTU5NHww&ixlib=rb-4.1.0&q=80&w=1080",
-      university: "University of California, Irvine",
-      subjects: ["English", "Writing"],
-      learningStyle: "Reading & Writing",
-      rating: 4.6,
-      reviewCount: 142,
-      priceLevel: "$$",
-      review: "Great for essay writing and literature analysis!",
-    },
-    {
-      id: 7,
-      name: "David Kim",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYW4lMjBwcm9mZXNzaW9uYWwlMjBzbWlsZXxlbnwxfHx8fDE3NzA5MzU1OTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      university: "University of California, Irvine",
-      subjects: ["History", "English"],
-      learningStyle: "Auditory Learning",
-      rating: 4.4,
-      reviewCount: 98,
-      priceLevel: "$",
-      review: "Excellent history tutor with engaging teaching style!",
-    },
-  ];
 
   const filteredTutors = tutors.filter((tutor) => {
     const matchesSearch =
@@ -254,6 +156,16 @@ export default function TutorsPage() {
 
         {/* Tutors List */}
         <div className="relative flex-1 overflow-hidden">
+          {isLoading && (
+            <div className="px-6 py-8 text-center" style={{ color: colors.textSecondary }}>
+              Loading tutors…
+            </div>
+          )}
+          {error && (
+            <div className="px-6 py-8 text-center" style={{ color: colors.textSecondary }}>
+              {error}
+            </div>
+          )}
           {/* Top fade overlay */}
           <AnimatePresence>
             {showTopFade && (
@@ -276,7 +188,7 @@ export default function TutorsPage() {
             className="h-full overflow-y-auto px-6 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
           >
             <AnimatePresence mode="popLayout">
-              {filteredTutors.map((tutor, index) => (
+              {!isLoading && !error && filteredTutors.map((tutor, index) => (
                 <motion.div
                   key={tutor.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -336,7 +248,7 @@ export default function TutorsPage() {
 
                           {/* Review */}
                           <p className="text-[13px] italic line-clamp-2 mb-2" style={{ color: colors.textSecondary }}>
-                            "{tutor.review}"
+                            "{tutor.review ?? ""}"
                           </p>
 
                           {/* Rating */}
@@ -358,7 +270,7 @@ export default function TutorsPage() {
             </AnimatePresence>
 
             {/* Empty State */}
-            {filteredTutors.length === 0 && (
+            {!isLoading && !error && filteredTutors.length === 0 && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

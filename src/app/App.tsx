@@ -9,6 +9,7 @@ import { CalendarProvider } from "./contexts/CalendarContext";
 import { CanvasAuthProvider } from "./contexts/CanvasAuthContext";
 import { CanvasCoursesProvider } from "./contexts/CanvasCoursesContext";
 import { ConversationsProvider } from "./contexts/ConversationsContext";
+import { TutorsProvider } from "./contexts/TutorsContext";
 import { CanvasSyncManager } from "./components/CanvasSyncManager";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -47,6 +48,7 @@ export default function App() {
     <ErrorBoundary>
       <HashRouter>
         <AuthProvider>
+          <TutorsProvider>
           <ConversationsProvider>
             <ThemeProvider>
               <CalendarProvider>
@@ -60,6 +62,7 @@ export default function App() {
               </CalendarProvider>
             </ThemeProvider>
           </ConversationsProvider>
+          </TutorsProvider>
         </AuthProvider>
       </HashRouter>
     </ErrorBoundary>

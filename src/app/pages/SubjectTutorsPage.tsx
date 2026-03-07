@@ -4,7 +4,9 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCalendar } from "../contexts/CalendarContext";
+import { useTutors, Tutor as BackendTutor } from "../contexts/TutorsContext";
 
+/** Shape used by this page for list and booking modal. */
 interface Tutor {
   id: number;
   name: string;
@@ -20,10 +22,28 @@ interface Tutor {
   location: string;
 }
 
+function mapBackendToPageTutor(t: BackendTutor): Tutor {
+  return {
+    id: t.id,
+    name: t.name,
+    avatar: t.avatar,
+    rating: t.rating,
+    reviews: t.reviewCount,
+    subjects: t.subjects,
+    hourlyRate: t.pricePerHour ?? 0,
+    experience: t.experience ?? "",
+    bio: t.bio ?? "",
+    availability: Array.isArray(t.availability) ? t.availability.join(", ") : (t.availability ?? ""),
+    responseTime: t.responseTime ?? "",
+    location: t.location ?? "",
+  };
+}
+
 export default function SubjectTutorsPage() {
   const navigate = useNavigate();
   const { subject } = useParams<{ subject: string }>();
   const { addSession, addCalendarEvent } = useCalendar();
+  const { tutors: backendTutors, isLoading, error } = useTutors();
   const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingData, setBookingData] = useState({
@@ -38,98 +58,12 @@ export default function SubjectTutorsPage() {
   // Capitalize subject for display
   const subjectDisplay = subject ? subject.charAt(0).toUpperCase() + subject.slice(1) : "";
 
-  // All tutors data
-  const allTutors: Tutor[] = [
-    {
-      id: 1,
-      name: "Debra Peterson",
-      avatar: "https://images.unsplash.com/photo-1600081687786-ce51e1e49ec7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjB3b21hbiUyMG1lbnRvciUyMHR1dG9yfGVufDF8fHx8MTc3MDkyOTIyOHww&ixlib=rb-4.1.0&q=80&w=1080",
-      rating: 4.9,
-      reviews: 127,
-      subjects: ["Math", "Physics"],
-      hourlyRate: 45,
-      experience: "5 years",
-      bio: "PhD in Mathematics with expertise in calculus and linear algebra. I focus on building strong foundational understanding.",
-      availability: "Weekdays 2-8 PM",
-      responseTime: "Usually responds in 2 hours",
-      location: "Remote & In-Person",
-    },
-    {
-      id: 2,
-      name: "Adam Smith",
-      avatar: "https://images.unsplash.com/photo-1621533463397-f292bd0745f9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBtYW4lMjBtZW50b3IlMjBidXNpbmVzc3xlbnwxfHx8fDE3NzA5MjkyMjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      rating: 4.8,
-      reviews: 89,
-      subjects: ["Physics", "Math"],
-      hourlyRate: 50,
-      experience: "7 years",
-      bio: "Former NASA engineer specializing in mechanics and thermodynamics. Love making physics intuitive and fun!",
-      availability: "Flexible schedule",
-      responseTime: "Usually responds in 1 hour",
-      location: "Remote only",
-    },
-    {
-      id: 3,
-      name: "Dr. Sarah Chen",
-      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjB3b21hbiUyMG1lbnRvciUyMHNjaWVudGlzdHxlbnwxfHx8fDE3NzA5MjkyMjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      rating: 5.0,
-      reviews: 203,
-      subjects: ["Chemistry", "Biology"],
-      hourlyRate: 55,
-      experience: "10 years",
-      bio: "Chemistry professor with a passion for organic chemistry and biochemistry. Published researcher and dedicated educator.",
-      availability: "Evenings & weekends",
-      responseTime: "Usually responds in 3 hours",
-      location: "Remote & In-Person",
-    },
-    {
-      id: 4,
-      name: "Michael Torres",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBtYW4lMjBtZW50b3IlMjBidXNpbmVzc3xlbnwxfHx8fDE3NzA5MjkyMjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      rating: 4.7,
-      reviews: 95,
-      subjects: ["Biology", "Chemistry"],
-      hourlyRate: 40,
-      experience: "4 years",
-      bio: "Medical student specializing in biology and anatomy. I break down complex topics into digestible concepts.",
-      availability: "Weekday mornings",
-      responseTime: "Usually responds in 4 hours",
-      location: "Remote only",
-    },
-    {
-      id: 5,
-      name: "Jennifer Lee",
-      avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjB3b21hbiUyMG1lbnRvciUyMHRlYWNoZXJ8ZW58MXx8fHwxNzcwOTI5MjI4fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      rating: 4.9,
-      reviews: 156,
-      subjects: ["Writing"],
-      hourlyRate: 38,
-      experience: "8 years",
-      bio: "Published author and writing coach. Expert in academic writing, essays, and creative writing techniques.",
-      availability: "Afternoons & evenings",
-      responseTime: "Usually responds in 2 hours",
-      location: "Remote & In-Person",
-    },
-    {
-      id: 6,
-      name: "David Park",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBtYW4lMjBtZW50b3IlMjBidXNpbmVzc3xlbnwxfHx8fDE3NzA5MjkyMjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      rating: 4.8,
-      reviews: 112,
-      subjects: ["Math"],
-      hourlyRate: 42,
-      experience: "6 years",
-      bio: "Statistics expert and data scientist. I help students master probability, statistics, and mathematical modeling.",
-      availability: "Flexible schedule",
-      responseTime: "Usually responds in 1 hour",
-      location: "Remote only",
-    },
-  ];
-
-  // Filter tutors by subject
-  const tutors = allTutors.filter((tutor) =>
-    tutor.subjects.some((s) => s.toLowerCase() === subject?.toLowerCase())
-  );
+  // Map backend tutors to page shape and filter by subject
+  const tutors = backendTutors
+    .map(mapBackendToPageTutor)
+    .filter((tutor) =>
+      tutor.subjects.some((s) => s.toLowerCase() === subject?.toLowerCase())
+    );
 
   const handleBookSession = (tutor: Tutor) => {
     setSelectedTutor(tutor);
@@ -223,7 +157,13 @@ export default function SubjectTutorsPage() {
 
         {/* Tutors List */}
         <div className="px-6 space-y-4">
-          {tutors.length > 0 ? (
+          {isLoading && (
+            <p className="text-[#a8b3cf] text-center py-8">Loading tutors…</p>
+          )}
+          {error && (
+            <p className="text-[#a8b3cf] text-center py-8">{error}</p>
+          )}
+          {!isLoading && !error && tutors.length > 0 ? (
             tutors.map((tutor, index) => (
               <motion.div
                 key={tutor.id}
@@ -328,7 +268,7 @@ export default function SubjectTutorsPage() {
                 </div>
               </motion.div>
             ))
-          ) : (
+          ) : !isLoading && !error ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -347,7 +287,7 @@ export default function SubjectTutorsPage() {
                 </motion.button>
               </Link>
             </motion.div>
-          )}
+          ) : null}
         </div>
       </div>
 
