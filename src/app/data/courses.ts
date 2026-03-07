@@ -14,4 +14,5 @@ export const subjects = [
   { name: "Physics", courseId: 3, defaultColor: "rgb(20, 184, 166)", icon: "physics" },
   { name: "Writing", courseId: 4, defaultColor: "rgb(236, 72, 153)", icon: "writing" },
   { name: "Biology", courseId: 5, defaultColor: "rgb(34, 197, 94)", icon: "biology" },
+  { name: "History", courseId: 0, defaultColor: "rgb(180, 83, 9)", icon: "history" },
 ];

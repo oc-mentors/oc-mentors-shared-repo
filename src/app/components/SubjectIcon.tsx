@@ -58,6 +58,13 @@ export function SubjectIcon({ type }: { type: string }) {
           <path d={svgPaths.p25382640} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.67" />
         </svg>
       );
+    case "history":
+      return (
+        <svg className="w-8 h-8" fill="none" viewBox="0 0 32 32">
+          <path d={svgPaths.p2dc07680} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.67" />
+          <path d={svgPaths.p3e24f6c0} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.67" />
+        </svg>
+      );
     default:
       return null;
   }

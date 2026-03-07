@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import { Search, SlidersHorizontal, Star, MapPin, BookOpen } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -20,12 +20,22 @@ interface Tutor {
   review: string;
 }
 
-const subjects = ["All", "Math", "Science", "English", "History", "Writing", "Chemistry", "Physics", "Biology"];
+const SUBJECT_FILTERS = ["All", "Chem", "Math", "Physics", "Writing", "Biology", "History"];
 
 export default function TutorsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const subjectFromUrl = searchParams.get("subject") ?? "";
+  const initialSubject =
+    subjectFromUrl && SUBJECT_FILTERS.includes(subjectFromUrl) ? subjectFromUrl : "All";
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("All");
+  const [selectedSubject, setSelectedSubject] = useState(initialSubject);
   const { colors, accentColor } = useTheme();
+
+  useEffect(() => {
+    const sub = searchParams.get("subject") ?? "";
+    setSelectedSubject(sub && SUBJECT_FILTERS.includes(sub) ? sub : "All");
+  }, [searchParams]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
@@ -97,7 +107,7 @@ export default function TutorsPage() {
       name: "James Chen",
       avatar: "https://images.unsplash.com/photo-1532272278764-53cd1fe53f72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx5b3VuZyUyMHByb2Zlc3Npb25hbCUyMG1hbiUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MDkwNTA3NHww&ixlib=rb-4.1.0&q=80&w=1080",
       university: "University of California, Irvine",
-      subjects: ["Science", "Chemistry", "Biology"],
+      subjects: ["Chem", "Biology"],
       learningStyle: "Hands-on Practice",
       rating: 4.7,
       reviewCount: 156,
@@ -109,7 +119,7 @@ export default function TutorsPage() {
       name: "Emily Rodriguez",
       avatar: "https://images.unsplash.com/photo-1649589244330-09ca58e4fa64?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMHByb2Zlc3Npb25hbCUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MDg5MjQ1M3ww&ixlib=rb-4.1.0&q=80&w=1080",
       university: "University of California, Irvine",
-      subjects: ["Science", "Physics"],
+      subjects: ["Physics"],
       learningStyle: "Visual Learning",
       rating: 4.9,
       reviewCount: 178,
@@ -121,7 +131,7 @@ export default function TutorsPage() {
       name: "Sarah Martinez",
       avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMHByb2Zlc3Npb25hbCUyMHNtaWxlfGVufDF8fHx8MTc3MDkzNTU5NHww&ixlib=rb-4.1.0&q=80&w=1080",
       university: "University of California, Irvine",
-      subjects: ["English", "Writing"],
+      subjects: ["Writing"],
       learningStyle: "Reading & Writing",
       rating: 4.6,
       reviewCount: 142,
@@ -133,7 +143,7 @@ export default function TutorsPage() {
       name: "David Kim",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYW4lMjBwcm9mZXNzaW9uYWwlMjBzbWlsZXxlbnwxfHx8fDE3NzA5MzU1OTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
       university: "University of California, Irvine",
-      subjects: ["History", "English"],
+      subjects: ["History", "Writing"],
       learningStyle: "Auditory Learning",
       rating: 4.4,
       reviewCount: 98,
@@ -205,7 +215,7 @@ export default function TutorsPage() {
                 onScroll={handleScroll}
                 className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
               >
-                {subjects.map((subject, index) => (
+                {SUBJECT_FILTERS.map((subject, index) => (
                   <motion.button
                     key={subject}
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -213,7 +223,10 @@ export default function TutorsPage() {
                     transition={{ delay: 0.15 + index * 0.03 }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setSelectedSubject(subject)}
+                    onClick={() => {
+                      setSelectedSubject(subject);
+                      setSearchParams(subject === "All" ? {} : { subject });
+                    }}
                     className="px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all cursor-pointer flex-shrink-0"
                     style={{
                       backgroundColor: selectedSubject === subject ? accentColor.primary : colors.bgTertiary,
