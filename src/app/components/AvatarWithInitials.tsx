@@ -10,23 +10,24 @@ interface AvatarWithInitialsProps {
 }
 
 function getInitials(firstName?: string, lastName?: string, name?: string): string {
-  // Priority: firstName + lastName > name > default "?"
+  // Priority: firstName + lastName > name > default "U" (User)
   if (firstName !== undefined && firstName !== null) {
     const firstInitial = String(firstName).trim()[0]?.toUpperCase() || "";
     const lastInitial = lastName != null ? String(lastName).trim()[0]?.toUpperCase() || "" : "";
     const combined = firstInitial + lastInitial;
-    return combined || "?";
+    return combined || "U";
   }
 
-  if (name) {
-    const nameParts = name.trim().split(/\s+/).filter(Boolean);
+  const trimmedName = typeof name === "string" ? name.trim() : "";
+  if (trimmedName) {
+    const nameParts = trimmedName.split(/\s+/).filter(Boolean);
     if (nameParts.length >= 2) {
       return (nameParts[0][0]?.toUpperCase() ?? "") + (nameParts[nameParts.length - 1][0]?.toUpperCase() ?? "");
     }
-    return nameParts[0]?.[0]?.toUpperCase() || "?";
+    return nameParts[0]?.[0]?.toUpperCase() || "U";
   }
 
-  return "?";
+  return "U";
 }
 
 // Deterministic background color from name (like Google) – same name = same color
