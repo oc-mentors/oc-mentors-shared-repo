@@ -216,7 +216,7 @@ export default function CanvasLoginPage() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="button"
-            onClick={() => navigate("/home")}
+            onClick={() => navigate(-1)}
             className="w-full py-3 bg-[#1e2139] text-[#a8b3cf] font-semibold rounded-xl border border-[rgba(255,255,255,0.12)] hover:bg-[#252837] transition-colors"
           >
             Cancel

@@ -89,6 +89,7 @@ export default function AnnouncementsPage() {
     const stored = localStorage.getItem('removedAnnouncementIds');
     return stored ? JSON.parse(stored) : [];
   });
+  const navigate = useNavigate();
   const { colors, accentColor } = useTheme();
   const { isCourseIgnored } = useCanvasCourses();
   const courseColors = useAllCourseColors();
@@ -145,16 +146,15 @@ export default function AnnouncementsPage() {
         <div className="px-6 pt-12 pb-3 flex-shrink-0">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <Link to="/canvas-classes">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: colors.bgCard }}
-                >
-                  <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
-                </motion.button>
-              </Link>
+              <motion.button
+                onClick={() => navigate(-1)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
+                style={{ backgroundColor: colors.bgCard }}
+              >
+                <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
+              </motion.button>
               <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>Announcements</h1>
             </div>
 

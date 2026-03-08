@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { BottomNav } from "../components/BottomNav";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Filter, AlertCircle, Calendar, Check, Trash2, Plus } from "lucide-react";
@@ -44,6 +44,7 @@ function formatFullDate(date: Date): string {
 }
 
 export default function AssignmentsPage() {
+  const navigate = useNavigate();
   const { getAllAssignments, isCourseIgnored } = useCanvasCourses();
   const { colors, accentColor } = useTheme();
   const courseColors = useAllCourseColors();
@@ -195,16 +196,15 @@ export default function AssignmentsPage() {
         <div className="px-6 pt-12 pb-3 flex-shrink-0">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <Link to="/canvas-classes">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: colors.bgCard }}
-                >
-                  <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
-                </motion.button>
-              </Link>
+              <motion.button
+                onClick={() => navigate(-1)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
+                style={{ backgroundColor: colors.bgCard }}
+              >
+                <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
+              </motion.button>
               <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
                 Assignments
               </h1>

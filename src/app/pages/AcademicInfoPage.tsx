@@ -89,16 +89,15 @@ export default function AcademicInfoPage() {
           className="px-6 pt-12 pb-3"
         >
           <div className="flex items-center gap-3 mb-2">
-            <Link to="/settings">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer flex-shrink-0"
-                style={{ backgroundColor: colors.bgTertiary }}
-              >
-                <ArrowLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
-              </motion.button>
-            </Link>
+            <motion.button
+              onClick={() => navigate(-1)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer flex-shrink-0"
+              style={{ backgroundColor: colors.bgTertiary }}
+            >
+              <ArrowLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
+            </motion.button>
             <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Academic Information</h1>
           </div>
         </motion.div>

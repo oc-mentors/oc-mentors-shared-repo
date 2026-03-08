@@ -41,7 +41,7 @@ export default function ThemeCustomizationPage() {
         <div className="px-6 pt-12 pb-3">
           <div className="flex items-center gap-4 mb-6">
             <button
-              onClick={() => navigate("/settings")}
+              onClick={() => navigate(-1)}
               className="transition-colors"
               style={{ color: colors.textSecondary }}
               onMouseEnter={(e) => e.currentTarget.style.color = colors.textPrimary}
