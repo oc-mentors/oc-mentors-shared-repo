@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router";
+import { motion } from "motion/react";
 import { ArrowLeft, BookOpen, ChevronRight } from "lucide-react";
 // ProfileButton removed — subpage
 

@@ -443,7 +443,7 @@ export default function ProfilePage() {
             {user?.name || "Nora Anderson"}
           </motion.h1>
 
-          {/* University or Role */}
+          {/* University (from profile) or role label */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -451,12 +451,14 @@ export default function ProfilePage() {
             className="text-[14px] mb-1"
             style={{ color: colors.textSecondary }}
           >
-            {user?.role === "tutor" || user?.role === "admin"
-              ? "Professional Tutor"
-              : "University of California, Irvine"}
+            {user?.university?.trim()
+              ? user.university
+              : user?.role === "tutor" || user?.role === "admin"
+                ? "Professional Tutor"
+                : "Add your university in Edit Profile"}
           </motion.p>
 
-          {/* Major & Year or Subjects */}
+          {/* Year & Major(s) for students, or subjects for tutors */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -466,7 +468,7 @@ export default function ProfilePage() {
           >
             {user?.role === "tutor" || user?.role === "admin"
               ? "Chemistry • Math • Physics"
-              : "Computer Science • 2nd Year"}
+              : [user?.year, user?.major?.length ? user.major.join(" • ") : null].filter(Boolean).join(" • ") || "Add year & major in Settings"}
           </motion.p>
 
           {/* Member Since Badge */}
@@ -567,8 +569,35 @@ export default function ProfilePage() {
             </motion.div>
           </Link>
 
-          {/* Take Learning Style Quiz / Learning Style Result */}
-          {learningStyle ? (
+          {/* Quiz card: student learning style vs tutor teaching profile */}
+          {user?.role === "tutor" ? (
+            <Link to="/tutor-onboarding">
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                className="rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-between"
+                style={{ backgroundColor: colors.bgCard }}
+              >
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${accentColor.primary}20` }}
+                  >
+                    <Layers className="w-5 h-5" style={{ color: accentColor.primary }} />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[15px] font-medium truncate" style={{ color: colors.textPrimary }}>
+                      Teaching Profile Quiz
+                    </span>
+                    <span className="text-[13px]" style={{ color: colors.textSecondary }}>
+                      {user.tutorOnboardingCompleted ? "Completed — tap to review or update" : "Help us match you with the right students"}
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 flex-shrink-0" style={{ color: colors.textSecondary }} />
+              </motion.div>
+            </Link>
+          ) : learningStyle ? (
             <motion.div
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}

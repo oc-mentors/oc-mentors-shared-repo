@@ -12,7 +12,7 @@ const COMPLETED_IDS_KEY = "completedAssignmentIds";
 const IGNORED_IDS_KEY   = "ignoredAssignmentIds";
 
 // Fixed "today" for the demo
-const TODAY = new Date(2026, 1, 13);
+const TODAY = new Date();
 
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const MONTHS_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];

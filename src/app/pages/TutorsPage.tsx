@@ -4,11 +4,19 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { AvatarWithInitials } from "../components/AvatarWithInitials";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTutors } from "../contexts/TutorsContext";
 
 const SUBJECT_FILTERS = ["All", "Chem", "Math", "Physics", "Writing", "Biology", "History"];
+
+/** Treat empty/placeholder strings as empty so we don't show """ or "." */
+function normalizeDisplay(s: string | undefined): string {
+  if (!s) return "";
+  const t = s.trim();
+  if (t === "." || t === '""' || t === '"""') return "";
+  return t;
+}
 
 export default function TutorsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -220,9 +228,9 @@ export default function TutorsPage() {
                     >
                       <div className="flex gap-4">
                         {/* Avatar */}
-                        <ImageWithFallback
+                        <AvatarWithInitials
                           src={tutor.avatar}
-                          alt={tutor.name}
+                          name={tutor.name}
                           className="w-14 h-14 rounded-full object-cover flex-shrink-0"
                         />
 
@@ -238,14 +246,16 @@ export default function TutorsPage() {
                             </span>
                           </div>
 
-                          {/* University */}
-                          <p className="text-[11px] mb-2" style={{ color: colors.textSecondary }}>
-                            {tutor.university}
-                          </p>
+                          {/* University — only if present */}
+                          {normalizeDisplay(tutor.university) && (
+                            <p className="text-[11px] mb-2" style={{ color: colors.textSecondary }}>
+                              {tutor.university}
+                            </p>
+                          )}
 
-                          {/* Subjects & Learning Style */}
+                          {/* Subjects (first 3 + "+ more") and Learning Style */}
                           <div className="flex flex-wrap gap-2 mb-2">
-                            {tutor.subjects.map((subject) => (
+                            {tutor.subjects.slice(0, 3).map((subject) => (
                               <span
                                 key={subject}
                                 className="text-[10px] px-2 py-1 rounded"
@@ -254,15 +264,24 @@ export default function TutorsPage() {
                                 {subject}
                               </span>
                             ))}
-                            <span className="text-[10px] px-2 py-1 rounded" style={{ backgroundColor: `${colors.textSecondary}20`, color: colors.textSecondary }}>
-                              • {tutor.learningStyle}
-                            </span>
+                            {tutor.subjects.length > 3 && (
+                              <span className="text-[10px] px-2 py-1 rounded" style={{ backgroundColor: `${accentColor.primary}20`, color: accentColor.primary }}>
+                                +{tutor.subjects.length - 3} more
+                              </span>
+                            )}
+                            {normalizeDisplay(tutor.learningStyle) && (
+                              <span className="text-[10px] px-2 py-1 rounded" style={{ backgroundColor: `${colors.textSecondary}20`, color: colors.textSecondary }}>
+                                • {tutor.learningStyle}
+                              </span>
+                            )}
                           </div>
 
-                          {/* Review */}
-                          <p className="text-[13px] italic line-clamp-2 mb-2" style={{ color: colors.textSecondary }}>
-                            "{tutor.review ?? ""}"
-                          </p>
+                          {/* Bio/Review — only when there's real content */}
+                          {(normalizeDisplay(tutor.bio) || normalizeDisplay(tutor.review)) && (
+                            <p className="text-[13px] italic line-clamp-2 mb-2" style={{ color: colors.textSecondary }}>
+                              "{normalizeDisplay(tutor.bio) || normalizeDisplay(tutor.review)}"
+                            </p>
+                          )}
 
                           {/* Rating */}
                           <div className="flex items-center gap-1">

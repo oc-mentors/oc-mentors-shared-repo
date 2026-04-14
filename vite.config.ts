@@ -19,4 +19,11 @@ export default defineConfig({
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
+
+  // Expose dev server on LAN and allow ngrok/tunnel hosts
+  server: {
+    host: true,
+    port: 5173,
+    allowedHosts: true,
+  },
 })

@@ -10,10 +10,11 @@ export default function BookingPage() {
   const navigate = useNavigate();
   const { colors, accentColor } = useTheme();
   const { addCalendarEvent, calendarEvents } = useCalendar();
-  const [selectedDate, setSelectedDate] = useState<number>(3);
+  const now = new Date();
+  const [selectedDate, setSelectedDate] = useState<number>(now.getDate());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [currentMonth, setCurrentMonth] = useState(11); // December (0-indexed)
-  const [currentYear, setCurrentYear] = useState(2025);
+  const [currentMonth, setCurrentMonth] = useState(now.getMonth());
+  const [currentYear, setCurrentYear] = useState(now.getFullYear());
   const [location, setLocation] = useState("Online");
 
   const monthNames = [

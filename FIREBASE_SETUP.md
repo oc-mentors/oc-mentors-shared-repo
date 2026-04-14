@@ -154,6 +154,17 @@ service cloud.firestore {
 
 Lock down further for production (e.g. restrict `progress` by `userId` in the document).
 
+**Deploy the rules from this repo** (required for the app to read/write):
+
+```bash
+# From the project root (where firebase.json and firestore.rules live)
+firebase login
+firebase use oc-mentors-socratic   # or your project ID
+firebase deploy --only firestore:rules
+```
+
+If you see **"Missing or insufficient permissions"** in the console, the rules in the repo are not deployed yet. Run the commands above and refresh the app.
+
 ---
 
 ## Step 7: Use Firebase in the app

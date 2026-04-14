@@ -7,14 +7,17 @@ import { ProfileButton } from "../components/ProfileButton";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useConversations } from "../contexts/ConversationsContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { conversations, updateConversation, deleteConversation } = useConversations();
-  const [activeMenu, setActiveMenu] = useState<number | null>(null);
+  const { user } = useAuth();
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
-  const [roleFilter, setRoleFilter] = useState<"all" | "tutor" | "professor" | "ta" | "peer">("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | "tutor" | "professor" | "ta" | "peer" | "student">("all");
   const { colors, accentColor } = useTheme();
+  const isTutor = user?.role === "tutor" || user?.role === "admin";
   const [showTopFade, setShowTopFade] = useState(false);
   const listContainerRef = useRef<HTMLDivElement>(null);
 
@@ -24,7 +27,7 @@ export default function MessagesPage() {
     }
   };
 
-  const togglePin = (id: number, event?: React.MouseEvent) => {
+  const togglePin = (id: string, event?: React.MouseEvent) => {
     event?.stopPropagation();
     event?.preventDefault();
     const conv = conversations.find(c => c.id === id);
@@ -40,7 +43,7 @@ export default function MessagesPage() {
     setActiveMenu(null);
   };
 
-  const toggleUnread = (id: number, event?: React.MouseEvent) => {
+  const toggleUnread = (id: string, event?: React.MouseEvent) => {
     event?.stopPropagation();
     event?.preventDefault();
     const conv = conversations.find(c => c.id === id);
@@ -50,14 +53,14 @@ export default function MessagesPage() {
     setActiveMenu(null);
   };
 
-  const handleDelete = (id: number, event?: React.MouseEvent) => {
+  const handleDelete = (id: string, event?: React.MouseEvent) => {
     event?.stopPropagation();
     event?.preventDefault();
     deleteConversation(id);
     setActiveMenu(null);
   };
 
-  const handleMenuClick = (id: number, event: React.MouseEvent) => {
+  const handleMenuClick = (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
     event.preventDefault();
     
@@ -77,8 +80,13 @@ export default function MessagesPage() {
 
   const unreadCount = conversations.filter((c) => c.unread).length;
 
+  // Tutors don't have peers; exclude peer conversations from the list for tutors
+  const conversationsForList = isTutor
+    ? conversations.filter((c) => c.role !== "peer")
+    : conversations;
+
   // Sort: pinned first (sorted by pinnedAt timestamp, oldest first), then by unread status
-  const sortedConversations = [...conversations].sort((a, b) => {
+  const sortedConversations = [...conversationsForList].sort((a, b) => {
     // Both pinned - sort by pinnedAt (oldest first)
     if (a.pinned && b.pinned) {
       return (a.pinnedAt || 0) - (b.pinnedAt || 0);
@@ -155,10 +163,11 @@ export default function MessagesPage() {
             <div className="flex gap-2 overflow-x-auto no-scrollbar justify-between">
               {[
                 { value: "all", label: "All" },
+                ...(isTutor ? [{ value: "student" as const, label: "Students" }] : []),
                 { value: "tutor", label: "Tutors" },
                 { value: "professor", label: "Professors" },
                 { value: "ta", label: "TAs" },
-                { value: "peer", label: "Peers" },
+                ...(isTutor ? [] : [{ value: "peer" as const, label: "Peers" }]),
               ].map((filter) => (
                 <motion.button
                   key={filter.value}
@@ -276,7 +285,7 @@ export default function MessagesPage() {
                             </span>
                           </div>
                           <p className="text-[13px] mb-1 leading-[19.5px]" style={{ color: colors.textSecondary }}>
-                            {conversation.role === "tutor" ? "Tutor" : conversation.role === "professor" ? "Professor" : conversation.role === "ta" ? "TA" : "Peer"}
+                            {conversation.role === "tutor" ? "Tutor" : conversation.role === "professor" ? "Professor" : conversation.role === "ta" ? "TA" : conversation.role === "student" ? "Student" : "Peer"}
                           </p>
                           <p
                             className={`text-[14px] leading-[21px] line-clamp-1 ${conversation.unread ? 'font-medium' : ''}`}

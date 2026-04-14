@@ -4,9 +4,11 @@ import { useAuth } from "../contexts/AuthContext";
 
 export function LoginAnimation() {
   const { colors, accentColor } = useTheme();
-  const { user } = useAuth();
+  const { user, loginAnimationMode } = useAuth();
 
-  const firstName = user?.name?.split(" ")[0] || "there";
+  const raw = user?.firstName || user?.name?.split(" ")[0] || "there";
+  const firstName = raw && raw !== "User" && raw !== "user" ? raw : "there";
+  const isSignup = loginAnimationMode === "signup";
 
   return (
     <motion.div
@@ -69,10 +71,10 @@ export function LoginAnimation() {
           transition={{ delay: 0.3, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
           <h2 className="text-2xl font-bold mb-1.5" style={{ color: colors.textPrimary }}>
-            Welcome back, {firstName}!
+            {isSignup ? `Welcome, ${firstName}!` : `Welcome back, ${firstName}!`}
           </h2>
           <p className="text-sm" style={{ color: colors.textSecondary }}>
-            Taking you to your dashboard…
+            {isSignup ? "Let's get you set up…" : "Taking you to your dashboard…"}
           </p>
         </motion.div>
 

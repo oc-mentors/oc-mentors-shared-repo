@@ -54,7 +54,7 @@ export function CalendarMonthView({ onDateSelect, selectedDate }: CalendarMonthV
   const { calendarEvents, addCalendarEvent, removeCalendarEvent, updateCalendarEvent } = useCalendar();
   const courseColors = useAllCourseColors();
 
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 13));
+  const [currentDate, setCurrentDate] = useState(() => new Date());
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
   const [selectedDateInternal, setSelectedDateInternal] = useState<Date | null>(null);
@@ -236,7 +236,7 @@ export function CalendarMonthView({ onDateSelect, selectedDate }: CalendarMonthV
 
   const isToday = (date: Date | null) => {
     if (!date) return false;
-    const today = new Date(2026, 1, 13);
+    const today = new Date();
     return (
       date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&

@@ -74,7 +74,7 @@ export default function SchedulePage() {
   } = useCalendar();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showBookingSuccess, setShowBookingSuccess] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 13)); // Feb 13, 2026 (Friday)
+  const [currentDate, setCurrentDate] = useState(() => new Date());
   const [showRecurringModal, setShowRecurringModal] = useState(false);
   const [showStudySessionModal, setShowStudySessionModal] = useState(false);
   const [showUserSelectModal, setShowUserSelectModal] = useState(false);
@@ -375,35 +375,27 @@ export default function SchedulePage() {
     }
   };
 
-  // Check if session is within 30 minutes of start time
+  // Check if session is within 30 minutes of start time (uses current date/time)
+  const monthShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const isSessionJoinable = (sessionDate: string, sessionTime: string): boolean => {
-    // Parse the session date and time
     const sessionDateParts = sessionDate.split(" ");
     const month = sessionDateParts[0];
-    const day = parseInt(sessionDateParts[1].replace(",", ""));
-    const year = parseInt(sessionDateParts[2]);
-    
-    // Convert month name to number
-    const monthIndex = monthNames.indexOf(month);
-    
-    // Parse time
+    const day = parseInt(sessionDateParts[1].replace(",", ""), 10);
+    const year = parseInt(sessionDateParts[2], 10);
+    const monthIndex = monthShort.indexOf(month);
+    if (monthIndex === -1 || isNaN(day) || isNaN(year)) return false;
+
     const [time, period] = sessionTime.split(" ");
     let [hours, minutes] = time.split(":").map(Number);
     if (!minutes) minutes = 0;
     if (period === "PM" && hours !== 12) hours += 12;
     if (period === "AM" && hours === 12) hours = 0;
-    
-    // Create session datetime
+
     const sessionDateTime = new Date(year, monthIndex, day, hours, minutes);
-    
-    // Current time (simulated as Feb 13, 2026 1:00 PM for demo)
-    const currentTime = new Date(2026, 1, 13, 13, 0); // 1:00 PM on Feb 13, 2026
-    
-    // Calculate difference in minutes
+    const currentTime = new Date();
+
     const diffInMinutes = (sessionDateTime.getTime() - currentTime.getTime()) / (1000 * 60);
-    
-    // Session is joinable if it's within 30 minutes before start time or already started (but not past end time)
-    return diffInMinutes <= 30 && diffInMinutes >= -60; // Can join 30 min before and up to 1 hour after start
+    return diffInMinutes <= 30 && diffInMinutes >= -60;
   };
 
   const [showTopFade, setShowTopFade] = useState(false);

@@ -73,18 +73,20 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       const code = err && typeof err === "object" && "code" in err ? (err as { code: string }).code : "";
-      const message = code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found"
-        ? "No account found. Please sign up first."
-        : code === "auth/email-already-in-use"
-          ? "This email is already registered. Try signing in."
-          : code === "auth/weak-password"
-            ? "Password should be at least 6 characters."
-            : "Something went wrong. Please try again.";
-      setError(message);
-      // Switch to signup so they can create an account
-      if (mode === "login" && (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found")) {
-        setMode("signup");
+      let message: string;
+      if (code === "auth/user-not-found") {
+        message = "No account found. Please sign up first.";
+        if (mode === "login") setMode("signup");
+      } else if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
+        message = "Wrong email or password. Please try again.";
+      } else if (code === "auth/email-already-in-use") {
+        message = "This email is already registered. Try signing in.";
+      } else if (code === "auth/weak-password") {
+        message = "Password should be at least 6 characters.";
+      } else {
+        message = "Something went wrong. Please try again.";
       }
+      setError(message);
     } finally {
       clearTimeout(timeoutId);
       setIsLoading(false);

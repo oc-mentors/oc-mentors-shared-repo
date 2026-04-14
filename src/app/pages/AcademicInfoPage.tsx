@@ -68,12 +68,11 @@ export default function AcademicInfoPage() {
 
   const handleConnectCanvas = () => navigate("/canvas-login");
 
-  // Static academic info (would be editable in a real app)
   const academicInfo = {
     age: 20,
-    major: "Computer Science",
-    year: "2nd Year (Sophomore)",
-    school: user?.university || "University of California, Irvine",
+    major: user?.major?.length ? user.major.join(", ") : "—",
+    year: user?.year || "—",
+    school: user?.university || "—",
     expectedGrad: "June 2027",
     gpa: "3.72",
   };

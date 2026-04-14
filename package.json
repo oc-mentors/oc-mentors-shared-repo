@@ -8,11 +8,12 @@
     "dev": "vite",
     "seed-users": "node scripts/seed-users.js",
     "seed-tutors": "node scripts/seed-tutors.js",
+    "seed-tutor-profiles": "node scripts/seed-tutor-profiles.js",
     "clear-all": "node scripts/clear-all.js",
-    "reset-and-seed": "node scripts/clear-all.js && node scripts/seed-users.js && node scripts/seed-tutors.js"
+    "reset-and-seed": "node scripts/clear-all.js && node scripts/seed-users.js && node scripts/seed-tutors.js",
+    "qr": "node scripts/qr-code.js"
   },
   "dependencies": {
-    "firebase": "^11.0.2",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@mui/icons-material": "7.3.5",
@@ -49,6 +50,7 @@
     "cmdk": "1.1.1",
     "date-fns": "3.6.0",
     "embla-carousel-react": "8.6.0",
+    "firebase": "^11.0.2",
     "input-otp": "1.4.2",
     "lucide-react": "0.487.0",
     "motion": "12.23.24",
@@ -69,9 +71,10 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
-    "firebase-admin": "^13.0.1",
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
+    "firebase-admin": "^13.0.1",
+    "qrcode": "^1.5.4",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5"
   },

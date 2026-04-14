@@ -111,7 +111,7 @@ function FieldError({ msg }: { msg?: string }) {
   );
 }
 
-const MIN_DATE = new Date(2026, 1, 13); // Feb 13 2026 — project fixed "today"
+const MIN_DATE = new Date(); // today
 
 export function AddEventModal({ date, onClose, onSave, defaultStartTime }: AddEventModalProps) {
   const { colors, accentColor } = useTheme();

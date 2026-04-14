@@ -5,8 +5,62 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { AvatarWithInitials } from "./AvatarWithInitials";
 import { useScrollLock } from "../hooks/useScrollLock";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../lib/firebase";
+// Avatar stored in Firestore as data URL (no Storage needed, no extra cost)
+
+const AVATAR_MAX_BYTES = 280 * 1024; // ~280 KB so base64 stays under Firestore 1 MB limit
+const AVATAR_MAX_SIDE = 512; // max width/height in px
+
+/** Compress image to JPEG under AVATAR_MAX_BYTES, return as data URL. */
+function compressImageToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      const scale = Math.min(1, AVATAR_MAX_SIDE / Math.max(w, h));
+      const cw = Math.round(w * scale);
+      const ch = Math.round(h * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = cw;
+      canvas.height = ch;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas not supported"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, cw, ch);
+
+      const tryQuality = (quality: number): void => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Could not compress image"));
+              return;
+            }
+            if (blob.size <= AVATAR_MAX_BYTES || quality <= 0.2) {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = () => reject(new Error("Could not read blob"));
+              reader.readAsDataURL(blob);
+              return;
+            }
+            tryQuality(Math.max(0.2, quality - 0.15));
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      tryQuality(0.85);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not load image"));
+    };
+    img.src = url;
+  });
+}
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -33,6 +87,8 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
     firstName: "",
     lastName: "",
     university: "",
+    year: "",
+    majorText: "",
     email: "",
     avatar: "",
   });
@@ -43,6 +99,8 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
         firstName: user.firstName || "",
         lastName: user.lastName || "",
         university: user.university || "",
+        year: user.year || "",
+        majorText: user.major?.length ? user.major.join(", ") : "",
         email: user.email,
         avatar: user.avatar || "",
       });
@@ -65,52 +123,25 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
     if (!file || !file.type.startsWith("image/")) return;
     if (!user?.id) return;
 
-    if (storage) {
-      setUploadingAvatar(true);
-      const UPLOAD_TIMEOUT_MS = 20000; // 20 seconds
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Upload timed out. Is Firebase Storage enabled?")), UPLOAD_TIMEOUT_MS)
-      );
-      try {
-        console.log("[Avatar] Upload starting:", file.name, file.size, "bytes");
-        const path = `avatars/${user.id}/${Date.now()}_${file.name}`;
-        const storageRef = ref(storage, path);
-        await Promise.race([uploadBytes(storageRef, file), timeoutPromise]);
-        console.log("[Avatar] uploadBytes done, getting URL...");
-        const downloadUrl = await getDownloadURL(storageRef);
-        console.log("[Avatar] Success, URL length:", downloadUrl.length);
-        setFormData((prev) => ({ ...prev, avatar: downloadUrl }));
-        updateUser({ avatar: downloadUrl });
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        const code = err && typeof err === "object" && "code" in err ? String((err as { code: string }).code) : "";
-        console.error("[Avatar] Upload failed:", code || message, err);
-        setUploadError(
-          code
-            ? `${code}: ${message}`
-            : message || "Upload failed. In Firebase Console enable Storage and deploy storage.rules."
-        );
-        const sizeMb = file.size / (1024 * 1024);
-        if (sizeMb < 0.5) {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setFormData((prev) => ({ ...prev, avatar: reader.result as string }));
-            updateUser({ avatar: reader.result as string });
-          };
-          reader.readAsDataURL(file);
-        }
-      } finally {
-        setUploadingAvatar(false);
-      }
-    } else {
-      console.warn("[Avatar] Firebase Storage not available (storage is null). Using data URL.");
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        setFormData((prev) => ({ ...prev, avatar: dataUrl }));
-        if (dataUrl.length < 500_000) updateUser({ avatar: dataUrl });
-      };
-      reader.readAsDataURL(file);
+    setUploadingAvatar(true);
+    try {
+      // Compress to under 300 KB so it fits in Firestore (no Storage needed)
+      const dataUrl =
+        file.size <= AVATAR_MAX_BYTES
+          ? await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = () => reject(new Error("Could not read image"));
+              reader.readAsDataURL(file);
+            })
+          : await compressImageToDataUrl(file);
+
+      setFormData((prev) => ({ ...prev, avatar: dataUrl }));
+      updateUser({ avatar: dataUrl });
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Could not process image.");
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -127,11 +158,14 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
 
   const handleSave = () => {
     const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+    const majorList = formData.majorText.split(",").map((s) => s.trim()).filter(Boolean);
     updateUser({
       firstName: formData.firstName,
       lastName: formData.lastName,
       name: fullName || user.name,
       university: formData.university,
+      year: formData.year || undefined,
+      major: majorList.length ? majorList : undefined,
       email: formData.email,
       avatar: formData.avatar,
     });
@@ -309,6 +343,59 @@ function EditProfileModalContent({ isOpen, onClose }: EditProfileModalProps) {
                       color: colors.textPrimary,
                     }}
                   />
+                </div>
+
+                {/* Year (for students) */}
+                <div>
+                  <label
+                    className="block text-[14px] font-semibold mb-2"
+                    style={{ color: colors.textPrimary }}
+                  >
+                    Year
+                  </label>
+                  <select
+                    value={formData.year}
+                    onChange={(e) => handleChange("year", e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border transition-colors"
+                    style={{
+                      backgroundColor: colors.bgSecondary,
+                      borderColor: colors.borderPrimary,
+                      color: colors.textPrimary,
+                    }}
+                  >
+                    <option value="">Select year</option>
+                    <option value="Freshman">Freshman</option>
+                    <option value="Sophomore">Sophomore</option>
+                    <option value="Junior">Junior</option>
+                    <option value="Senior">Senior</option>
+                    <option value="Graduate">Graduate</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                {/* Major(s) - comma-separated for multiple */}
+                <div>
+                  <label
+                    className="block text-[14px] font-semibold mb-2"
+                    style={{ color: colors.textPrimary }}
+                  >
+                    Major(s)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.majorText}
+                    onChange={(e) => handleChange("majorText", e.target.value)}
+                    placeholder="e.g. Computer Science, Math"
+                    className="w-full px-4 py-3 rounded-xl border transition-colors"
+                    style={{
+                      backgroundColor: colors.bgSecondary,
+                      borderColor: colors.borderPrimary,
+                      color: colors.textPrimary,
+                    }}
+                  />
+                  <p className="text-[12px] mt-1" style={{ color: colors.textSecondary }}>
+                    Separate multiple majors with commas
+                  </p>
                 </div>
 
                 {/* Email */}

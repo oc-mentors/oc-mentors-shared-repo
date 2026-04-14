@@ -1,6 +1,6 @@
 rules_version = '2';
 // TEST MODE: Any signed-in user can read/write all data. Use only for local/dev.
-// To restore locked rules: cp firestore.rules.backup firestore.rules && firebase deploy --only firestore:rules
+// To use: copy this to firestore.rules and run: firebase deploy --only firestore:rules
 service cloud.firestore {
   match /databases/{database}/documents {
     match /{document=**} {

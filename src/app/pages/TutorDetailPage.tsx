@@ -1,8 +1,11 @@
 import { motion } from "motion/react";
 import { useNavigate, useParams, useLocation } from "react-router";
 import { ChevronLeft, Star, MapPin, BookOpen, Calendar, MessageCircle, Clock } from "lucide-react";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { AvatarWithInitials } from "../components/AvatarWithInitials";
 import { useConversations, Conversation } from "../contexts/ConversationsContext";
+import { useConnections } from "../contexts/ConnectionsContext";
+import { useTutorRequests } from "../contexts/TutorRequestsContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTutors } from "../contexts/TutorsContext";
 
@@ -10,10 +13,18 @@ export default function TutorDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
-  const tutorId = params.id ? parseInt(params.id) : 1;
+  const tutorId = params.id ?? "";
   const { addConversation, getConversation } = useConversations();
+  const { getOrCreateConnectionWithTutor, getConnectionWithTutor } = useConnections();
+  const { createRequest, hasPendingRequestToTutor } = useTutorRequests();
+  const { user } = useAuth();
   const { colors, accentColor } = useTheme();
   const { tutors, isLoading, error } = useTutors();
+
+  const connection = getConnectionWithTutor(tutorId);
+  const hasConnection = !!connection?.conversationId;
+  const pendingRequest = hasPendingRequestToTutor(tutorId);
+  const isViewingAsStudent = user?.role === "student" || !user?.role;
 
   const tutor = tutors.find((t) => t.id === tutorId) ?? tutors[0];
 
@@ -99,9 +110,9 @@ export default function TutorDetailPage() {
           className="px-6 pb-6"
         >
           <div className="flex items-start gap-5 mb-4">
-            <ImageWithFallback
+            <AvatarWithInitials
               src={tutor.avatar}
-              alt={tutor.name}
+              name={tutor.name}
               className="w-24 h-24 rounded-2xl object-cover shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
             />
             <div className="flex-1">
@@ -155,44 +166,109 @@ export default function TutorDetailPage() {
           className="px-6 pb-6"
         >
           <div className="grid grid-cols-2 gap-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                // Check if conversation exists
-                let conversationToUse = getConversation(tutor.id);
-                
-                // If not, create it
-                if (!conversationToUse) {
-                  const newConversation: Conversation = {
-                    id: tutor.id,
-                    name: tutor.name,
-                    avatar: tutor.avatar,
-                    university: tutor.university,
-                    message: "",
-                    timestamp: "",
-                    unread: false,
-                    pinned: false,
-                    role: "tutor",
-                    tutorId: tutor.id,
-                  };
-                  addConversation(newConversation);
-                  conversationToUse = newConversation;
-                }
-                
-                // Navigate to the chat
-                navigate(`/chat/${tutor.id}`, { 
-                  state: { 
-                    conversation: conversationToUse,
+            {isViewingAsStudent && (
+              <>
+                {hasConnection ? (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={async () => {
+                      try {
+                        const conversationId = connection!.conversationId;
+                        let conversationToUse = getConversation(conversationId);
+                        if (!conversationToUse) {
+                          const newConversation: Conversation = {
+                            id: conversationId,
+                            name: tutor.name,
+                            avatar: tutor.avatar,
+                            university: tutor.university,
+                            message: "",
+                            timestamp: "",
+                            unread: false,
+                            pinned: false,
+                            role: "tutor",
+                            tutorId: tutor.id,
+                          };
+                          addConversation(newConversation);
+                          conversationToUse = newConversation;
+                        }
+                        navigate(`/chat/${conversationId}`, {
+                          state: { conversation: conversationToUse },
+                        });
+                      } catch (e) {
+                        console.error("[TutorDetail] Message failed:", e);
+                      }
+                    }}
+                    className="py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer"
+                    style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Message
+                  </motion.button>
+                ) : pendingRequest ? (
+                  <motion.div
+                    className="py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] opacity-80"
+                    style={{ backgroundColor: colors.bgTertiary, color: colors.textSecondary }}
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Request sent
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={async () => {
+                      try {
+                        await createRequest(tutor.id, undefined, tutor.subjects?.[0]);
+                        // UI will re-render and show "Request sent" via pendingRequest
+                      } catch (e) {
+                        console.error("[TutorDetail] Request failed:", e);
+                      }
+                    }}
+                    className="py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer"
+                    style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Request tutor
+                  </motion.button>
+                )}
+              </>
+            )}
+            {user?.role === "tutor" && user?.id !== tutorId && hasConnection && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={async () => {
+                  try {
+                    const conversationId = connection!.conversationId;
+                    let conversationToUse = getConversation(conversationId);
+                    if (!conversationToUse) {
+                      conversationToUse = {
+                        id: conversationId,
+                        name: tutor.name,
+                        avatar: tutor.avatar,
+                        university: tutor.university,
+                        message: "",
+                        timestamp: "",
+                        unread: false,
+                        pinned: false,
+                        role: "tutor",
+                        tutorId: tutor.id,
+                      };
+                      addConversation(conversationToUse);
+                    }
+                    navigate(`/chat/${conversationId}`, { state: { conversation: conversationToUse } });
+                  } catch (e) {
+                    console.error("[TutorDetail] Message failed:", e);
                   }
-                });
-              }}
-              className="py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer"
-              style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
-            >
-              <MessageCircle className="w-5 h-5" />
-              Message
-            </motion.button>
+                }}
+                className="py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer"
+                style={{ backgroundColor: colors.bgTertiary, color: colors.textPrimary }}
+              >
+                <MessageCircle className="w-5 h-5" />
+                Message
+              </motion.button>
+            )}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -240,26 +316,28 @@ export default function TutorDetailPage() {
           </div>
         </motion.div>
 
-        {/* Availability */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="px-6 pb-5"
-        >
-          <h2 className="text-[18px] font-semibold mb-3" style={{ color: colors.textPrimary }}>Availability</h2>
-          <div className="flex flex-wrap gap-2">
-            {tutor.availability.map((time) => (
-              <span
-                key={time}
-                className="text-[13px] px-3 py-2 rounded-lg border"
-                style={{ backgroundColor: colors.bgCard, color: colors.textPrimary, borderColor: colors.borderPrimary }}
-              >
-                {time}
-              </span>
-            ))}
-          </div>
-        </motion.div>
+        {/* Availability (only if tutor has set availability) */}
+        {(tutor.availability?.length ?? 0) > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="px-6 pb-5"
+          >
+            <h2 className="text-[18px] font-semibold mb-3" style={{ color: colors.textPrimary }}>Availability</h2>
+            <div className="flex flex-wrap gap-2">
+              {(tutor.availability ?? []).map((time) => (
+                <span
+                  key={time}
+                  className="text-[13px] px-3 py-2 rounded-lg border"
+                  style={{ backgroundColor: colors.bgCard, color: colors.textPrimary, borderColor: colors.borderPrimary }}
+                >
+                  {time}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Reviews */}
         <motion.div

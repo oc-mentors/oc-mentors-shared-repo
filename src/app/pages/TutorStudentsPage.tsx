@@ -3,67 +3,24 @@ import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Search, TrendingUp, Calendar, MessageSquare, Star } from "lucide-react";
 import { BottomNav } from "../components/BottomNav";
+import { useAuth } from "../contexts/AuthContext";
+import { useConnections } from "../contexts/ConnectionsContext";
+import type { Conversation } from "../contexts/ConversationsContext";
 
 export default function TutorStudentsPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuth();
+  const { connections } = useConnections();
 
-  const students = [
-    {
-      id: 1,
-      name: "Emily Johnson",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
-      subject: "Chemistry",
-      sessionsCompleted: 8,
-      upcomingSessions: 2,
-      lastSession: "Feb 17, 2026",
-      performance: 92,
-    },
-    {
-      id: 2,
-      name: "Marcus Chen",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-      subject: "Math",
-      sessionsCompleted: 12,
-      upcomingSessions: 1,
-      lastSession: "Feb 18, 2026",
-      performance: 88,
-    },
-    {
-      id: 3,
-      name: "Sarah Williams",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400",
-      subject: "Physics",
-      sessionsCompleted: 6,
-      upcomingSessions: 3,
-      lastSession: "Feb 16, 2026",
-      performance: 85,
-    },
-    {
-      id: 4,
-      name: "Alex Rivera",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
-      subject: "Biology",
-      sessionsCompleted: 10,
-      upcomingSessions: 1,
-      lastSession: "Feb 19, 2026",
-      performance: 95,
-    },
-    {
-      id: 5,
-      name: "Jessica Park",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
-      subject: "Chemistry",
-      sessionsCompleted: 5,
-      upcomingSessions: 2,
-      lastSession: "Feb 15, 2026",
-      performance: 78,
-    },
-  ];
+  const uid = user?.id ?? "";
+  const myStudents = connections.filter(
+    (c) => c.tutorUid === uid && c.status === "active" && c.conversationId
+  );
 
-  const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.subject.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredStudents = myStudents.filter(
+    (c) =>
+      (c.studentFirstName ?? "Student").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -99,13 +56,11 @@ export default function TutorStudentsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#1e2139] rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]">
               <p className="text-[#a8b3cf] text-sm mb-1">Total Students</p>
-              <p className="text-3xl font-bold text-[#e8edf5]">{students.length}</p>
+              <p className="text-3xl font-bold text-[#e8edf5]">{myStudents.length}</p>
             </div>
             <div className="bg-[#1e2139] rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]">
-              <p className="text-[#a8b3cf] text-sm mb-1">Avg Performance</p>
-              <p className="text-3xl font-bold text-[#e8edf5]">
-                {Math.round(students.reduce((acc, s) => acc + s.performance, 0) / students.length)}%
-              </p>
+              <p className="text-[#a8b3cf] text-sm mb-1">Connected</p>
+              <p className="text-3xl font-bold text-[#e8edf5]">{myStudents.length}</p>
             </div>
           </div>
         </div>
@@ -113,57 +68,32 @@ export default function TutorStudentsPage() {
         {/* Students List */}
         <div className="px-6">
           <div className="space-y-3">
-            {filteredStudents.map((student, index) => (
+            {filteredStudents.map((connection, index) => (
               <motion.div
-                key={student.id}
+                key={connection.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 className="bg-[#1e2139] rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
               >
                 <div className="flex items-start gap-4">
-                  {/* Avatar */}
                   <img
-                    src={student.avatar}
-                    alt={student.name}
+                    src={connection.studentPhotoURL || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"}
+                    alt={connection.studentFirstName ?? "Student"}
                     className="w-16 h-16 rounded-xl object-cover"
                   />
 
-                  {/* Info */}
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h3 className="text-base font-semibold text-[#e8edf5]">
-                          {student.name}
+                          {connection.studentFirstName ?? "Student"}
                         </h3>
-                        <p className="text-sm text-[#a8b3cf]">{student.subject}</p>
-                      </div>
-                      <div className="flex items-center gap-1 bg-[#2a2f45] px-2 py-1 rounded-lg">
-                        <Star className="w-3 h-3 text-[#fbbf24] fill-[#fbbf24]" />
-                        <span className="text-xs font-semibold text-[#e8edf5]">
-                          {student.performance}%
-                        </span>
                       </div>
                     </div>
-
-                    {/* Stats Row */}
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="flex items-center gap-1 text-xs text-[#a8b3cf]">
-                        <TrendingUp className="w-3 h-3" />
-                        <span>{student.sessionsCompleted} completed</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-[#a8b3cf]">
-                        <Calendar className="w-3 h-3" />
-                        <span>{student.upcomingSessions} upcoming</span>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-[#a8b3cf] mb-3">
-                      Last session: {student.lastSession}
-                    </p>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mt-3">
                       <Link to="/schedule" className="flex-1">
                         <motion.button
                           whileHover={{ scale: 1.05 }}
@@ -173,7 +103,22 @@ export default function TutorStudentsPage() {
                           Schedule
                         </motion.button>
                       </Link>
-                      <Link to={`/chat/${student.id}`}>
+                      <Link
+                        to={`/chat/${connection.conversationId}`}
+                        state={{
+                          conversation: {
+                            id: connection.conversationId,
+                            name: connection.studentFirstName ?? "Student",
+                            avatar: connection.studentPhotoURL ?? "",
+                            university: "",
+                            message: "",
+                            timestamp: "",
+                            unread: false,
+                            pinned: false,
+                            role: "student",
+                          } as Conversation,
+                        }}
+                      >
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
@@ -191,7 +136,11 @@ export default function TutorStudentsPage() {
 
           {filteredStudents.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-[#a8b3cf]">No students found</p>
+              <p className="text-[#a8b3cf]">
+                {myStudents.length === 0
+                  ? "No students yet. When students request you and you accept, they’ll appear here."
+                  : "No students match your search."}
+              </p>
             </div>
           )}
         </div>

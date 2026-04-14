@@ -12,25 +12,29 @@ export default function ChatConversationPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
-  const { getConversation, getMessages, addMessage, setMessagesForConversation, updateConversation } = useConversations();
+  const {
+    getConversation,
+    getMessages,
+    addMessage,
+    updateConversation,
+    loadMessagesForConversation,
+    subscribeToMessages,
+  } = useConversations();
   const { colors, accentColor } = useTheme();
-  
-  // Get conversation data from location state or find by ID
-  const conversationFromState = location.state?.conversation as Conversation | undefined;
-  const conversationId = params.id ? parseInt(params.id) : conversationFromState?.id || 1;
-  
-  // Get the conversation from context
-  const currentConversation = conversationFromState || getConversation(conversationId);
 
-  // Get messages from context
-  const contextMessages = getMessages(conversationId);
-  const [messages, setMessages] = useState<Message[]>(contextMessages);
-  
-  // Update local messages when context messages change or conversationId changes
+  const conversationFromState = location.state?.conversation as Conversation | undefined;
+  const conversationId = (params.id ?? conversationFromState?.id) ?? "";
+
+  const currentConversation = conversationFromState || getConversation(conversationId);
+  const messages = getMessages(conversationId);
+
+  // Load initial messages and subscribe to real-time updates so both tutor and student see new messages
   useEffect(() => {
-    const newMessages = getMessages(conversationId);
-    setMessages(newMessages);
-  }, [conversationId, contextMessages.length]);
+    if (!conversationId) return;
+    loadMessagesForConversation(conversationId);
+    const unsubscribe = subscribeToMessages(conversationId);
+    return () => unsubscribe();
+  }, [conversationId, loadMessagesForConversation, subscribeToMessages]);
 
   // Mark conversation as read when entering the chat
   useEffect(() => {
@@ -78,34 +82,19 @@ export default function ChatConversationPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSendMessage = () => {
-    if (messageInput.trim()) {
-      const newMessage: Message = {
-        id: messages.length + 1,
-        text: messageInput,
-        time: new Date().toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        }),
-        isSent: true,
-        ...(replyingTo && {
-          replyTo: {
-            id: replyingTo.id,
-            text: replyingTo.text,
-            isSent: replyingTo.isSent,
-          },
-        }),
-      };
-      
-      // Add message to context
-      addMessage(conversationId, newMessage);
-      
-      // Update local state
-      setMessages([...messages, newMessage]);
-      setMessageInput("");
-      setReplyingTo(null);
-      setTimeout(scrollToBottom, 100);
-    }
+  const handleSendMessage = async () => {
+    if (!messageInput.trim()) return;
+    const text = messageInput.trim();
+    setMessageInput("");
+    setReplyingTo(null);
+    await addMessage(conversationId, {
+      text,
+      isSent: true,
+      ...(replyingTo && {
+        replyTo: { id: replyingTo.id, text: replyingTo.text, isSent: replyingTo.isSent },
+      }),
+    });
+    setTimeout(scrollToBottom, 100);
   };
 
   const handleReply = (message: Message) => {
@@ -113,27 +102,16 @@ export default function ChatConversationPage() {
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, type: "image" | "file") => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: "image" | "file") => {
     const files = event.target.files;
     if (files && files.length > 0) {
       const file = files[0];
       const url = URL.createObjectURL(file);
-      const newMessage: Message = {
-        id: messages.length + 1,
+      await addMessage(conversationId, {
         text: type === "image" ? "Sent an image" : `Sent a file: ${file.name}`,
-        time: new Date().toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        }),
         isSent: true,
         attachments: [{ type, url, name: file.name }],
-      };
-      
-      // Add message to context
-      addMessage(conversationId, newMessage);
-      
-      // Update local state
-      setMessages([...messages, newMessage]);
+      });
       setShowAttachMenu(false);
       setTimeout(scrollToBottom, 100);
     }
@@ -166,7 +144,7 @@ export default function ChatConversationPage() {
                 const targetTutorId = currentConversation.tutorId ?? conversationId;
                 // Store navigation context in sessionStorage
                 sessionStorage.setItem('tutorNavSource', 'chat');
-                sessionStorage.setItem('tutorNavChatId', conversationId.toString());
+                sessionStorage.setItem('tutorNavChatId', conversationId);
                 navigate(`/tutor/${targetTutorId}`);
               }}
               className={currentConversation.role === 'tutor' ? "cursor-pointer" : "cursor-default"}
@@ -180,7 +158,7 @@ export default function ChatConversationPage() {
             <div className="flex flex-col items-center gap-0.5">
               <h2 className="text-[18px] font-semibold" style={{ color: colors.textPrimary }}>{currentConversation.name}</h2>
               <span className="text-[12px]" style={{ color: colors.textSecondary }}>
-                {currentConversation.role === 'ta' ? 'TA' : currentConversation.role.charAt(0).toUpperCase() + currentConversation.role.slice(1)}
+                {currentConversation.role === 'ta' ? 'TA' : currentConversation.role === 'student' ? 'Student' : currentConversation.role.charAt(0).toUpperCase() + currentConversation.role.slice(1)}
               </span>
             </div>
           </div>

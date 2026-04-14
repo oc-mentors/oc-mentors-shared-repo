@@ -3,16 +3,23 @@ import { motion } from "motion/react";
 import { Star, ArrowLeft, Check } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
+import { collection, doc, getDoc, addDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { db, firestoreReady } from "../lib/firebase";
+import { useAuth } from "../contexts/AuthContext";
 import { BottomNav } from "../components/BottomNav";
 
 interface SessionData {
   tutor: string;
   subject: string;
+  /** Required to save review to Firestore and update tutor aggregate */
+  connectionId?: string;
+  tutorUid?: string;
 }
 
 export default function RateSessionPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const sessionData = (location.state?.session as SessionData) || {
     tutor: "Debra Peterson",
     subject: "Math 2A - Matrices",
@@ -22,6 +29,8 @@ export default function RateSessionPage() {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [review, setReview] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const tags = [
     "Clear explanations",
@@ -39,11 +48,46 @@ export default function RateSessionPage() {
     );
   };
 
-  const handleSubmit = () => {
-    // Submit the review (in a real app, this would send to backend)
-    navigate("/schedule", {
-      state: { showSuccessMessage: true },
-    });
+  const handleSubmit = async () => {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const { connectionId, tutorUid } = sessionData;
+      if (user?.id && connectionId && tutorUid) {
+        await firestoreReady;
+        if (db) {
+          await addDoc(collection(db, "reviews"), {
+            tutorUid,
+            studentUid: user.id,
+            connectionId,
+            rating,
+            text: review || undefined,
+            createdAt: serverTimestamp(),
+          });
+          const tutorRef = doc(db, "tutorProfiles", tutorUid);
+          const tutorSnap = await getDoc(tutorRef);
+          if (tutorSnap.exists()) {
+            const data = tutorSnap.data();
+            const prevAvg = data.ratingAvg ?? 0;
+            const prevCount = data.ratingCount ?? 0;
+            const newCount = prevCount + 1;
+            const newAvg = (prevAvg * prevCount + rating) / newCount;
+            await updateDoc(tutorRef, {
+              ratingAvg: Math.round(newAvg * 10) / 10,
+              ratingCount: newCount,
+              updatedAt: serverTimestamp(),
+            });
+          }
+        }
+      }
+      navigate("/schedule", {
+        state: { showSuccessMessage: true },
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to submit review");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSkip = () => {
@@ -191,6 +235,10 @@ export default function RateSessionPage() {
           </div>
         </motion.div>
 
+        {error && (
+          <div className="mx-6 mb-4 p-3 rounded-xl bg-red-500/20 text-red-200 text-sm">{error}</div>
+        )}
+
         {/* Action Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -203,7 +251,8 @@ export default function RateSessionPage() {
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             onClick={handleSubmit}
-            className="w-full py-4 rounded-xl font-semibold text-white text-[16px] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
+            disabled={submitting}
+            className="w-full py-4 rounded-xl font-semibold text-white text-[16px] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] disabled:opacity-70"
             style={{
               backgroundImage:
                 "linear-gradient(171.386deg, rgb(67, 97, 217) 0%, rgb(91, 124, 235) 100%)",

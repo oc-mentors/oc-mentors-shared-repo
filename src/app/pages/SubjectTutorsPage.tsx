@@ -1,14 +1,19 @@
 import { Link, useNavigate, useParams } from "react-router";
-import { ArrowLeft, Star, MapPin, Clock, Calendar, Video, MessageSquare, DollarSign } from "lucide-react";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { ArrowLeft, Star, MapPin, Clock, Calendar, Video, MessageSquare, DollarSign, BookOpen } from "lucide-react";
+import { AvatarWithInitials } from "../components/AvatarWithInitials";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { Timestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db, firestoreReady } from "../lib/firebase";
+import { useAuth } from "../contexts/AuthContext";
+import { useConnections } from "../contexts/ConnectionsContext";
 import { useCalendar } from "../contexts/CalendarContext";
 import { useTutors, Tutor as BackendTutor } from "../contexts/TutorsContext";
 
 /** Shape used by this page for list and booking modal. */
 interface Tutor {
-  id: number;
+  id: string;
   name: string;
   avatar: string;
   rating: number;
@@ -23,6 +28,12 @@ interface Tutor {
 }
 
 function mapBackendToPageTutor(t: BackendTutor): Tutor {
+  const normalize = (v?: string): string => {
+    if (!v) return "";
+    const trimmed = v.trim();
+    if (trimmed === "." || trimmed === '""') return "";
+    return trimmed;
+  };
   return {
     id: t.id,
     name: t.name,
@@ -31,23 +42,28 @@ function mapBackendToPageTutor(t: BackendTutor): Tutor {
     reviews: t.reviewCount,
     subjects: t.subjects,
     hourlyRate: t.pricePerHour ?? 0,
-    experience: t.experience ?? "",
-    bio: t.bio ?? "",
-    availability: Array.isArray(t.availability) ? t.availability.join(", ") : (t.availability ?? ""),
-    responseTime: t.responseTime ?? "",
-    location: t.location ?? "",
+    experience: normalize(t.experience),
+    bio: normalize(t.bio),
+    availability: Array.isArray(t.availability)
+      ? t.availability.map(normalize).filter(Boolean).join(", ")
+      : normalize(t.availability as string | undefined),
+    responseTime: normalize(t.responseTime),
+    location: normalize(t.location),
   };
 }
 
 export default function SubjectTutorsPage() {
   const navigate = useNavigate();
   const { subject } = useParams<{ subject: string }>();
+  const { user } = useAuth();
+  const { getConnectionWithTutor } = useConnections();
   const { addSession, addCalendarEvent } = useCalendar();
   const { tutors: backendTutors, isLoading, error } = useTutors();
   const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const todayStr = (() => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })();
   const [bookingData, setBookingData] = useState({
-    date: "2026-02-20",
+    date: todayStr,
     time: "14:00",
     duration: "1 hour",
     topic: "",
@@ -70,19 +86,16 @@ export default function SubjectTutorsPage() {
     setShowBookingModal(true);
   };
 
-  const confirmBooking = () => {
+  const confirmBooking = async () => {
     if (!selectedTutor) return;
 
-    // Parse the booking data
     const [year, month, day] = bookingData.date.split('-').map(Number);
     const [hours, minutes] = bookingData.time.split(':').map(Number);
-    
-    // Convert to 12-hour format
+
     const period = hours >= 12 ? 'PM' : 'AM';
     const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
     const startTime = `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
-    
-    // Calculate end time based on duration
+
     const durationMap: { [key: string]: number } = {
       "1 hour": 1,
       "1.5 hours": 1.5,
@@ -94,7 +107,6 @@ export default function SubjectTutorsPage() {
     const endHours12 = endHours === 0 ? 12 : endHours > 12 ? endHours - 12 : endHours;
     const endTime = `${endHours12}:${minutes.toString().padStart(2, '0')} ${endPeriod}`;
 
-    // Create calendar event
     const calendarEvent = {
       id: Date.now(),
       type: "class" as const,
@@ -108,7 +120,6 @@ export default function SubjectTutorsPage() {
       color: "from-[#5b7ceb] to-[#7c3aed]",
     };
 
-    // Create session entry
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const session = {
       id: Date.now() + 1,
@@ -122,9 +133,29 @@ export default function SubjectTutorsPage() {
       location: bookingData.location,
     };
 
-    // Add to context (which will save to localStorage automatically)
     addCalendarEvent(calendarEvent);
     addSession(session);
+
+    if (user?.id && db) {
+      const connection = getConnectionWithTutor(selectedTutor.id);
+      if (connection?.connectionId) {
+        try {
+          await firestoreReady;
+          const scheduledAt = new Date(year, month - 1, day, hours, minutes);
+          await addDoc(collection(db, "sessions"), {
+            connectionId: connection.connectionId,
+            studentUid: user.id,
+            tutorUid: selectedTutor.id,
+            status: "requested",
+            scheduledAt: Timestamp.fromDate(scheduledAt),
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        } catch (_) {
+          // Non-blocking; calendar/session UI still updated
+        }
+      }
+    }
 
     setShowBookingModal(false);
     navigate("/schedule", { state: { showBookingSuccess: true } });
@@ -173,9 +204,9 @@ export default function SubjectTutorsPage() {
               >
                 {/* Tutor Header */}
                 <div className="flex items-start gap-4 mb-4">
-                  <ImageWithFallback
+                  <AvatarWithInitials
                     src={tutor.avatar}
-                    alt={tutor.name}
+                    name={tutor.name}
                     className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
@@ -208,26 +239,43 @@ export default function SubjectTutorsPage() {
                 </div>
 
                 {/* Bio */}
-                <div className="mb-4">
-                  <p className="text-[14px] text-[#a8b3cf] leading-relaxed">
-                    {tutor.bio}
-                  </p>
-                </div>
+                {tutor.bio && (
+                  <div className="mb-4">
+                    <p className="text-[14px] text-[#a8b3cf] leading-relaxed">
+                      {tutor.bio}
+                    </p>
+                  </div>
+                )}
 
                 {/* Details */}
                 <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-[13px]">
-                    <MapPin className="w-3.5 h-3.5 text-[#a8b3cf]" />
-                    <span className="text-[#e8edf5]">{tutor.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[13px]">
-                    <Calendar className="w-3.5 h-3.5 text-[#a8b3cf]" />
-                    <span className="text-[#e8edf5]">{tutor.availability}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[13px]">
-                    <Clock className="w-3.5 h-3.5 text-[#a8b3cf]" />
-                    <span className="text-[#a8b3cf]">{tutor.responseTime}</span>
-                  </div>
+                  {tutor.location && (
+                    <div className="flex items-center gap-2 text-[13px]">
+                      <MapPin className="w-3.5 h-3.5 text-[#a8b3cf]" />
+                      <span className="text-[#e8edf5]">{tutor.location}</span>
+                    </div>
+                  )}
+                  {tutor.availability && (
+                    <div className="flex items-center gap-2 text-[13px]">
+                      <Calendar className="w-3.5 h-3.5 text-[#a8b3cf]" />
+                      <span className="text-[#e8edf5]">{tutor.availability}</span>
+                    </div>
+                  )}
+                  {tutor.responseTime && (
+                    <div className="flex items-center gap-2 text-[13px]">
+                      <Clock className="w-3.5 h-3.5 text-[#a8b3cf]" />
+                      <span className="text-[#a8b3cf]">{tutor.responseTime}</span>
+                    </div>
+                  )}
+                  {tutor.subjects.length > 0 && (
+                    <div className="flex items-center gap-2 text-[13px]">
+                      <BookOpen className="w-3.5 h-3.5 text-[#a8b3cf]" />
+                      <span className="text-[#e8edf5]">
+                        {tutor.subjects.slice(0, 3).join(", ")}
+                        {tutor.subjects.length > 3 && " + more"}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Subjects Tags */}
@@ -314,9 +362,9 @@ export default function SubjectTutorsPage() {
 
               {/* Tutor Info */}
               <div className="flex items-center gap-3 mb-5 p-4 bg-[#2a2f4a] rounded-xl">
-                <ImageWithFallback
+                <AvatarWithInitials
                   src={selectedTutor.avatar}
-                  alt={selectedTutor.name}
+                  name={selectedTutor.name}
                   className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                 />
                 <div className="flex-1">

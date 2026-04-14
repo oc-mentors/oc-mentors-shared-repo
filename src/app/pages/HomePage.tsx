@@ -11,36 +11,19 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAllCourseColors } from "../hooks/useCourseColor";
 import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
+import { useCalendar } from "../contexts/CalendarContext";
 import { subjects } from "../data/courses";
 import TutorHomePage from "./TutorHomePage";
 // Inline placeholder (no external request) to avoid ERR_NAME_NOT_RESOLVED
 const imgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect fill='%23e2e8f0' width='150' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
-const imgDebra = imgPlaceholder;
-const imgAdam = imgPlaceholder;
 
-const meetings = [
-  {
-    id: 1,
-    name: "Debra Peterson",
-    subject: "Math 2A • Visual Learning",
-    time: "Today at 6:30  PM",
-    image: imgDebra,
-    isActive: true,
-  },
-  {
-    id: 2,
-    name: "Adam Smith",
-    subject: "Chemistry 1A • Hands-on Practice",
-    time: "Tomorrow at 5:30 PM",
-    image: imgAdam,
-    isActive: true,
-  },
-];
+const STUDY_GUIDES_LINK = "https://linktr.ee/ocmentors#collection-224818fa-fa60-405f-afd3-0ff5d41934d6";
 
 const resources = [
   { id: 1, image: "https://images.unsplash.com/photo-1758685734312-5134968399a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxjdWx1cyUyMG1hdGhlbWF0aWNzJTIwZWR1Y2F0aW9ufGVufDF8fHx8MTc3MDkzMTk2NXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", title: "Calculus Basics" },
   { id: 2, image: "https://images.unsplash.com/photo-1761095596584-34731de3e568?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjaGVtaXN0cnklMjBsYWIlMjBiZWFrZXJzfGVufDF8fHx8MTc3MDkzMTk2NXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", title: "Chemistry 101" },
   { id: 3, image: "https://images.unsplash.com/photo-1756829007483-414057ed33cd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaHlzaWNzJTIwc2NpZW5jZSUyMGVkdWNhdGlvbnxlbnwxfHx8fDE3NzA4MjM1NDV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", title: "Physics Guide" },
+  { id: 4, image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", title: "Study guides by request", url: STUDY_GUIDES_LINK },
 ];
 
 type SubjectItem = { name: string; courseId: number; defaultColor: string; icon: string };
@@ -56,6 +39,10 @@ export default function HomePage() {
   const { colors, accentColor } = useTheme();
   const courseColors = useAllCourseColors();
   const { isCourseIgnored } = useCanvasCourses();
+  const { sessions, removedSessionIds } = useCalendar();
+  const upcomingMeetings = sessions.filter(
+    (s) => s.status === "upcoming" && !removedSessionIds.includes(s.id)
+  );
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showTopFade, setShowTopFade] = useState(false);
@@ -65,6 +52,10 @@ export default function HomePage() {
     }
   };
 
+  const greetingName = (() => {
+    const n = user?.firstName || user?.name?.split(" ")[0] || "there";
+    return n && n !== "User" && n !== "user" ? n : "there";
+  })();
   const visibleSubjects = subjects.filter((s) => !isCourseIgnored(s.courseId));
   const allDisplaySubjects: SubjectItem[] = [...visibleSubjects, ...customSubjects];
 
@@ -131,14 +122,17 @@ export default function HomePage() {
             >
               <div className="space-y-3">
                 <h1 className="text-[44px] font-bold leading-tight" style={{ color: colors.textPrimary }}>
-                  Hi, {user?.firstName || user?.name?.split(" ")[0] || "there"} 👋
+                  Hi, {greetingName} 👋
                 </h1>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" style={{ color: colors.textSecondary }} />
+                <Link
+                  to="/schedule"
+                  className="flex items-center gap-2 group cursor-pointer"
+                >
+                  <Clock className="w-5 h-5 flex-shrink-0" style={{ color: colors.textSecondary }} />
                   <p className="text-base italic" style={{ color: colors.textSecondary }}>
-                    You have Chemistry with Dedra in 2 hours
+                    View your schedule
                   </p>
-                </div>
+                </Link>
               </div>
 
               <Link to="/progress">
@@ -322,56 +316,76 @@ export default function HomePage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold" style={{ color: colors.textPrimary }}>Upcoming Meeting</h3>
-                <Link to="/schedule">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="text-[13px] font-semibold"
-                    style={{ color: accentColor.primary }}
-                  >
-                    View All
-                  </motion.button>
-                </Link>
+                {upcomingMeetings.length > 0 && (
+                  <Link to="/schedule">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="text-[13px] font-semibold"
+                      style={{ color: accentColor.primary }}
+                    >
+                      View All
+                    </motion.button>
+                  </Link>
+                )}
               </div>
 
-              <div className="space-y-3">
-                {meetings.map((meeting, index) => (
-                  <Link key={meeting.id} to="/schedule">
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 + index * 0.1 }}
-                      whileHover={{ scale: 1.02, x: 4 }}
-                      className="rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer"
-                      style={{ backgroundColor: colors.bgCard }}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <img
-                            src={meeting.image}
-                            alt={meeting.name}
-                            className="w-14 h-14 rounded-2xl object-cover"
-                          />
-                          {meeting.isActive && (
+              {upcomingMeetings.length > 0 ? (
+                <div className="space-y-3">
+                  {upcomingMeetings.slice(0, 3).map((meeting, index) => (
+                    <Link key={meeting.id} to="/schedule">
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 + index * 0.1 }}
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        className="rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer"
+                        style={{ backgroundColor: colors.bgCard }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="relative">
+                            <ImageWithFallback
+                              src={meeting.tutorAvatar}
+                              alt={meeting.tutor}
+                              className="w-14 h-14 rounded-2xl object-cover"
+                            />
                             <div className="absolute bottom-0 right-0 w-5 h-5 border-2 rounded-full" style={{ backgroundColor: accentColor.primary, borderColor: colors.bgPrimary }} />
-                          )}
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-[15px] font-semibold mb-1" style={{ color: colors.textPrimary }}>
+                              {meeting.tutor}
+                            </h4>
+                            <p className="text-[13px] mb-1" style={{ color: colors.textSecondary }}>
+                              {meeting.subject}
+                            </p>
+                            <p className="text-xs font-medium" style={{ color: accentColor.primary }}>
+                              {meeting.date} at {meeting.time}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <h4 className="text-[15px] font-semibold mb-1" style={{ color: colors.textPrimary }}>
-                            {meeting.name}
-                          </h4>
-                          <p className="text-[13px] mb-1" style={{ color: colors.textSecondary }}>
-                            {meeting.subject}
-                          </p>
-                          <p className="text-xs font-medium" style={{ color: accentColor.primary }}>
-                            {meeting.time}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </Link>
-                ))}
-              </div>
+                      </motion.div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <Link to="/book-session">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer border-2 border-dashed text-center"
+                    style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
+                  >
+                    <p className="text-[15px] font-medium mb-2" style={{ color: colors.textSecondary }}>
+                      No upcoming meetings
+                    </p>
+                    <p className="text-[14px] font-semibold" style={{ color: accentColor.primary }}>
+                      Schedule a session
+                    </p>
+                  </motion.div>
+                </Link>
+              )}
             </motion.div>
 
             <motion.div
@@ -382,27 +396,36 @@ export default function HomePage() {
             >
               <h3 className="text-lg font-bold mb-4" style={{ color: colors.textPrimary }}>Recommended Resources</h3>
               <div className="grid grid-cols-2 gap-3">
-                {resources.map((resource, index) => (
-                  <motion.div
-                    key={resource.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.6 + index * 0.1 }}
-                    whileHover={{ scale: 1.05, y: -4 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="relative rounded-2xl overflow-hidden shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer group"
-                  >
-                    <ImageWithFallback
-                      src={resource.image}
-                      alt={resource.title}
-                      className="w-full h-32 object-cover transition-transform group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <p className="text-white text-sm font-semibold">{resource.title}</p>
-                    </div>
-                  </motion.div>
-                ))}
+                {resources.map((resource, index) => {
+                  const href = "url" in resource && resource.url ? resource.url : `https://www.youtube.com/results?search_query=${encodeURIComponent(resource.title)}`;
+                  return (
+                    <a
+                      key={resource.id}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.6 + index * 0.1 }}
+                        whileHover={{ scale: 1.05, y: -4 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="relative rounded-2xl overflow-hidden shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer group"
+                      >
+                        <ImageWithFallback
+                          src={resource.image}
+                          alt={resource.title}
+                          className="w-full h-32 object-cover transition-transform group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                          <p className="text-white text-sm font-semibold">{resource.title}</p>
+                        </div>
+                      </motion.div>
+                    </a>
+                  );
+                })}
               </div>
             </motion.div>
           </div>

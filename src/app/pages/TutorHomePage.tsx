@@ -4,52 +4,19 @@ import { Calendar, Users, DollarSign, Clock, MessageSquare, TrendingUp, Bell, Vi
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import { useAuth } from "../contexts/AuthContext";
+import { useTutorRequests } from "../contexts/TutorRequestsContext";
 
 export default function TutorHomePage() {
   const { user } = useAuth();
+  const { incomingRequests } = useTutorRequests();
 
+  const today = new Date();
+  const fmt = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const d0 = new Date(today); const d1 = new Date(today); d1.setDate(d1.getDate() + 1);
   const upcomingSessions = [
-    {
-      id: 1,
-      studentName: "Emily Johnson",
-      subject: "Chemistry",
-      time: "10:00 AM",
-      date: "Feb 19",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
-    },
-    {
-      id: 2,
-      studentName: "Marcus Chen",
-      subject: "Math",
-      time: "2:30 PM",
-      date: "Feb 19",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-    },
-    {
-      id: 3,
-      studentName: "Sarah Williams",
-      subject: "Physics",
-      time: "4:00 PM",
-      date: "Feb 20",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400",
-    },
-  ];
-
-  const pendingRequests = [
-    {
-      id: 1,
-      studentName: "Alex Rivera",
-      subject: "Biology",
-      requestedTime: "Feb 21, 3:00 PM",
-      message: "Need help with cellular respiration concepts",
-    },
-    {
-      id: 2,
-      studentName: "Jessica Park",
-      subject: "Chemistry",
-      requestedTime: "Feb 22, 1:00 PM",
-      message: "Struggling with organic chemistry reactions",
-    },
+    { id: 1, studentName: "Emily Johnson", subject: "Chemistry", time: "10:00 AM", date: fmt(d0), avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400" },
+    { id: 2, studentName: "Marcus Chen", subject: "Math", time: "2:30 PM", date: fmt(d0), avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" },
+    { id: 3, studentName: "Sarah Williams", subject: "Physics", time: "4:00 PM", date: fmt(d1), avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400" },
   ];
 
   return (
@@ -60,7 +27,7 @@ export default function TutorHomePage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-[#e8edf5]">
-                Welcome back, {user?.name || "Tutor"}!
+                Welcome back, {user?.firstName || user?.name?.split(" ")[0] || "Tutor"}!
               </h1>
               <p className="text-sm text-[#a8b3cf] mt-1">
                 {new Date().toLocaleDateString("en-US", { 
@@ -122,66 +89,54 @@ export default function TutorHomePage() {
           </div>
         </div>
 
-        {/* Pending Session Requests */}
-        {pendingRequests.length > 0 && (
-          <div className="px-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-[#e8edf5]">Pending Requests</h2>
-              <div className="bg-[#5b7ceb] text-white text-xs font-semibold px-2 py-1 rounded-full">
-                {pendingRequests.length}
-              </div>
-            </div>
+        {/* Pending Tutor Requests (real data) */}
+        <div className="px-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-[#e8edf5]">Requests from students</h2>
+            <Link
+              to="/tutor-requests"
+              className="text-sm text-[#5b7ceb] font-semibold flex items-center gap-1"
+            >
+              View all
+              {incomingRequests.length > 0 && (
+                <span className="bg-[#5b7ceb] text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                  {incomingRequests.length}
+                </span>
+              )}
+            </Link>
+          </div>
+          {incomingRequests.length === 0 ? (
+            <p className="text-sm text-[#a8b3cf]">No pending requests</p>
+          ) : (
             <div className="space-y-3">
-              {pendingRequests.map((request) => (
-                <motion.div
-                  key={request.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="bg-[#1e2139] rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="text-base font-semibold text-[#e8edf5]">
-                        {request.studentName}
-                      </h3>
-                      <p className="text-sm text-[#a8b3cf]">{request.subject}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-[#a8b3cf]">{request.requestedTime}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-[#a8b3cf] mb-4">{request.message}</p>
-                  <div className="flex gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex-1 bg-gradient-to-r from-[#4361d9] to-[#5b7ceb] text-white text-sm font-semibold py-2 rounded-xl"
-                    >
-                      Accept
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex-1 bg-[#2a2f45] text-[#a8b3cf] text-sm font-semibold py-2 rounded-xl"
-                    >
-                      Decline
-                    </motion.button>
-                  </div>
-                </motion.div>
+              {incomingRequests.slice(0, 2).map((req) => (
+                <Link key={req.id} to="/tutor-requests">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-[#1e2139] rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
+                  >
+                    <p className="text-base font-semibold text-[#e8edf5]">Student request</p>
+                    {req.subject && <p className="text-sm text-[#a8b3cf]">{req.subject}</p>}
+                    {req.initialMessage && (
+                      <p className="text-sm text-[#a8b3cf] mt-1 line-clamp-1">"{req.initialMessage}"</p>
+                    )}
+                  </motion.div>
+                </Link>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Upcoming Sessions */}
         <div className="px-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-[#e8edf5]">Upcoming Sessions</h2>
-            <Link to="/schedule" className="text-sm text-[#5b7ceb] font-semibold">
+            <span className="text-sm text-[#5b7ceb]/60 font-semibold cursor-not-allowed" title="Demo – coming soon">
               View All
-            </Link>
+            </span>
           </div>
           <div className="space-y-3">
             {upcomingSessions.map((session, index) => (
@@ -216,15 +171,13 @@ export default function TutorHomePage() {
                       </div>
                     </div>
                   </div>
-                  <Link to="/video-session">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="w-10 h-10 bg-gradient-to-br from-[#4361d9] to-[#5b7ceb] rounded-xl flex items-center justify-center"
-                    >
-                      <Video className="w-5 h-5 text-white" />
-                    </motion.button>
-                  </Link>
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center cursor-not-allowed opacity-60"
+                    style={{ backgroundColor: "rgba(67, 97, 217, 0.5)" }}
+                    title="Demo – coming soon"
+                  >
+                    <Video className="w-5 h-5 text-white" />
+                  </div>
                 </div>
               </motion.div>
             ))}

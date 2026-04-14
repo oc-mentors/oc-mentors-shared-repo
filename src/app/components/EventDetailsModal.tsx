@@ -114,7 +114,7 @@ export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventD
     "July", "August", "September", "October", "November", "December"
   ];
 
-  const MIN_DATE = new Date(2026, 1, 13); // Feb 13 2026 — project fixed "today"
+  const MIN_DATE = new Date(); // today
 
   // Convert "H:MM AM/PM" → total minutes since midnight
   function timeToMinutes(t: string): number {
