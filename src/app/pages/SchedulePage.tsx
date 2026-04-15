@@ -175,34 +175,7 @@ export default function SchedulePage() {
     date: new Date(),
   });
 
-  // Available users for study session invites
-  const availableUsers: User[] = [
-    {
-      id: 1,
-      name: "Sarah Chen",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
-    },
-    {
-      id: 2,
-      name: "Michael Torres",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-    },
-    {
-      id: 3,
-      name: "Emily Rodriguez",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400",
-    },
-    {
-      id: 4,
-      name: "David Kim",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
-    },
-    {
-      id: 5,
-      name: "Jessica Park",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
-    },
-  ];
+  const availableUsers: User[] = [];
 
   // Sessions and calendar events now come from CalendarContext
 
@@ -1326,32 +1299,38 @@ export default function SchedulePage() {
             </p>
 
             <div className="space-y-3 max-h-[400px] overflow-y-auto">
-              {availableUsers.map((user, index) => (
-                <motion.button
-                  key={user.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleSendStudyInvite(user.id)}
-                  className="w-full flex items-center gap-3 rounded-xl p-4 transition-colors"
-                  style={{ backgroundColor: colors.bgTertiary }}
-                >
-                  <ImageWithFallback
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                  />
-                  <div className="flex-1 text-left">
-                    <p className="text-[15px] font-semibold" style={{ color: colors.textPrimary }}>{user.name}</p>
-                    <p className="text-[13px]" style={{ color: colors.textSecondary }}>Online now</p>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#14b8a6] to-[#0891b2] flex items-center justify-center">
-                    <Plus className="w-5 h-5 text-white" />
-                  </div>
-                </motion.button>
-              ))}
+              {availableUsers.length === 0 ? (
+                <p className="text-[14px] text-center py-6" style={{ color: colors.textSecondary }}>
+                  No classmates to show yet. Invite links from your school roster can be added here later.
+                </p>
+              ) : (
+                availableUsers.map((user, index) => (
+                  <motion.button
+                    key={user.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleSendStudyInvite(user.id)}
+                    className="w-full flex items-center gap-3 rounded-xl p-4 transition-colors"
+                    style={{ backgroundColor: colors.bgTertiary }}
+                  >
+                    <ImageWithFallback
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 text-left">
+                      <p className="text-[15px] font-semibold" style={{ color: colors.textPrimary }}>{user.name}</p>
+                      <p className="text-[13px]" style={{ color: colors.textSecondary }}>Online now</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#14b8a6] to-[#0891b2] flex items-center justify-center">
+                      <Plus className="w-5 h-5 text-white" />
+                    </div>
+                  </motion.button>
+                ))
+              )}
             </div>
 
             <motion.button

@@ -17,14 +17,8 @@ import TutorHomePage from "./TutorHomePage";
 // Inline placeholder (no external request) to avoid ERR_NAME_NOT_RESOLVED
 const imgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect fill='%23e2e8f0' width='150' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
 
-const STUDY_GUIDES_LINK = "https://linktr.ee/ocmentors#collection-224818fa-fa60-405f-afd3-0ff5d41934d6";
-
-const resources = [
-  { id: 1, image: "https://images.unsplash.com/photo-1758685734312-5134968399a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxjdWx1cyUyMG1hdGhlbWF0aWNzJTIwZWR1Y2F0aW9ufGVufDF8fHx8MTc3MDkzMTk2NXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", title: "Calculus Basics" },
-  { id: 2, image: "https://images.unsplash.com/photo-1761095596584-34731de3e568?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjaGVtaXN0cnklMjBsYWIlMjBiZWFrZXJzfGVufDF8fHx8MTc3MDkzMTk2NXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", title: "Chemistry 101" },
-  { id: 3, image: "https://images.unsplash.com/photo-1756829007483-414057ed33cd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaHlzaWNzJTIwc2NpZW5jZSUyMGVkdWNhdGlvbnxlbnwxfHx8fDE3NzA4MjM1NDV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", title: "Physics Guide" },
-  { id: 4, image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", title: "Study guides by request", url: STUDY_GUIDES_LINK },
-];
+/** Curated tiles; empty until you add real links/content. */
+const resources: { id: number; image: string; title: string; url?: string }[] = [];
 
 type SubjectItem = { name: string; courseId: number; defaultColor: string; icon: string };
 
@@ -388,6 +382,7 @@ export default function HomePage() {
               )}
             </motion.div>
 
+            {resources.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -428,6 +423,7 @@ export default function HomePage() {
                 })}
               </div>
             </motion.div>
+            )}
           </div>
         </div>
       </div>

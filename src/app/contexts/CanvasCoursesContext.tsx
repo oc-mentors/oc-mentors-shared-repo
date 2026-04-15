@@ -60,107 +60,9 @@ const defaultCanvasUrls: Record<number, string> = {
   5: "https://canvas.uci.edu/courses/67894", // BIO SCI 93
 };
 
-// Generate mock assignments — single source of truth used by both AssignmentsPage and the calendar
+/** No local demo assignments — list stays empty until Canvas sync or user-added items populate storage. */
 function generateDefaultAssignments(): CanvasAssignment[] {
-  return [
-    // ── CHEM 1A ─────────────────────────────────────────────────────────────
-    {
-      id: 1,
-      name: "Lab Report: Acid-Base Titration",
-      courseFullName: "CHEM 1A: General Chemistry",
-      dueDate: new Date(2026, 1, 18, 23, 59), // Feb 18, 2026, 11:59 PM
-      courseId: 1,
-      courseName: "CHEM 1A",
-      courseColor: "#8b5cf6",
-      points: 100,
-      submitted: false,
-      instructions:
-        "Complete a formal lab report on the acid-base titration experiment conducted in class. Your report should include: introduction, materials and methods, results (with data tables), discussion, and conclusion. Make sure to show all calculations and include error analysis.",
-    },
-    {
-      id: 7,
-      name: "Lab Safety Quiz",
-      courseFullName: "CHEM 1A: General Chemistry",
-      dueDate: new Date(2026, 1, 12, 23, 59), // Feb 12, 2026, 11:59 PM
-      courseId: 1,
-      courseName: "CHEM 1A",
-      courseColor: "#8b5cf6",
-      points: 25,
-      submitted: true,
-      score: 25,
-      instructions:
-        "Complete the lab safety quiz before Friday's lab session. This quiz covers proper handling of chemicals, emergency procedures, and lab equipment usage.",
-    },
-    // ── MATH 2A ─────────────────────────────────────────────────────────────
-    {
-      id: 2,
-      name: "Problem Set 5: Integration Techniques",
-      courseFullName: "MATH 2A: Calculus I",
-      dueDate: new Date(2026, 1, 16, 23, 59), // Feb 16, 2026
-      courseId: 2,
-      courseName: "MATH 2A",
-      courseColor: "#3b82f6",
-      points: 50,
-      submitted: false,
-      instructions:
-        "Complete problems 1-20 from Chapter 7. Focus on integration by parts, trigonometric substitution, and partial fractions. Show all work for full credit. You may work in groups but must submit your own solutions.",
-    },
-    {
-      id: 6,
-      name: "Homework 3: Derivatives",
-      courseFullName: "MATH 2A: Calculus I",
-      dueDate: new Date(2026, 1, 10, 23, 59), // Feb 10, 2026 — past due
-      courseId: 2,
-      courseName: "MATH 2A",
-      courseColor: "#3b82f6",
-      points: 50,
-      submitted: false,
-      instructions:
-        "Complete all exercises from Section 3.1–3.4. Focus on the chain rule, implicit differentiation, and related rates problems.",
-    },
-    // ── PHYS 7C ─────────────────────────────────────────────────────────────
-    {
-      id: 3,
-      name: "Midterm Exam Review",
-      courseFullName: "PHYS 7C: Classical Mechanics",
-      dueDate: new Date(2026, 1, 17, 23, 59), // Feb 17, 2026
-      courseId: 3,
-      courseName: "PHYS 7C",
-      courseColor: "#14b8a6",
-      points: 75,
-      submitted: false,
-      instructions:
-        "Complete the practice problems posted on Canvas to prepare for the midterm. This review is mandatory and will count as a homework grade. Topics covered: Newton's laws, energy conservation, momentum, and rotational dynamics.",
-    },
-    // ── WRIT 39B ────────────────────────────────────────────────────────────
-    {
-      id: 4,
-      name: "Argumentative Essay Draft",
-      courseFullName: "WRIT 39B: Critical Reading",
-      dueDate: new Date(2026, 1, 19, 23, 59), // Feb 19, 2026
-      courseId: 4,
-      courseName: "WRIT 39B",
-      courseColor: "#ec4899",
-      points: 150,
-      submitted: false,
-      instructions:
-        "Submit a complete first draft of your argumentative essay (1500–2000 words). Your essay should present a clear thesis statement, include at least 5 scholarly sources, and address counterarguments. This draft will receive peer review feedback.",
-    },
-    // ── BIO SCI 93 ──────────────────────────────────────────────────────────
-    {
-      id: 5,
-      name: "Gene Expression Lab Quiz",
-      courseFullName: "BIO SCI 93: DNA to Organisms",
-      dueDate: new Date(2026, 1, 15, 23, 59), // Feb 15, 2026
-      courseId: 5,
-      courseName: "BIO SCI 93",
-      courseColor: "#22c55e",
-      points: 40,
-      submitted: false,
-      instructions:
-        "Complete the online quiz covering gene expression, transcription, and translation. The quiz has 20 multiple choice questions and is timed (30 minutes). You will have 2 attempts; your highest score will be recorded.",
-    },
-  ];
+  return [];
 }
 
 function loadAssignmentsFromStorage(): CanvasAssignment[] {
@@ -186,18 +88,20 @@ function saveAssignmentsToStorage(assignments: CanvasAssignment[]) {
 
 function loadCoursesFromStorage(): CanvasCourse[] {
   const stored = localStorage.getItem(STORAGE_KEY);
-  
-  // Always use defaultCanvasCourses as base to ensure icons are correct
+
   const baseCourses = defaultCanvasCourses.map((course) => ({
     ...course,
     canvasUrl: defaultCanvasUrls[course.id],
     progress: 0,
     lessonsCompleted: 0,
   }));
-  
+
   if (stored) {
     try {
       const storedData = JSON.parse(stored);
+      if (!Array.isArray(storedData) || storedData.length === 0) {
+        return [];
+      }
       // Merge stored data with base courses to preserve icons
       return baseCourses.map((baseCourse) => {
         const storedCourse = storedData.find((c: CanvasCourse) => c.id === baseCourse.id);
@@ -214,16 +118,11 @@ function loadCoursesFromStorage(): CanvasCourse[] {
       });
     } catch (error) {
       console.error("Error loading courses from storage:", error);
-      return baseCourses;
+      return [];
     }
   }
-  
-  // Initialize with random progress
-  return baseCourses.map((course) => ({
-    ...course,
-    progress: getRandomProgress(),
-    lessonsCompleted: getRandomLessons(),
-  }));
+
+  return [];
 }
 
 function saveCoursesToStorage(courses: CanvasCourse[]) {

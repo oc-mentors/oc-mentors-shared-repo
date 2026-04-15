@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Search, TrendingUp, Calendar, MessageSquare, Star } from "lucide-react";
 import { BottomNav } from "../components/BottomNav";
+import { AvatarWithInitials } from "../components/AvatarWithInitials";
 import { useAuth } from "../contexts/AuthContext";
 import { useConnections } from "../contexts/ConnectionsContext";
 import type { Conversation } from "../contexts/ConversationsContext";
@@ -77,10 +78,10 @@ export default function TutorStudentsPage() {
                 className="bg-[#1e2139] rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
               >
                 <div className="flex items-start gap-4">
-                  <img
-                    src={connection.studentPhotoURL || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"}
-                    alt={connection.studentFirstName ?? "Student"}
-                    className="w-16 h-16 rounded-xl object-cover"
+                  <AvatarWithInitials
+                    src={connection.studentPhotoURL || undefined}
+                    name={connection.studentFirstName ?? "Student"}
+                    className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
                   />
 
                   <div className="flex-1">

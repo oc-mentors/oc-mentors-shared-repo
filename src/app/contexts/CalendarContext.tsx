@@ -51,67 +51,12 @@ interface CalendarContextType {
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
 
-function formatSessionDate(d: Date): string {
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
-
 function getDefaultSessions(): Session[] {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const d1 = new Date(today); d1.setDate(d1.getDate() + 1);
-  const d3 = new Date(today); d3.setDate(d3.getDate() + 3);
-  const past = new Date(today); past.setDate(past.getDate() - 5);
-  return [
-    {
-      id: 1,
-      subject: "Math 2A - Matrices",
-      tutor: "Debra Peterson",
-      tutorAvatar: "https://images.unsplash.com/photo-1600081687786-ce51e1e49ec7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjB3b21hbiUyMG1lbnRvciUyMHR1dG9yfGVufDF8fHx8MTc3MDkyOTIyOHww&ixlib=rb-4.1.0&q=80&w=1080",
-      date: formatSessionDate(d1),
-      time: "2:00 PM",
-      duration: "1 hour",
-      status: "upcoming",
-      location: "Online",
-    },
-    {
-      id: 2,
-      subject: "Physics - Mechanics",
-      tutor: "Adam Smith",
-      tutorAvatar: "https://images.unsplash.com/photo-1621533463397-f292bd0745f9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBtYW4lMjBtZW50b3IlMjBidXNpbmVzc3xlbnwxfHx8fDE3NzA5MjkyMjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      date: formatSessionDate(d3),
-      time: "10:00 AM",
-      duration: "1 hour",
-      status: "upcoming",
-      location: "UCI",
-    },
-    {
-      id: 3,
-      subject: "Math 2A - Derivatives",
-      tutor: "Debra Peterson",
-      tutorAvatar: "https://images.unsplash.com/photo-1600081687786-ce51e1e49ec7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjB3b21hbiUyMG1lbnRvciUyMHR1dG9yfGVufDF8fHx8MTc3MDkyOTIyOHww&ixlib=rb-4.1.0&q=80&w=1080",
-      date: formatSessionDate(past),
-      time: "2:00 PM",
-      duration: "1 hour",
-      status: "completed",
-    },
-  ];
+  return [];
 }
 
 function getDefaultCalendarEvents(): CalendarEvent[] {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const d1 = new Date(today); d1.setDate(d1.getDate() + 1);
-  const d3 = new Date(today); d3.setDate(d3.getDate() + 3);
-  const d0 = new Date(today);
-  const d4 = new Date(today); d4.setDate(d4.getDate() + 4);
-  const d5 = new Date(today); d5.setDate(d5.getDate() + 5);
-  return [
-    { id: 1, type: "tutor", title: "Math 2A - Matrices", startTime: "2:00 PM", endTime: "3:00 PM", day: d1.getDay(), date: d1, tutor: "Debra Peterson", location: "Online", courseId: 2 },
-    { id: 2, type: "tutor", title: "Physics - Mechanics", startTime: "10:00 AM", endTime: "11:00 AM", day: d3.getDay(), date: d3, tutor: "Adam Smith", location: "UCI", courseId: 3 },
-    { id: 3, type: "study", title: "Chemistry Study", startTime: "3:00 PM", endTime: "5:00 PM", day: d0.getDay(), date: d0, participants: ["Sarah Chen", "Michael Torres"], location: "Irvine High School", courseId: 1 },
-    { id: 4, type: "class", title: "Writing 39B", startTime: "11:00 AM", endTime: "12:00 PM", day: d4.getDay(), date: d4, tutor: "Jennifer Lee", location: "Online", courseId: 4 },
-    { id: 5, type: "class", title: "Biology Lab", startTime: "1:00 PM", endTime: "3:00 PM", day: d5.getDay(), date: d5, tutor: "Dr. Martinez", location: "UCI", courseId: 5 },
-  ];
+  return [];
 }
 
 export function CalendarProvider({ children }: { children: ReactNode }) {

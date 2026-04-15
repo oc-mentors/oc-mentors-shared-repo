@@ -205,7 +205,14 @@ export default function CanvasClassesPage() {
             <div className="px-6">
               <h2 className="text-lg font-bold mb-4" style={{ color: colors.textPrimary }}>My Classes</h2>
               <div className="space-y-3">
-                {sortedCourses.map((course, index) => {
+                {sortedCourses.length === 0 ? (
+                  <p className="text-sm rounded-2xl p-5 border" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary, color: colors.textSecondary }}>
+                    {isCanvasConnected
+                      ? "No classes loaded yet. Tap refresh above after connecting Canvas."
+                      : "Connect Canvas to import your courses."}
+                  </p>
+                ) : (
+                sortedCourses.map((course, index) => {
                   const IconComponent = course.icon;
                   const ignored = isCourseIgnored(course.id);
                   return (
@@ -287,7 +294,8 @@ export default function CanvasClassesPage() {
                       </div>
                     </motion.div>
                   );
-                })}
+                })
+                )}
               </div>
             </div>
           </div>

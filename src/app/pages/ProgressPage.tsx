@@ -9,20 +9,7 @@ import { useCanvasAuth } from "../contexts/CanvasAuthContext";
 import { useAllCourseColors } from "../hooks/useCourseColor";
 import { CanvasLoginPromptModal } from "../components/CanvasLoginPromptModal";
 
-const achievements = [
-  {
-    id: 1,
-    title: "5 Lessons Complete",
-    date: "Nov 8",
-    icon: "trophy",
-  },
-  {
-    id: 2,
-    title: "Perfect Quiz Score",
-    date: "Nov 5",
-    icon: "star",
-  },
-];
+const achievements: { id: number; title: string; date: string; icon: string }[] = [];
 
 function ProgressBar({ percentage, color }: { percentage: number; color: string }) {
   return (
@@ -167,7 +154,7 @@ export default function ProgressPage() {
                 </div>
                 <div className="w-px h-16" style={{ backgroundColor: mode === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)" }} />
                 <div>
-                  <div className="text-[44px] font-bold leading-tight" style={{ color: mode === "dark" ? "white" : "black" }}>24hrs</div>
+                  <div className="text-[44px] font-bold leading-tight" style={{ color: mode === "dark" ? "white" : "black" }}>0hrs</div>
                   <div className="text-sm" style={{ color: mode === "dark" ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.6)" }}>Total Study Time</div>
                 </div>
               </div>
@@ -214,7 +201,12 @@ export default function ProgressPage() {
             )}
           </div>
           <div className="space-y-3">
-            {visibleCourses.map((course, index) => {
+            {visibleCourses.length === 0 ? (
+              <p className="text-sm rounded-2xl p-5 border" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary, color: colors.textSecondary }}>
+                No courses yet. Connect Canvas and refresh to sync your classes.
+              </p>
+            ) : (
+            visibleCourses.map((course, index) => {
               const IconComponent = course.icon;
               const courseColor = courseColors[course.id] || course.color;
               return (
@@ -292,7 +284,8 @@ export default function ProgressPage() {
                   </motion.div>
                 </motion.div>
               );
-            })}
+            })
+            )}
           </div>
         </motion.div>
 
@@ -305,35 +298,41 @@ export default function ProgressPage() {
         >
           <h2 className="text-lg font-semibold mb-4" style={{ color: colors.textPrimary }}>Recent Achievements</h2>
           <div className="space-y-3">
-            {achievements.map((achievement, index) => (
-              <motion.div
-                key={achievement.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 + index * 0.1 }}
-                whileHover={{ scale: 1.02, x: 4 }}
-                className="rounded-2xl p-4 border cursor-pointer"
-                style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#f59e0b] to-[#d97706] flex items-center justify-center">
-                    <Trophy className="w-6 h-6 text-white" />
+            {achievements.length === 0 ? (
+              <p className="text-sm rounded-2xl p-5 border" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary, color: colors.textSecondary }}>
+                Achievements will appear here as you complete lessons and quizzes.
+              </p>
+            ) : (
+              achievements.map((achievement, index) => (
+                <motion.div
+                  key={achievement.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + index * 0.1 }}
+                  whileHover={{ scale: 1.02, x: 4 }}
+                  className="rounded-2xl p-4 border cursor-pointer"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#f59e0b] to-[#d97706] flex items-center justify-center">
+                      <Trophy className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-[15px] font-semibold mb-1" style={{ color: colors.textPrimary }}>
+                        {achievement.title}
+                      </h3>
+                      <p className="text-xs" style={{ color: colors.textSecondary }}>{achievement.date}</p>
+                    </div>
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor.primary }} />
+                    </motion.div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-[15px] font-semibold mb-1" style={{ color: colors.textPrimary }}>
-                      {achievement.title}
-                    </h3>
-                    <p className="text-xs" style={{ color: colors.textSecondary }}>{achievement.date}</p>
-                  </div>
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor.primary }} />
-                  </motion.div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))
+            )}
           </div>
         </motion.div>
       </div>
