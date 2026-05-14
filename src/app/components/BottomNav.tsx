@@ -22,10 +22,20 @@ function CanvasLogo({ className }: { className?: string }) {
 }
 
 // Paths that are "overlay" pages — should not change the highlighted tab
-const OVERLAY_PATHS = ["/profile", "/progress", "/settings", "/learning-quiz"];
+const OVERLAY_PATHS = [
+  "/profile",
+  "/progress",
+  "/settings",
+  "/learning-quiz",
+  "/notes",
+  "/community",
+  "/privacy",
+  "/landing",
+];
 
 // Map any pathname to a tab id
 function pathToTab(p: string): string {
+  if (p === "/notes" || p === "/community" || p === "/privacy" || p === "/landing") return "home";
   if (p === "/home") return "home";
   if (p === "/tutors" || p.startsWith("/tutor/") || p === "/booking" || p === "/tutor-students") return "tutors";
   if (p === "/schedule" || p === "/video-session" || p === "/rate-session" || p === "/tutor-availability") return "schedule";

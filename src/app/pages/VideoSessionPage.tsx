@@ -1,7 +1,11 @@
 import { useNavigate } from "react-router";
 import { useState } from "react";
-import { Video, VideoOff, Mic, MicOff, Monitor, Users, MessageSquare, Settings, MoreVertical, PhoneOff } from "lucide-react";
+import { motion } from "motion/react";
+import { Video, VideoOff, Mic, MicOff, Monitor, Users, MessageSquare, Settings, MoreVertical, PhoneOff, Shield, ChevronDown } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+
+const tutorPipPlaceholder =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='160' viewBox='0 0 128 160'%3E%3Crect fill='%232c3042' width='128' height='160'/%3E%3Ccircle cx='64' cy='58' r='22' fill='%23475569'/%3E%3Cpath d='M32 132c8-28 56-28 64 0' fill='%23475569'/%3E%3C/svg%3E";
 
 export default function VideoSessionPage() {
   const navigate = useNavigate();
@@ -14,8 +18,8 @@ export default function VideoSessionPage() {
       navigate("/rate-session", {
         state: {
           session: {
-            tutor: "Debra Peterson",
-            subject: "Math 2A - Matrices",
+            tutor: "Tutor",
+            subject: "Tutoring session",
           },
         },
       });
@@ -71,13 +75,13 @@ export default function VideoSessionPage() {
               className="absolute bottom-4 right-4 w-32 h-40 rounded-xl overflow-hidden shadow-[0px_4px_16px_0px_rgba(0,0,0,0.8)] border-2 border-[rgba(255,255,255,0.2)]"
             >
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1600081687786-ce51e1e49ec7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjB3b21hbiUyMG1lbnRvciUyMHR1dG9yfGVufDF8fHx8MTc3MDkyOTIyOHww&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Debra Peterson"
+                src={tutorPipPlaceholder}
+                alt="Tutor"
                 className="w-full h-full object-cover"
               />
               {/* Name Label */}
               <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-[rgba(0,0,0,0.7)] text-white text-[10px] px-2 py-1 rounded-md">
-                Debra
+                Tutor
               </div>
             </motion.div>
           </div>

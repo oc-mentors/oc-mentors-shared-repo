@@ -1,4 +1,4 @@
-# Using Firebase as the Backend for OC Mentors
+# Using Firebase as the Backend for Socratic OC
 
 This guide explains how to use **Firebase** (Authentication, Firestore, Storage, optional Cloud Functions) as the backend for this project instead of a custom Node/Express API.
 
@@ -53,7 +53,7 @@ This guide explains how to use **Firebase** (Authentication, Firestore, Storage,
 ## Step 3: Register your app and get config
 
 1. **Project settings** → **Your apps** → **</>** (Web)
-2. App nickname, e.g. `OC Mentors Web`
+2. App nickname, e.g. `Socratic OC Web`
 3. Don’t check Firebase Hosting yet → **Register app**
 4. Copy the `firebaseConfig` object (apiKey, authDomain, projectId, etc.)
 
@@ -205,4 +205,4 @@ For Canvas sync, scheduled reminders, or heavy logic, add **Cloud Functions** (N
 | Upload avatar     | `uploadBytes(storageRef, file)` → `getDownloadURL` → save URL in `users` |
 | Session reviews   | `addDoc(collection(db, 'reviews'), data)` |
 
-Using this, you can run the entire OC Mentors backend on Firebase and keep your existing frontend structure.
+Using this, you can run the entire Socratic OC backend on Firebase and keep your existing frontend structure.

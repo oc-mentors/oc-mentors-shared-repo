@@ -1,7 +1,7 @@
 {
-  "name": "OC Mentors",
-  "short_name": "OC Mentors",
-  "description": "Tutoring and mentorship",
+  "name": "Socratic OC",
+  "short_name": "Socratic OC",
+  "description": "Socratic OC: tutoring, scheduling, and mentorship for students.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1b2e",

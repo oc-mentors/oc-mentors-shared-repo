@@ -148,7 +148,10 @@ export default function CourseNotificationSettingsPage() {
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
-            <h1 className="text-2xl font-bold text-[#e8edf5]">Notifications</h1>
+            <div>
+              <h1 className="text-2xl font-bold text-[#e8edf5]">Notifications</h1>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#a8b3cf] mt-0.5">Socratic OC</p>
+            </div>
           </div>
 
           {/* Course Info */}

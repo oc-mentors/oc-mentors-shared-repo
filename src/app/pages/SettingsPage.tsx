@@ -5,7 +5,7 @@ import svgPaths from "../../imports/svg-2ctauirw4p";
 import { EditProfileModal } from "../components/EditProfileModal";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, ChevronRight, ChevronDown, Bell, Mail, Globe, Moon, Sun, Eye, Ear, BookOpen, Hand, Layers, Target, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronDown, Bell, Mail, Globe, Moon, Sun, Eye, Ear, BookOpen, Hand, Layers, Target, RefreshCw, Contrast, Type } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { LEARNING_STYLE_QUIZ_QUESTIONS, getQuizAnswerText } from "../lib/learningStyleQuiz";
@@ -18,7 +18,7 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(true);
-  const { mode, accentColor, colors } = useTheme();
+  const { mode, accentColor, colors, highContrast, dyslexiaFont, setHighContrast, setDyslexiaFont } = useTheme();
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [quizAnswersExpanded, setQuizAnswersExpanded] = useState(false);
@@ -74,7 +74,14 @@ export default function SettingsPage() {
             >
               <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
             </motion.button>
-            <h1 className="text-[28px] font-bold flex-1 text-center mr-10" style={{ color: colors.textPrimary }}>Settings</h1>
+            <div className="flex-1 text-center mr-10">
+              <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>
+                Settings
+              </h1>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5" style={{ color: colors.textTertiary }}>
+                Socratic OC
+              </p>
+            </div>
           </div>
         </div>
 
@@ -321,6 +328,74 @@ export default function SettingsPage() {
                   </div>
                 </motion.button>
               </Link>
+            </div>
+          </motion.div>
+
+          {/* Accessibility (matches marketing profile toggles) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="mb-6"
+          >
+            <h2 className="text-[13px] font-semibold uppercase tracking-wider mb-4" style={{ color: colors.textSecondary }}>
+              Accessibility
+            </h2>
+            <div className="space-y-3">
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="w-full rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-between"
+                style={{ backgroundColor: colors.bgCard }}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-[16px] flex items-center justify-center" style={{ backgroundColor: colors.bgTertiary }}>
+                    <Contrast className="w-5 h-5" style={{ color: accentColor.primary }} />
+                  </div>
+                  <span className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
+                    High contrast
+                  </span>
+                </div>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setHighContrast(!highContrast)}
+                  className="relative w-[51px] h-[31px] rounded-full transition-colors"
+                  style={{ backgroundColor: highContrast ? accentColor.primary : colors.bgTertiary }}
+                >
+                  <motion.div
+                    animate={{ x: highContrast ? 20 : 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className="absolute left-[3px] top-[3px] w-[25px] h-[25px] bg-white rounded-full shadow-md"
+                  />
+                </motion.button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="w-full rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-between"
+                style={{ backgroundColor: colors.bgCard }}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-[16px] flex items-center justify-center" style={{ backgroundColor: colors.bgTertiary }}>
+                    <Type className="w-5 h-5" style={{ color: accentColor.primary }} />
+                  </div>
+                  <span className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
+                    Dyslexia-friendly font (Lexend)
+                  </span>
+                </div>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setDyslexiaFont(!dyslexiaFont)}
+                  className="relative w-[51px] h-[31px] rounded-full transition-colors"
+                  style={{ backgroundColor: dyslexiaFont ? accentColor.primary : colors.bgTertiary }}
+                >
+                  <motion.div
+                    animate={{ x: dyslexiaFont ? 20 : 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className="absolute left-[3px] top-[3px] w-[25px] h-[25px] bg-white rounded-full shadow-md"
+                  />
+                </motion.button>
+              </motion.div>
             </div>
           </motion.div>
         </div>

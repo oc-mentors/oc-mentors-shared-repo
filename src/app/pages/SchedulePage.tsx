@@ -417,7 +417,14 @@ export default function SchedulePage() {
         {/* Header with Profile Button */}
         <div className="flex-shrink-0 px-6 pt-12 pb-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Schedule</h1>
+            <div>
+              <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>
+                Schedule
+              </h1>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5" style={{ color: colors.textTertiary }}>
+                Socratic OC
+              </p>
+            </div>
             <ProfileButton />
           </div>
         </div>

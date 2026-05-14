@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db, firestoreReady } from "../lib/firebase";
 import type { TutorProfileDoc } from "../types/firestore";
+import { useAuth } from "./AuthContext";
 
 /**
- * Tutor as used in the app (blueprint: from tutorProfiles/{uid}, fallback legacy tutors).
- * id is Firebase Auth UID (string) for tutorProfiles, or legacy numeric id as string.
+ * Tutor as used in the app (from tutorProfiles/{uid} only).
+ * id is Firebase Auth UID (string) from tutorProfiles.
  */
 export interface Tutor {
   id: string;
@@ -60,6 +61,7 @@ interface TutorsContextType {
 const TutorsContext = createContext<TutorsContextType | undefined>(undefined);
 
 export function TutorsProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,10 +76,7 @@ export function TutorsProvider({ children }: { children: ReactNode }) {
       await firestoreReady;
       if (cancelled || !db) return;
       try {
-        const [tutorProfilesSnap, legacySnap] = await Promise.all([
-          getDocs(collection(db, "tutorProfiles")),
-          getDocs(collection(db, "tutors")),
-        ]);
+        const tutorProfilesSnap = await getDocs(collection(db, "tutorProfiles"));
         if (cancelled) return;
 
         const fromProfiles: Tutor[] = tutorProfilesSnap.docs
@@ -87,36 +86,64 @@ export function TutorsProvider({ children }: { children: ReactNode }) {
           })
           .map((d) => mapTutorProfileToTutor(d.id, d.data() as TutorProfileDoc));
 
-        const fromLegacy: Tutor[] = legacySnap.docs
-          .map((d) => {
-            const data = d.data() as Record<string, unknown>;
-            return {
-              id: d.id,
-              name: (data.name as string) ?? "",
-              avatar: (data.avatar as string) ?? "",
-              university: (data.university as string) ?? "",
-              major: data.major as string | undefined,
-              subjects: Array.isArray(data.subjects) ? (data.subjects as string[]) : [],
-              learningStyle: (data.learningStyle as string) ?? "",
-              rating: (data.rating as number) ?? 0,
-              reviewCount: (data.reviewCount as number) ?? 0,
-              priceLevel: (data.priceLevel as string) ?? "",
-              pricePerHour: data.pricePerHour as number | undefined,
-              review: data.review as string | undefined,
-              bio: data.bio as string | undefined,
-              availability: data.availability as string[] | undefined,
-              totalSessions: data.totalSessions as number | undefined,
-              responseTime: data.responseTime as string | undefined,
-              experience: data.experience as string | undefined,
-              location: data.location as string | undefined,
-            } as Tutor;
-          });
-
-        const profileIds = new Set(fromProfiles.map((t) => t.id));
-        const legacyOnly = fromLegacy.filter((t) => !profileIds.has(t.id));
-        let list: Tutor[] = [...fromProfiles, ...legacyOnly].sort((a, b) =>
+        let list: Tutor[] = [...fromProfiles].sort((a, b) =>
           a.name.localeCompare(b.name)
         );
+
+        // Ensure student-linked tutors are still visible, even if their tutorProfile is missing.
+        const uid = user?.id;
+        if (uid && user?.role !== "tutor" && user?.role !== "admin") {
+          const connectionsSnap = await getDocs(
+            query(
+              collection(db, "connections"),
+              where("studentUid", "==", uid),
+              where("status", "==", "active")
+            )
+          );
+          const connectedTutorIds = Array.from(
+            new Set(
+              connectionsSnap.docs
+                .map((d) => d.data() as Record<string, unknown>)
+                .map((d) => (typeof d.tutorUid === "string" ? d.tutorUid : ""))
+                .filter(Boolean)
+            )
+          );
+          const existingIds = new Set(list.map((t) => t.id));
+          const missingConnectedIds = connectedTutorIds.filter((id) => !existingIds.has(id));
+          if (missingConnectedIds.length > 0) {
+            const connectedTutors = await Promise.all(
+              missingConnectedIds.map(async (tutorUid) => {
+                try {
+                  const userSnap = await getDoc(doc(db, "users", tutorUid));
+                  if (!userSnap.exists()) return null;
+                  const data = userSnap.data() as Record<string, unknown>;
+                  const firstName = typeof data.firstName === "string" ? data.firstName.trim() : "";
+                  const lastName = typeof data.lastName === "string" ? data.lastName.trim() : "";
+                  const displayName =
+                    [firstName, lastName].filter(Boolean).join(" ") ||
+                    (typeof data.name === "string" ? data.name.trim() : "") ||
+                    "Tutor";
+                  return {
+                    id: tutorUid,
+                    name: displayName,
+                    avatar: typeof data.photoURL === "string" ? data.photoURL : "",
+                    university: typeof data.university === "string" ? data.university : "",
+                    subjects: [],
+                    learningStyle: "",
+                    rating: 0,
+                    reviewCount: 0,
+                    priceLevel: "",
+                  } as Tutor;
+                } catch {
+                  return null;
+                }
+              })
+            );
+            list = [...list, ...connectedTutors.filter(Boolean) as Tutor[]].sort((a, b) =>
+              a.name.localeCompare(b.name)
+            );
+          }
+        }
 
         const uidList = list.map((t) => t.id);
         const userPhotos = await Promise.all(
@@ -164,7 +191,7 @@ export function TutorsProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user?.id, user?.role]);
 
   const value: TutorsContextType = { tutors, isLoading, error };
   return (

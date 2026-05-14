@@ -95,7 +95,14 @@ export default function ProgressPage() {
           </div>
 
           <div className="flex items-center justify-between">
-            <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Academic Info</h1>
+            <div>
+              <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>
+                Academic Info
+              </h1>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5" style={{ color: colors.textTertiary }}>
+                Socratic OC
+              </p>
+            </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

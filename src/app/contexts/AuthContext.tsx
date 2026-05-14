@@ -80,6 +80,34 @@ function getStringFromDoc(docData: Record<string, unknown>, ...keys: string[]): 
   return "";
 }
 
+const FIRESTORE_READ_MS = 25_000;
+
+/** Logs + avoids infinite spinner if Firestore never settles on mobile WebView. */
+async function firestoreRead<T>(promise: Promise<T>, label: string): Promise<T> {
+  console.log(`[Socratic OC] ${label} … start`);
+  try {
+    const result = await Promise.race([
+      promise,
+      new Promise<never>((_, rej) =>
+        setTimeout(
+          () =>
+            rej(
+              new Error(
+                `[Socratic OC] Firestore timed out after ${FIRESTORE_READ_MS}ms (${label}). Check network / rules / Safari → Develop → iPhone → Console.`
+              )
+            ),
+          FIRESTORE_READ_MS
+        )
+      ),
+    ]);
+    console.log(`[Socratic OC] ${label} … ok`);
+    return result;
+  } catch (e) {
+    console.error(`[Socratic OC] ${label} … failed`, e);
+    throw e;
+  }
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -115,11 +143,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isFirebaseConfigured || !auth) {
+      console.warn("[Socratic OC] Auth: Firebase not configured or auth missing — spinner off.");
       setIsLoading(false);
       return;
     }
+
+    let sawAuthCallback = false;
+    const noCallbackTimer = window.setTimeout(() => {
+      if (!sawAuthCallback) {
+        console.warn(
+          "[Socratic OC] Auth: onAuthStateChanged still has not fired after 20s. Open Safari → Develop → your iPhone → pick this app → Console. Check network and Firebase Auth (authorized domains include capacitor://localhost)."
+        );
+      }
+    }, 20_000);
+
+    console.log("[Socratic OC] Auth: listening for onAuthStateChanged …");
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      sawAuthCallback = true;
+      console.log("[Socratic OC] Auth: state changed", {
+        signedIn: !!firebaseUser,
+        uid: firebaseUser?.uid ?? null,
+      });
+
       if (!firebaseUser) {
+        console.log("[Socratic OC] Auth: no user — hiding loading spinner.");
         setUser(null);
         setIsLoading(false);
         setProfileLoaded(false);
@@ -136,17 +183,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // (signup sets the real name; if we set minimalUser now we overwrite it before Firestore loads)
 
       try {
+        console.log("[Socratic OC] Auth: waiting for firestoreReady …");
         await firestoreReady;
-        if (!db) return;
+        console.log("[Socratic OC] Auth: firestoreReady finished");
+        if (!db) {
+          console.error("[Socratic OC] Auth: db is null after firestoreReady — cannot load profile.");
+          return;
+        }
         const uid = firebaseUser.uid;
         const userRef = doc(db, "users", uid);
-        const userSnap = await getDocFromServer(userRef);
+        console.log("[Socratic OC] Auth: loading Firestore user doc …");
+        const userSnap = await firestoreRead(getDocFromServer(userRef), `getDoc users/${uid}`);
 
         let snap = userSnap;
         // Right after signup, our setDoc may not be visible to getDoc yet. Retry once so we don't overwrite with "User".
         if (!snap.exists()) {
           await new Promise((r) => setTimeout(r, 400));
-          snap = await getDocFromServer(userRef);
+          snap = await firestoreRead(getDocFromServer(userRef), `getDoc users/${uid} (retry)`);
         }
 
         if (snap.exists()) {
@@ -197,7 +250,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             };
             if (role === "student") {
               const studentRef = doc(db, "studentProfiles", uid);
-              const studentSnap = await getDocFromServer(studentRef);
+              const studentSnap = await firestoreRead(
+                getDocFromServer(studentRef),
+                `getDoc studentProfiles/${uid}`
+              );
               if (studentSnap.exists()) {
                 const sp = studentSnap.data() as StudentProfileDoc;
                 merged.learningStyle = sp.learningStyle as LearningStyle | undefined;
@@ -292,16 +348,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             if (role === "student") {
               const studentRef = doc(db, "studentProfiles", uid);
-              await setDoc(
-                studentRef,
-                {
-                  uid,
-                  learningStyle: merged.learningStyle,
-                  learningStyleQuestionAnswers: merged.learningStyleQuestionAnswers,
-                  createdAt: serverTimestamp(),
-                  updatedAt: serverTimestamp(),
-                },
-                { merge: true }
+              await firestoreRead(
+                setDoc(
+                  studentRef,
+                  {
+                    uid,
+                    learningStyle: merged.learningStyle,
+                    learningStyleQuestionAnswers: merged.learningStyleQuestionAnswers,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                  },
+                  { merge: true }
+                ),
+                `setDoc studentProfiles/${uid} (legacy merge)`
               );
             }
             setUser(merged);
@@ -317,22 +376,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const fromAuth = (firebaseUser.displayName || minimalUser.name).trim();
           const first = fromAuth.split(/\s+/)[0] || "";
           const last = fromAuth.split(/\s+/).slice(1).join(" ") || "";
-          await setDoc(userRef, {
-            uid,
-            email: firebaseUser.email || "",
-            firstName: first,
-            lastName: last,
-            photoURL: firebaseUser.photoURL || null,
-            roles: { student: true, tutor: false, admin: false },
-            status: "active",
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          });
-          await setDoc(doc(db, "studentProfiles", uid), {
-            uid,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          });
+          console.log("[Socratic OC] Auth: no users doc — creating profile docs …");
+          await firestoreRead(
+            setDoc(userRef, {
+              uid,
+              email: firebaseUser.email || "",
+              firstName: first,
+              lastName: last,
+              photoURL: firebaseUser.photoURL || null,
+              roles: { student: true, tutor: false, admin: false },
+              status: "active",
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            }),
+            `setDoc users/${uid} (bootstrap)`
+          );
+          await firestoreRead(
+            setDoc(doc(db, "studentProfiles", uid), {
+              uid,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            }),
+            `setDoc studentProfiles/${uid} (bootstrap)`
+          );
           const name = [first, last].filter(Boolean).join(" ").trim() || first || "User";
           setUser({
             ...minimalUser,
@@ -353,10 +419,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } finally {
         setProfileLoaded(true);
         setIsLoading(false);
+        console.log("[Socratic OC] Auth: profile flow finished — isLoading false");
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      window.clearTimeout(noCallbackTimer);
+      unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string, _role: UserRole) => {

@@ -78,7 +78,8 @@ export default function BookSessionPage() {
             </motion.button>
             {/* ProfileButton removed — subpage */}
           </div>
-          <h1 className="text-[28px] font-bold text-[#e8edf5] mb-2">Book a Session</h1>
+          <h1 className="text-[28px] font-bold text-[#e8edf5] mb-1">Book a Session</h1>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#a8b3cf] mb-2">Socratic OC</p>
           <p className="text-[15px] text-[#a8b3cf]">
             Select a class to find available tutors
           </p>

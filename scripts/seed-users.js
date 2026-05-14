@@ -1,5 +1,5 @@
 /**
- * Seed Firebase Auth users and Firestore user profiles for OC Mentors.
+ * Seed Firebase Auth users and Firestore user profiles for Socratic OC.
  * All accounts use password: "password".
  *
  * Prerequisites:

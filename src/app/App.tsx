@@ -48,6 +48,17 @@ import CourseNotificationSettingsPage from "./pages/CourseNotificationSettingsPa
 import ThemeCustomizationPage from "./pages/ThemeCustomizationPage";
 import AcademicInfoPage from "./pages/AcademicInfoPage";
 import YouTubeViewerPage from "./pages/YouTubeViewerPage";
+import LandingPage from "./pages/LandingPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import NotesPage from "./pages/NotesPage";
+import CommunityPage from "./pages/CommunityPage";
+import { Toaster } from "sonner";
+import { useTheme } from "./contexts/ThemeContext";
+
+function ThemedToaster() {
+  const { mode } = useTheme();
+  return <Toaster richColors position="top-center" theme={mode === "light" ? "light" : "dark"} />;
+}
 
 export default function App() {
   return (
@@ -64,6 +75,7 @@ export default function App() {
                   <CanvasCoursesProvider>
                     <CanvasSyncManager />
                     <ScrollToTop />
+                    <ThemedToaster />
                     <SafeAppRoutes />
                   </CanvasCoursesProvider>
                 </CanvasAuthProvider>
@@ -155,6 +167,18 @@ function AppRoutes() {
     return () => clearTimeout(t);
   }, [showLogoutAnimation, clearLogoutAnimation]);
 
+  // Debug: Safari → Develop → iPhone → WebView → filter "Socratic OC"
+  useEffect(() => {
+    if (isLoading) {
+      console.log("[Socratic OC] UI: auth loading spinner visible", { path: location.pathname });
+    } else {
+      console.log("[Socratic OC] UI: auth loading done", {
+        path: location.pathname,
+        isAuthenticated,
+      });
+    }
+  }, [isLoading, isAuthenticated, location.pathname]);
+
   // Show a loading screen while checking auth state
   if (isLoading) {
     return (
@@ -196,6 +220,9 @@ function AppRoutes() {
         
         {/* Splash page (optional, can be accessed directly) */}
         <Route path="/splash" element={<SplashPage />} />
+
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         
         {/* Login page - redirect tutors to tutor quiz (once), students to learning quiz/home */}
         <Route 
@@ -261,6 +288,8 @@ function AppRoutes() {
         <Route path="/theme-customization" element={guardProtected(<ThemeCustomizationPage />)} />
         <Route path="/academic-info" element={guardProtected(<AcademicInfoPage />)} />
         <Route path="/watch" element={guardProtected(<YouTubeViewerPage />)} />
+        <Route path="/notes" element={guardProtected(<NotesPage />)} />
+        <Route path="/community" element={guardProtected(<CommunityPage />)} />
         
         {/* Tutor-specific Routes */}
         <Route path="/tutor-students" element={guardProtected(<TutorStudentsPage />)} />

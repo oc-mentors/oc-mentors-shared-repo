@@ -1,5 +1,5 @@
 /**
- * Firestore document types per OC Mentors Architecture Blueprint.
+ * Firestore document types per Socratic OC Architecture Blueprint.
  * Top-level: users, studentProfiles, tutorProfiles, tutorVerifications,
  * tutorRequests, connections, conversations, reviews, sessions.
  */

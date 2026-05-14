@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { Mail, Lock, User, GraduationCap, Users, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth, UserRole } from "../contexts/AuthContext";
@@ -50,7 +51,7 @@ export default function LoginPage() {
     setSelectedRole(null);
     setError(null);
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRole) return;
@@ -114,21 +115,17 @@ export default function LoginPage() {
   const isFormValid = selectedRole && email && password && (mode === "login" || name);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1d29] via-[#2a2f45] to-[#1a1d29] flex items-center justify-center p-6">
-      <div className="max-w-md w-full">
-        {/* Logo and Welcome */}
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1d29] via-[#2a2f45] to-[#1a1d29] flex flex-col">
+      <div className="flex-1 flex flex-col justify-center items-center p-6 w-full min-h-0">
+        <div className="max-w-md w-full">
+        {/* Tagline */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-[#4361d9] to-[#5b7ceb] rounded-3xl flex items-center justify-center shadow-[0px_8px_24px_0px_rgba(67,97,217,0.4)]">
-            <span className="text-4xl font-bold text-white">OC</span>
-          </div>
-          <h1 className="text-3xl font-bold text-[#e8edf5] mb-2">
-            {mode === "login" ? "Welcome Back" : "Get Started"}
-          </h1>
-          <p className="text-[#a8b3cf]">
+          <p className="text-xs font-bold tracking-[0.25em] uppercase text-[#a8b3cf] mb-3">Socratic OC</p>
+          <p className="text-xl sm:text-2xl font-bold text-[#e8edf5] leading-snug px-2">
             {mode === "login" ? "Sign in to continue your learning" : "Create your account to begin"}
           </p>
         </motion.div>
@@ -208,6 +205,7 @@ export default function LoginPage() {
                   </span>
                 </div>
                 <button
+                  type="button"
                   onClick={handleChangeRole}
                   className="text-sm text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
                 >
@@ -365,6 +363,18 @@ export default function LoginPage() {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
+      </div>
+      <div
+        className="shrink-0 w-full max-w-md mx-auto px-6 pb-10 pt-2 text-center text-xs flex flex-col items-center gap-2"
+        style={{ color: "#a8b3cf" }}
+      >
+        <Link to="/landing" className="underline hover:text-white/90">
+          About Socratic OC
+        </Link>
+        <Link to="/privacy" className="underline hover:text-white/90">
+          Privacy
+        </Link>
       </div>
       <ChangePasswordModal
         isOpen={showForgotPasswordModal}

@@ -37,7 +37,12 @@ export default function PastLessonsPage() {
             >
               <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
             </motion.button>
-            <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>Past Lessons</h1>
+            <div>
+              <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>Past Lessons</h1>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5" style={{ color: colors.textTertiary }}>
+                Socratic OC
+              </p>
+            </div>
           </div>
         </div>
 

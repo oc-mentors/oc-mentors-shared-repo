@@ -1,6 +1,6 @@
 {
   "name": "functions",
-  "description": "OC Mentors Cloud Functions",
+  "description": "Socratic OC Cloud Functions",
   "type": "module",
   "main": "index.js",
   "engines": {

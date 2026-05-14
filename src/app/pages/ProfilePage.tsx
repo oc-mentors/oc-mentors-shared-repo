@@ -3,7 +3,7 @@ import { BottomNav } from "../components/BottomNav";
 import { AvatarWithInitials } from "../components/AvatarWithInitials";
 import svgPaths from "../../imports/svg-ncbm4ttepm";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, ChevronRight, TrendingUp, Target, Settings, HelpCircle, LogOut, Eye, Ear, BookOpen, Hand, Layers, RefreshCw, Lightbulb, Bug, Send, CheckCircle, X, ChevronDown, Mail, Clock, Copy, ExternalLink } from "lucide-react";
+import { ArrowLeft, ChevronRight, TrendingUp, Target, Settings, HelpCircle, LogOut, Eye, Ear, BookOpen, Hand, Layers, RefreshCw, Lightbulb, Bug, Send, CheckCircle, X, ChevronDown, Mail, Clock, Copy, ExternalLink, Sparkles } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useState, useEffect } from "react";
@@ -168,7 +168,7 @@ function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
 
             {/* Open email client button */}
             <motion.a
-              href={`mailto:${email}?subject=OC Mentors Support`}
+              href={`mailto:${email}?subject=Socratic OC Support`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               className="w-full py-3.5 rounded-2xl text-[15px] font-semibold text-white flex items-center justify-center gap-2"
@@ -766,6 +766,27 @@ export default function ProfilePage() {
               )}
             </AnimatePresence>
           </div>
+
+          {/* About / Overview */}
+          <Link to="/landing">
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              className="rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-between"
+              style={{ backgroundColor: colors.bgCard }}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-11 h-11 rounded-2xl flex items-center justify-center"
+                  style={{ backgroundColor: `${accentColor.primary}20` }}
+                >
+                  <Sparkles className="w-5 h-5" style={{ color: accentColor.primary }} />
+                </div>
+                <span className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>About Socratic OC</span>
+              </div>
+              <ChevronRight className="w-5 h-5" style={{ color: colors.textSecondary }} />
+            </motion.div>
+          </Link>
 
           {/* Logout */}
           <motion.div

@@ -20,10 +20,7 @@ export default function RateSessionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const sessionData = (location.state?.session as SessionData) || {
-    tutor: "Debra Peterson",
-    subject: "Math 2A - Matrices",
-  };
+  const sessionData = location.state?.session as SessionData | undefined;
 
   const [rating, setRating] = useState(5);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -49,6 +46,7 @@ export default function RateSessionPage() {
   };
 
   const handleSubmit = async () => {
+    if (!sessionData) return;
     setError(null);
     setSubmitting(true);
     try {
@@ -93,6 +91,36 @@ export default function RateSessionPage() {
   const handleSkip = () => {
     navigate("/schedule");
   };
+
+  if (!sessionData?.tutor) {
+    return (
+      <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-24 flex flex-col">
+        <div className="max-w-md mx-auto w-full px-6 pt-12 flex-1 flex flex-col">
+          <button type="button" onClick={() => navigate("/schedule")} className="cursor-pointer self-start mb-6">
+            <ArrowLeft className="w-5 h-5 text-[#e8edf5]" />
+          </button>
+          <p className="text-[#e8edf5] text-lg font-semibold mb-2">No session to rate</p>
+          <p className="text-[#a8b3cf] text-sm mb-8">
+            Open this page after a tutoring session, or return to your schedule.
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            onClick={() => navigate("/schedule")}
+            className="w-full py-4 rounded-xl font-semibold text-white text-[16px]"
+            style={{
+              backgroundImage:
+                "linear-gradient(171.386deg, rgb(67, 97, 217) 0%, rgb(91, 124, 235) 100%)",
+            }}
+          >
+            Go to schedule
+          </motion.button>
+        </div>
+        <BottomNav currentPage="schedule" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-24">

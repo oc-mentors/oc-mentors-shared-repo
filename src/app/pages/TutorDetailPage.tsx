@@ -26,7 +26,7 @@ export default function TutorDetailPage() {
   const pendingRequest = hasPendingRequestToTutor(tutorId);
   const isViewingAsStudent = user?.role === "student" || !user?.role;
 
-  const tutor = tutors.find((t) => t.id === tutorId) ?? tutors[0];
+  const tutor = tutors.find((t) => t.id === tutorId);
 
   // Determine where to go back to based on sessionStorage
   const handleBack = () => {
@@ -61,30 +61,6 @@ export default function TutorDetailPage() {
       </div>
     );
   }
-
-  const reviews = [
-    {
-      id: 1,
-      student: "Alex Johnson",
-      rating: 5,
-      date: "2 weeks ago",
-      comment: "Debra is the best Math tutor I ever had! She helped me pass Math 2A with an A!",
-    },
-    {
-      id: 2,
-      student: "Maria Garcia",
-      rating: 4,
-      date: "1 month ago",
-      comment: "Very patient and explains concepts clearly. Highly recommend!",
-    },
-    {
-      id: 3,
-      student: "Kevin Lee",
-      rating: 5,
-      date: "1 month ago",
-      comment: "Amazing tutor! Really knows how to break down complex topics.",
-    },
-  ];
 
   return (
     <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
@@ -349,28 +325,9 @@ export default function TutorDetailPage() {
           <h2 className="text-[18px] font-semibold mb-3" style={{ color: colors.textPrimary }}>
             Reviews ({tutor.reviewCount})
           </h2>
-          <div className="space-y-3">
-            {reviews.map((review) => (
-              <div
-                key={review.id}
-                className="rounded-xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
-                style={{ backgroundColor: colors.bgCard }}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[14px] font-medium" style={{ color: colors.textPrimary }}>
-                    {review.student}
-                  </span>
-                  <span className="text-[11px]" style={{ color: colors.textSecondary }}>{review.date}</span>
-                </div>
-                <div className="flex items-center gap-1 mb-2">
-                  {Array.from({ length: review.rating }).map((_, i) => (
-                    <Star key={i} className="w-3 h-3 text-[#FFB800] fill-[#FFB800]" />
-                  ))}
-                </div>
-                <p className="text-[13px] leading-[19.5px]" style={{ color: colors.textSecondary }}>{review.comment}</p>
-              </div>
-            ))}
-          </div>
+          <p className="text-[14px]" style={{ color: colors.textSecondary }}>
+            No reviews yet.
+          </p>
         </motion.div>
       </div>
     </div>

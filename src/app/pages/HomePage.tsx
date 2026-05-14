@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router";
-import { Clock, Plus } from "lucide-react";
+import { Clock, Plus, BookOpen, Users } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
@@ -77,7 +77,7 @@ export default function HomePage() {
         <div className="flex-shrink-0 px-6 pt-12 pb-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold tracking-[1.95px] uppercase" style={{ color: colors.textSecondary }}>
-              OC MENTORS
+              Socratic OC
             </h2>
             <ProfileButton />
           </div>
@@ -120,12 +120,16 @@ export default function HomePage() {
                 </h1>
                 <Link
                   to="/schedule"
-                  className="flex items-center gap-2 group cursor-pointer"
+                  className="inline-flex items-center gap-2 group cursor-pointer"
+                  aria-label="Open your schedule"
                 >
                   <Clock className="w-5 h-5 flex-shrink-0" style={{ color: colors.textSecondary }} />
-                  <p className="text-base italic" style={{ color: colors.textSecondary }}>
+                  <span
+                    className="text-base italic underline underline-offset-[5px] decoration-1"
+                    style={{ color: colors.textSecondary, textDecorationColor: "currentColor" }}
+                  >
                     View your schedule
-                  </p>
+                  </span>
                 </Link>
               </div>
 
@@ -151,6 +155,27 @@ export default function HomePage() {
                   Start Today's Learning Plan
                 </motion.button>
               </Link>
+
+              <div className="grid grid-cols-2 gap-2 mt-5">
+                <Link to="/notes">
+                  <div
+                    className="rounded-xl py-3 px-2 text-center text-xs font-semibold border"
+                    style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary, color: colors.textPrimary }}
+                  >
+                    <BookOpen className="w-4 h-4 mx-auto mb-1" style={{ color: accentColor.primary }} />
+                    Study hub
+                  </div>
+                </Link>
+                <Link to="/community">
+                  <div
+                    className="rounded-xl py-3 px-2 text-center text-xs font-semibold border"
+                    style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary, color: colors.textPrimary }}
+                  >
+                    <Users className="w-4 h-4 mx-auto mb-1" style={{ color: accentColor.primary }} />
+                    Community
+                  </div>
+                </Link>
+              </div>
             </motion.div>
 
             <motion.div

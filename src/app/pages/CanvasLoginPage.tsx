@@ -86,7 +86,7 @@ export default function CanvasLoginPage() {
               Connected Successfully!
             </h2>
             <p className="text-sm text-[#a8b3cf]">
-              Your Canvas account is now linked to OC Mentors
+              Your Canvas account is now linked to Socratic OC
             </p>
           </motion.div>
 
@@ -231,7 +231,7 @@ export default function CanvasLoginPage() {
           className="mt-6 p-4 bg-[#1e2139] border border-[rgba(255,255,255,0.08)] rounded-xl"
         >
           <p className="text-xs text-[#a8b3cf] text-center">
-            By connecting Canvas, you'll be able to view your courses, assignments, and announcements directly in OC Mentors.
+            By connecting Canvas, you'll be able to view your courses, assignments, and announcements directly in Socratic OC.
           </p>
         </motion.div>
       </div>

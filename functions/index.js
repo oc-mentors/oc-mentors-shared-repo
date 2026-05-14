@@ -1,5 +1,5 @@
 /**
- * OC Mentors Cloud Functions.
+ * Socratic OC Cloud Functions.
  * - acceptTutorRequest: atomically update request, create connection + conversation.
  * - onMessageCreated: update conversation lastMessage* when a message is added.
  */

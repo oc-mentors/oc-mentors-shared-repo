@@ -1,5 +1,5 @@
 /**
- * Seed Firestore "tutors" collection for OC Mentors catalog.
+ * Seed Firestore "tutors" collection for Socratic OC catalog.
  *
  * Prerequisites:
  * 1. Same Firebase project as the app (e.g. oc-mentors-socratic).

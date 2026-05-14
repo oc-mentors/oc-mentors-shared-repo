@@ -70,7 +70,7 @@ export function LogoutAnimation() {
             See you soon!
           </h2>
           <p className="text-sm" style={{ color: colors.textSecondary }}>
-            You've been signed out of OC Mentors
+            You've been signed out of Socratic OC
           </p>
         </motion.div>
 

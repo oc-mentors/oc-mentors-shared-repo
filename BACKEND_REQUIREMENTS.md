@@ -1,4 +1,4 @@
-# Backend Requirements for OC Mentors Project
+# Backend Requirements for Socratic OC Project
 
 This document outlines all backend endpoints, handlers, and data management needed based on the frontend implementation.
 

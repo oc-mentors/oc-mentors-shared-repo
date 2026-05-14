@@ -94,55 +94,78 @@ interface ThemeContextType {
   mode: ThemeMode;
   accentColor: AccentColor;
   colors: ThemeColors;
+  highContrast: boolean;
+  dyslexiaFont: boolean;
   setMode: (mode: ThemeMode) => void;
   setAccentColor: (color: AccentColor) => void;
   toggleMode: () => void;
+  setHighContrast: (v: boolean) => void;
+  setDyslexiaFont: (v: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-function getThemeColors(mode: ThemeMode, accent: AccentColor): ThemeColors {
+function getThemeColors(mode: ThemeMode, accent: AccentColor, highContrast: boolean): ThemeColors {
   if (mode === "light") {
-    return {
+    const base: ThemeColors = {
       bgPrimary: "#f5f7fa",
       bgSecondary: "#ffffff",
       bgTertiary: "#e8ecf1",
       bgCard: "#ffffff",
       bgCardHover: "#f8f9fb",
-      
       textPrimary: "#1a1d29",
       textSecondary: "#4a5568",
       textTertiary: "#718096",
-      
       borderPrimary: "rgba(0,0,0,0.08)",
       borderSecondary: "rgba(0,0,0,0.12)",
-      
       accent: accent.primary,
       accentGradient: accent.gradient,
       accentLight: accent.primary + "20",
       accentDark: accent.primary,
     };
-  } else {
+    if (!highContrast) return base;
     return {
-      bgPrimary: "#1a1d29",
-      bgSecondary: "#1e2139",
-      bgTertiary: "#2a2f45",
-      bgCard: "#1e2139",
-      bgCardHover: "#252837",
-      
-      textPrimary: "#e8edf5",
-      textSecondary: "#a8b3cf",
-      textTertiary: "#6b7694",
-      
-      borderPrimary: "rgba(255,255,255,0.08)",
-      borderSecondary: "rgba(255,255,255,0.12)",
-      
-      accent: accent.primary,
-      accentGradient: accent.gradient,
-      accentLight: accent.primary + "20",
-      accentDark: accent.primary,
+      ...base,
+      bgPrimary: "#ffffff",
+      bgSecondary: "#f0f0f0",
+      bgTertiary: "#e0e0e0",
+      bgCard: "#ffffff",
+      textPrimary: "#000000",
+      textSecondary: "#1a1a1a",
+      textTertiary: "#333333",
+      borderPrimary: "rgba(0,0,0,0.35)",
+      borderSecondary: "rgba(0,0,0,0.5)",
     };
   }
+  const base: ThemeColors = {
+    bgPrimary: "#1a1d29",
+    bgSecondary: "#1e2139",
+    bgTertiary: "#2a2f45",
+    bgCard: "#1e2139",
+    bgCardHover: "#252837",
+    textPrimary: "#e8edf5",
+    textSecondary: "#a8b3cf",
+    textTertiary: "#6b7694",
+    borderPrimary: "rgba(255,255,255,0.08)",
+    borderSecondary: "rgba(255,255,255,0.12)",
+    accent: accent.primary,
+    accentGradient: accent.gradient,
+    accentLight: accent.primary + "20",
+    accentDark: accent.primary,
+  };
+  if (!highContrast) return base;
+  return {
+    ...base,
+    bgPrimary: "#000000",
+    bgSecondary: "#0a0a0a",
+    bgTertiary: "#141414",
+    bgCard: "#0a0a0a",
+    textPrimary: "#ffffff",
+    textSecondary: "#f0f0f0",
+    textTertiary: "#dddddd",
+    borderPrimary: "rgba(255,255,255,0.45)",
+    borderSecondary: "rgba(255,255,255,0.65)",
+  };
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -159,7 +182,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return accentColors[0]; // Default to Blue
   });
 
-  const colors = getThemeColors(mode, accentColor);
+  const [highContrast, setHighContrastState] = useState(() => {
+    return typeof localStorage !== "undefined" && localStorage.getItem("accessibilityHighContrast") === "true";
+  });
+
+  const [dyslexiaFont, setDyslexiaFontState] = useState(() => {
+    return typeof localStorage !== "undefined" && localStorage.getItem("accessibilityDyslexiaFont") === "true";
+  });
+
+  const colors = getThemeColors(mode, accentColor, highContrast);
 
   useEffect(() => {
     localStorage.setItem("themeMode", mode);
@@ -169,9 +200,30 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("accentColor", JSON.stringify(accentColor));
   }, [accentColor]);
 
+  useEffect(() => {
+    localStorage.setItem("accessibilityHighContrast", highContrast ? "true" : "false");
+    document.documentElement.classList.toggle("high-contrast", highContrast);
+  }, [highContrast]);
+
+  useEffect(() => {
+    localStorage.setItem("accessibilityDyslexiaFont", dyslexiaFont ? "true" : "false");
+    document.documentElement.classList.toggle("dyslexia-font", dyslexiaFont);
+    if (dyslexiaFont && !document.getElementById("lexend-font")) {
+      const link = document.createElement("link");
+      link.id = "lexend-font";
+      link.rel = "stylesheet";
+      link.href =
+        "https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap";
+      document.head.appendChild(link);
+    }
+  }, [dyslexiaFont]);
+
   const toggleMode = () => {
     setMode(mode === "light" ? "dark" : "light");
   };
+
+  const setHighContrast = (v: boolean) => setHighContrastState(v);
+  const setDyslexiaFont = (v: boolean) => setDyslexiaFontState(v);
 
   return (
     <ThemeContext.Provider
@@ -179,9 +231,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         mode,
         accentColor,
         colors,
+        highContrast,
+        dyslexiaFont,
         setMode,
         setAccentColor,
         toggleMode,
+        setHighContrast,
+        setDyslexiaFont,
       }}
     >
       {children}

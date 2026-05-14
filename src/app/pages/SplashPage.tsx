@@ -158,12 +158,9 @@ export default function SplashPage() {
                 }}
                 className="relative"
               >
-                <h1 className="text-7xl font-bold text-center bg-gradient-to-br from-purple-400 via-blue-400 to-teal-400 bg-clip-text text-transparent tracking-wider mb-1">
-                  OC
+                <h1 className="text-5xl sm:text-6xl font-bold text-center bg-gradient-to-br from-purple-400 via-blue-400 to-teal-400 bg-clip-text text-transparent tracking-tight">
+                  Socratic OC
                 </h1>
-                <h2 className="text-4xl font-semibold text-center text-[#e8edf5] tracking-[0.35em] mt-3">
-                  MENTORS
-                </h2>
               </motion.div>
               
               {/* Decorative corner accents */}

@@ -1,4 +1,4 @@
-# OC Mentors — Backend / Database Architecture Report
+# Socratic OC — Backend / Database Architecture Report
 
 **Purpose:** Extract of the current Firebase Auth + Firestore usage for review with an external architect.  
 **Scope:** Exact current behavior only; no proposed changes.

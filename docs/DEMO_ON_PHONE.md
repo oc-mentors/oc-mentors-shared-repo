@@ -8,10 +8,10 @@ Three ways to let people open the app on their phones.
 
 The app is set up as a **Progressive Web App (PWA)**. When someone opens your tunnel or deployed URL on their phone, they can **add it to their home screen** so it looks and feels like a normal app (icon, full-screen, no browser bar).
 
-- **iPhone (Safari):** Tap the Share button → **Add to Home Screen** → name it “OC Mentors” → Add. It will appear on the home screen and open full-screen.
+- **iPhone (Safari):** Tap the Share button → **Add to Home Screen** → name it “Socratic OC” → Add. It will appear on the home screen and open full-screen.
 - **Android (Chrome):** When the page loads, you may see “Add to Home screen” or “Install app” in the menu (⋮) or as a banner. Tap it. The app icon is added to the home screen and opens in its own window.
 
-After that, they open **OC Mentors** from the home screen like any other app.
+After that, they open **Socratic OC** from the home screen like any other app.
 
 ---
 

@@ -138,12 +138,12 @@ export default function SubjectTutorsPage() {
 
     if (user?.id && db) {
       const connection = getConnectionWithTutor(selectedTutor.id);
-      if (connection?.connectionId) {
+      if (connection?.id) {
         try {
           await firestoreReady;
           const scheduledAt = new Date(year, month - 1, day, hours, minutes);
           await addDoc(collection(db, "sessions"), {
-            connectionId: connection.connectionId,
+            connectionId: connection.id,
             studentUid: user.id,
             tutorUid: selectedTutor.id,
             status: "requested",

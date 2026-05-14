@@ -58,7 +58,14 @@ export default function CanvasClassesPage() {
         <div className="flex-shrink-0 px-6 pt-12 pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Canvas</h1>
+              <div>
+                <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>
+                  Canvas
+                </h1>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5" style={{ color: colors.textTertiary }}>
+                  Socratic OC
+                </p>
+              </div>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

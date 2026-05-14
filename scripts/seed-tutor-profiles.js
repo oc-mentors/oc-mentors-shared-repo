@@ -1,5 +1,5 @@
 /**
- * Seed Firebase Auth + tutorProfiles for OC Mentors (blueprint architecture).
+ * Seed Firebase Auth + tutorProfiles for Socratic OC (blueprint architecture).
  * Creates one Auth user per tutor and writes tutorProfiles/{uid}.
  * Run after setting GOOGLE_APPLICATION_CREDENTIALS (same as seed-users.js).
  *

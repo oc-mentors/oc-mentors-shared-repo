@@ -1,4 +1,4 @@
-# Firebase for OC Mentors – Complete Beginner Guide
+# Firebase for Socratic OC – Complete Beginner Guide
 
 This guide assumes you’ve never used Firebase. It explains what it is, what was added to your project, and how to set it up step by step.
 
@@ -135,7 +135,7 @@ You’ll use this later for profile pictures and file uploads.
 1. Click the **gear icon** next to “Project Overview” in the sidebar → **“Project settings”**.
 2. Scroll down to **“Your apps”**.
 3. Click the **</>** (Web) icon to add a web app.
-4. **App nickname:** e.g. `OC Mentors Web`.
+4. **App nickname:** e.g. `Socratic OC Web`.
 5. **Do not** check “Firebase Hosting” for now.
 6. Click **“Register app”**.
 7. You’ll see a code block with `firebaseConfig` that looks like:

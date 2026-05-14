@@ -87,7 +87,7 @@ export default function AcademicInfoPage() {
           animate={{ opacity: 1, y: 0 }}
           className="px-6 pt-12 pb-3"
         >
-          <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-start gap-3 mb-2">
             <motion.button
               onClick={() => navigate(-1)}
               whileHover={{ scale: 1.05 }}
@@ -97,7 +97,14 @@ export default function AcademicInfoPage() {
             >
               <ArrowLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
             </motion.button>
-            <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>Academic Information</h1>
+            <div>
+              <h1 className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>
+                Academic Information
+              </h1>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5" style={{ color: colors.textTertiary }}>
+                Socratic OC
+              </p>
+            </div>
           </div>
         </motion.div>
 

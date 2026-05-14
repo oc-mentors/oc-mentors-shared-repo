@@ -1,5 +1,5 @@
 /**
- * Clear all Firestore data and Firebase Auth users for OC Mentors.
+ * Clear all Firestore data and Firebase Auth users for Socratic OC.
  * Use before re-seeding. Run with same service account as seed scripts.
  *
  *   export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/service-account.json"

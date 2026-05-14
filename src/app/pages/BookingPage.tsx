@@ -98,12 +98,12 @@ export default function BookingPage() {
       addCalendarEvent({
         id: newId,
         type: "tutor",
-        title: "Tutor Session - Debra Peterson",
+        title: "Tutor session",
         startTime: selectedTime,
         endTime: endTime,
         day: dayOfWeek,
         date: bookingDate,
-        tutor: "Debra Peterson",
+        tutor: "Tutor",
         location: location,
         color: "from-[#f59e0b] to-[#d97706]", // Orange gradient for tutor sessions
       });
@@ -169,7 +169,7 @@ export default function BookingPage() {
         >
           {/* Mentor Info */}
           <div className="text-center mb-4">
-            <p className="text-[14px] mb-2" style={{ color: colors.textSecondary }}>Debra Peterson</p>
+            <p className="text-[14px] mb-2" style={{ color: colors.textSecondary }}>Your tutor</p>
             <h1 className="text-[32px] font-bold mb-2" style={{ color: colors.textPrimary }}>30 Minute Meeting</h1>
             <div className="flex items-center justify-center gap-2" style={{ color: colors.textSecondary }}>
               <Clock className="w-4 h-4" />

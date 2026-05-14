@@ -1,0 +1,1867 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socratic OC</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+  <script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        navy: '#0A0F24',
+        navy2: '#111C44',
+        elblue: '#3E6BFF',
+        cyan: '#00D1FF',
+        softblue: '#4CC9FF',
+        purple: '#A060FF',
+        maintext: '#E6ECFF',
+        sectext: '#C7D2FF',
+      },
+      fontFamily: {
+        outfit: ['Outfit', 'sans-serif'],
+        mono: ['Space Mono', 'monospace'],
+      }
+    }
+  }
+}
+</script>
+  <style>
+html, body { height: 100%; margin: 0; }
+* { box-sizing: border-box; }
+.glow-card {
+  background: linear-gradient(135deg, rgba(17,28,68,0.9), rgba(10,15,36,0.95));
+  border: 1px solid rgba(62,107,255,0.15);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+.glow-card:hover {
+  border-color: rgba(0,209,255,0.4);
+  box-shadow: 0 0 30px rgba(0,209,255,0.1), 0 0 60px rgba(62,107,255,0.05);
+}
+.gradient-text {
+  background: linear-gradient(135deg, #3E6BFF, #00D1FF, #4CC9FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #3E6BFF, #00D1FF);
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-primary:hover {
+  box-shadow: 0 0 25px rgba(0,209,255,0.3);
+  transform: translateY(-2px);
+}
+.btn-secondary {
+  background: transparent;
+  color: #C7D2FF;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(62,107,255,0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-secondary:hover {
+  border-color: #00D1FF;
+  color: #00D1FF;
+  box-shadow: 0 0 15px rgba(0,209,255,0.15);
+}
+.btn-tab {
+  background: transparent;
+  color: #C7D2FF;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(62,107,255,0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  line-height: 1;
+}
+.btn-tab:hover {
+  border-color: #00D1FF;
+  color: #00D1FF;
+  box-shadow: 0 0 15px rgba(0,209,255,0.15);
+}
+.btn-tab-active {
+  background: linear-gradient(135deg, #3E6BFF, #00D1FF);
+  color: #fff;
+  border: 1px solid rgba(62,107,255,0.4);
+  height: 44px;
+  line-height: 1;
+}
+.btn-tab-active:hover {
+  box-shadow: 0 0 25px rgba(0,209,255,0.3);
+  border: 1px solid rgba(62,107,255,0.4);
+}
+.page { display: none; }
+.page.active { display: block; }
+.nav-link { cursor: pointer; transition: color 0.2s; }
+.nav-link:hover, .nav-link.active { color: #00D1FF; }
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.3;
+  pointer-events: none;
+}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+.fade-up { animation: fadeUp 0.7s ease forwards; }
+.fade-up-d1 { animation-delay: 0.1s; opacity: 0; }
+.fade-up-d2 { animation-delay: 0.2s; opacity: 0; }
+.fade-up-d3 { animation-delay: 0.3s; opacity: 0; }
+.fade-up-d4 { animation-delay: 0.4s; opacity: 0; }
+.fade-up-d5 { animation-delay: 0.5s; opacity: 0; }
+.app-screen {
+  background: linear-gradient(135deg, #111C44, #0A0F24);
+  border: 1px solid rgba(62,107,255,0.2);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.app-screen::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 30%, rgba(0,209,255,0.05), transparent 50%);
+  pointer-events: none;
+}
+.quiz-option {
+  background: rgba(17,28,68,0.6);
+  border: 1px solid rgba(62,107,255,0.2);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.quiz-option:hover, .quiz-option.selected {
+  border-color: #00D1FF;
+  background: rgba(0,209,255,0.08);
+}
+.quiz-option.selected { box-shadow: 0 0 15px rgba(0,209,255,0.15); }
+.flashcard {
+  perspective: 1000px;
+  cursor: pointer;
+}
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+.flashcard-front, .flashcard-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+.flashcard-front {
+  background: linear-gradient(135deg, #111C44, #0A0F24);
+  border: 1px solid rgba(62,107,255,0.2);
+}
+.flashcard-back {
+  background: linear-gradient(135deg, rgba(62,107,255,0.15), rgba(0,209,255,0.1));
+  border: 1px solid rgba(0,209,255,0.3);
+  transform: rotateY(180deg);
+}
+.mentor-card {
+  background: linear-gradient(135deg, rgba(17,28,68,0.9), rgba(10,15,36,0.95));
+  border: 1px solid rgba(62,107,255,0.15);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.3s;
+}
+.mentor-card:hover {
+  border-color: rgba(160,96,255,0.4);
+  box-shadow: 0 0 30px rgba(160,96,255,0.1);
+}
+.mentor-card-expanded {
+  background: linear-gradient(135deg, rgba(17,28,68,0.9), rgba(10,15,36,0.95));
+  border: 1px solid rgba(62,107,255,0.15);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s;
+}
+.mentor-card-expanded:hover {
+  border-color: rgba(62,107,255,0.4);
+  box-shadow: 0 0 30px rgba(62,107,255,0.1);
+}
+.mentor-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: bold;
+}
+.subject-pill {
+  background: rgba(17,28,68,0.8);
+  border: 1px solid rgba(62,107,255,0.2);
+  border-radius: 12px;
+  padding: 16px 24px;
+  text-align: center;
+  transition: all 0.3s;
+  cursor: default;
+}
+.subject-pill:hover {
+  border-color: #00D1FF;
+  box-shadow: 0 0 20px rgba(0,209,255,0.1);
+}
+.mobile-menu { display: none; }
+.mobile-menu.open { display: flex; }
+.step-line {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  right: 28px;
+  height: 2px;
+  background: linear-gradient(90deg, #3E6BFF, #00D1FF);
+  z-index: 0;
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0A0F24; }
+::-webkit-scrollbar-thumb { background: #3E6BFF; border-radius: 3px; }
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: linear-gradient(135deg, #111C44, #0A0F24);
+  border: 1px solid rgba(0,209,255,0.3);
+  border-radius: 12px;
+  padding: 16px 24px;
+  color: #E6ECFF;
+  z-index: 1000;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.4s ease;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.community-post {
+  background: rgba(17,28,68,0.6);
+  border: 1px solid rgba(62,107,255,0.15);
+  border-radius: 12px;
+  padding: 20px;
+  transition: border-color 0.3s;
+}
+.community-post:hover { border-color: rgba(0,209,255,0.3); }
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-navy font-outfit text-maintext overflow-auto">
+  <div id="app" class="w-full h-full overflow-auto">
+   <!-- NAVBAR -->
+   <nav class="fixed top-0 left-0 right-0 z-50 bg-navy/90 backdrop-blur-md border-b border-elblue/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+     <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('home')">
+      <svg width="36" height="36" viewbox="0 0 36 36" fill="none">
+       <circle cx="18" cy="18" r="16" stroke="url(#logoG)" stroke-width="2.5" fill="none" /> <path d="M12 18c0-3.3 2.7-6 6-6s6 2.7 6 6-2.7 6-6 6" stroke="#00D1FF" stroke-width="2" stroke-linecap="round" /> <circle cx="18" cy="18" r="2.5" fill="#3E6BFF" /> <path d="M24 24l3 3" stroke="#A060FF" stroke-width="2" stroke-linecap="round" /> <defs>
+        <lineargradient id="logoG" x1="0" y1="0" x2="36" y2="36">
+         <stop stop-color="#3E6BFF" />
+         <stop offset="1" stop-color="#00D1FF" />
+        </lineargradient>
+       </defs>
+      </svg><span class="font-bold text-lg tracking-tight">OC <span class="gradient-text">Mentors</span></span>
+     </div>
+     <div class="hidden md:flex items-center gap-6 text-sm font-medium text-sectext">
+      <span class="nav-link active" data-page="home" onclick="navigateTo('home')">Home</span> <span class="nav-link" data-page="quiz" onclick="navigateTo('quiz')">Learner Quiz</span> <span class="nav-link" data-page="notes" onclick="navigateTo('notes')">Notes</span> <span class="nav-link" data-page="calendar" onclick="navigateTo('calendar')">Calendar</span> <span class="nav-link" data-page="community" onclick="navigateTo('community')">Community</span> <span class="nav-link" data-page="profile" onclick="navigateTo('profile')">Profile</span>
+     </div><button class="md:hidden text-sectext" onclick="toggleMobile()"><i data-lucide="menu" style="width:24px;height:24px"></i></button>
+    </div>
+    <div id="mobileMenu" class="mobile-menu flex-col bg-navy2 border-t border-elblue/10 md:hidden">
+     <span class="nav-link px-6 py-3 text-sectext border-b border-elblue/5" onclick="navigateTo('home');toggleMobile()">Home</span> <span class="nav-link px-6 py-3 text-sectext border-b border-elblue/5" onclick="navigateTo('quiz');toggleMobile()">Learner Quiz</span> <span class="nav-link px-6 py-3 text-sectext border-b border-elblue/5" onclick="navigateTo('notes');toggleMobile()">Notes</span> <span class="nav-link px-6 py-3 text-sectext border-b border-elblue/5" onclick="navigateTo('calendar');toggleMobile()">Calendar</span> <span class="nav-link px-6 py-3 text-sectext border-b border-elblue/5" onclick="navigateTo('community');toggleMobile()">Community</span> <span class="nav-link px-6 py-3 text-sectext" onclick="navigateTo('profile');toggleMobile()">Profile</span>
+    </div>
+   </nav><!-- HOME PAGE -->
+   <div id="page-home" class="page active pt-16">
+    <!-- HERO -->
+    <section class="relative overflow-hidden py-20 sm:py-28 px-4">
+     <div class="hero-orb w-72 h-72 bg-elblue" style="top:-10%;left:10%"></div>
+     <div class="hero-orb w-96 h-96 bg-purple" style="top:20%;right:-5%"></div>
+     <div class="hero-orb w-60 h-60 bg-cyan" style="bottom:0;left:40%"></div>
+     <div class="max-w-4xl mx-auto text-center relative z-10">
+      <div class="space-y-4 mb-10 fade-up fade-up-d1">
+       <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight">Are you reaching your <span class="gradient-text">FULL POTENTIAL?</span></h2>
+       <p class="text-sectext text-lg">Find out what learner you are</p>
+      </div>
+      <div class="flex flex-wrap justify-center gap-4 fade-up fade-up-d4">
+       <button class="btn-primary" onclick="navigateTo('quiz')">Get Matched</button> <button class="btn-secondary" onclick="navigateTo('quiz')"><i data-lucide="clipboard-list" style="width:18px;height:18px"></i> Take Learner Quiz</button>
+      </div>
+     </div>
+    </section><!-- STORY -->
+    <section class="py-20 px-4 relative">
+     <div class="absolute inset-0 bg-gradient-to-b from-transparent via-navy2/30 to-transparent pointer-events-none"></div>
+     <div class="max-w-3xl mx-auto relative z-10">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">A Real <span class="gradient-text">Story</span></h2>
+      <div class="glow-card p-8 sm:p-12 text-center">
+       <p class="text-lg sm:text-xl text-maintext mb-6 leading-relaxed">Student started high school with all F's and not setup to graduate.</p>
+       <div class="flex items-center justify-center my-8">
+        <div class="flex-1 h-1 bg-gradient-to-r from-transparent to-elblue"></div><i data-lucide="arrow-down" style="width:24px;height:24px;color:#00D1FF;margin:0 16px;flex-shrink:0"></i>
+        <div class="flex-1 h-1 bg-gradient-to-l from-transparent to-elblue"></div>
+       </div>
+       <p class="text-lg sm:text-xl text-maintext leading-relaxed">Student is now passing all classes with our specific approach and plan to graduate.</p>
+      </div>
+     </div>
+    </section><!-- THE PROBLEM -->
+    <section class="py-20 px-4">
+     <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-2">The <span class="gradient-text">Problem</span></h2>
+      <p class="text-sectext text-center mb-12 max-w-2xl mx-auto">Students like the one in the story are underserved in traditional classrooms</p>
+      <div class="space-y-4">
+       <div class="glow-card p-8">
+        <p class="text-lg font-semibold text-maintext">Students are behind grade level</p>
+       </div>
+       <div class="glow-card p-8">
+        <p class="text-lg font-semibold text-maintext">Students lack 1-on-1 help</p>
+       </div>
+       <div class="glow-card p-8">
+        <p class="text-lg font-semibold text-maintext">1 in 5 students like the one in the story aren't graduating</p>
+       </div>
+      </div>
+     </div>
+    </section><!-- OUR MISSION -->
+    <section class="py-20 px-4 relative">
+     <div class="absolute inset-0 bg-gradient-to-b from-transparent via-navy2/30 to-transparent pointer-events-none"></div>
+     <div class="max-w-3xl mx-auto relative z-10">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">Our <span class="gradient-text">Mission</span></h2>
+      <div class="glow-card p-8 sm:p-12 text-center">
+       <p class="text-lg sm:text-xl text-maintext mb-6 leading-relaxed">We believe that education is more than just about memorizing. It's about <span class="gradient-text font-semibold">transformation</span> and that starts with understanding how each student learns <span class="gradient-text font-semibold">best</span>.</p>
+       <p class="text-cyan font-mono text-sm mt-6">— Daniyal Rauf, CEO of Socratic OC</p>
+      </div>
+     </div>
+    </section><!-- SOCRATIC OC -->
+    <section class="py-20 px-4">
+     <div class="max-w-5xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">Socratic <span class="gradient-text">OC</span></h2>
+      <p class="text-sectext text-center mb-12 max-w-2xl mx-auto">A personalized mentorship platform tailored for students with learning differences, built to boost confidence and academic success.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+       <div class="glow-card p-8 text-center hover:border-elblue/40 transition-all">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-elblue/40 to-cyan/20 flex items-center justify-center mx-auto mb-4 text-2xl">
+         <i data-lucide="help-circle" style="width:32px;height:32px;color:#3E6BFF"></i>
+        </div>
+        <h3 class="text-lg font-semibold mb-2 text-maintext">Guided Questions</h3>
+        <p class="text-sectext text-sm">We use the Socratic method to spark deeper understanding.</p>
+       </div>
+       <div class="glow-card p-8 text-center hover:border-cyan/40 transition-all">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-cyan/40 to-softblue/20 flex items-center justify-center mx-auto mb-4 text-2xl">
+         <i data-lucide="user-check" style="width:32px;height:32px;color:#00D1FF"></i>
+        </div>
+        <h3 class="text-lg font-semibold mb-2 text-maintext">Tailored for Learning Differences</h3>
+        <p class="text-sectext text-sm">Personalized support for how each student learns best.</p>
+       </div>
+       <div class="glow-card p-8 text-center hover:border-purple/40 transition-all">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple/40 to-elblue/20 flex items-center justify-center mx-auto mb-4 text-2xl">
+         <i data-lucide="palette" style="width:32px;height:32px;color:#A060FF"></i>
+        </div>
+        <h3 class="text-lg font-semibold mb-2 text-maintext">Tailored Learning Styles</h3>
+        <p class="text-sectext text-sm">Visual, auditory, and kinesthetic approaches.</p>
+       </div>
+       <div class="glow-card p-8 text-center hover:border-softblue/40 transition-all">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-softblue/40 to-cyan/20 flex items-center justify-center mx-auto mb-4 text-2xl">
+         <i data-lucide="square" style="width:32px;height:32px;color:#4CC9FF"></i>
+        </div>
+        <h3 class="text-lg font-semibold mb-2 text-maintext">Canvas Extension</h3>
+        <p class="text-sectext text-sm">Track assignments, grades, deadlines, and progress.</p>
+       </div>
+       <div class="glow-card p-8 text-center hover:border-cyan/40 transition-all">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-cyan/40 to-elblue/20 flex items-center justify-center mx-auto mb-4 text-2xl">
+         <i data-lucide="clipboard-list" style="width:32px;height:32px;color:#00D1FF"></i>
+        </div>
+        <h3 class="text-lg font-semibold mb-2 text-maintext">Quiz &amp; Test Support</h3>
+        <p class="text-sectext text-sm">Targeted quiz prep and confidence-building review.</p>
+       </div>
+       <div class="glow-card p-8 text-center hover:border-purple/40 transition-all">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple/40 to-softblue/20 flex items-center justify-center mx-auto mb-4 text-2xl">
+         <i data-lucide="zap" style="width:32px;height:32px;color:#A060FF"></i>
+        </div>
+        <h3 class="text-lg font-semibold mb-2 text-maintext">Active Problem-Solving</h3>
+        <p class="text-sectext text-sm">Learn by doing through critical thinking and mentorship.</p>
+       </div>
+      </div>
+      <div class="text-center">
+       <p class="text-lg font-semibold gradient-text">Build Confidence. Think Critically. Achieve More.</p>
+      </div>
+     </div>
+    </section>
+    <section class="py-20 px-4">
+     <div class="max-w-5xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">How It <span class="gradient-text">Works</span></h2>
+      <p class="text-sectext text-center mb-16 max-w-xl mx-auto">Three simple steps to your perfect learning match.</p>
+      <div class="relative grid grid-cols-1 md:grid-cols-3 gap-8">
+       <div class="hidden md:block step-line"></div>
+       <div class="glow-card p-8 text-center relative z-10 fade-up fade-up-d1">
+        <div class="w-14 h-14 rounded-full bg-elblue/20 flex items-center justify-center mx-auto mb-5">
+         <span class="text-2xl font-bold gradient-text">1</span>
+        </div>
+        <h3 class="text-lg font-semibold mb-2 text-maintext">Take the Learner Quiz</h3>
+        <p class="text-sectext text-sm">Discover your unique learning style, strengths, and preferences.</p>
+       </div>
+       <div class="glow-card p-8 text-center relative z-10 fade-up fade-up-d2">
+        <div class="w-14 h-14 rounded-full bg-cyan/20 flex items-center justify-center mx-auto mb-5">
+         <span class="text-2xl font-bold gradient-text">2</span>
+        </div>
+        <h3 class="text-lg font-semibold mb-2 text-maintext">Get Matched</h3>
+        <p class="text-sectext text-sm">We pair you with a mentor who fits your learning style and goals.</p>
+       </div>
+       <div class="glow-card p-8 text-center relative z-10 fade-up fade-up-d3">
+        <div class="w-14 h-14 rounded-full bg-purple/20 flex items-center justify-center mx-auto mb-5">
+         <span class="text-2xl font-bold gradient-text">3</span>
+        </div>
+        <h3 class="text-lg font-semibold mb-2 text-maintext">Track &amp; Improve</h3>
+        <p class="text-sectext text-sm">Monitor your progress with adaptive dashboards and feedback.</p>
+       </div>
+      </div>
+     </div>
+    </section><!-- APP SCREENS -->
+    <section class="py-20 px-4">
+     <div class="max-w-5xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">Inside the <span class="gradient-text">Platform</span></h2>
+      <p class="text-sectext text-center mb-16 max-w-xl mx-auto">A glimpse at the Socratic OC experience.</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+       <!-- Learning Style Matching Screen -->
+       <div class="app-screen">
+        <div class="flex items-center gap-2 mb-4">
+         <div class="w-3 h-3 rounded-full bg-red-500/60"></div>
+         <div class="w-3 h-3 rounded-full bg-yellow-500/60"></div>
+         <div class="w-3 h-3 rounded-full bg-green-500/60"></div><span class="text-xs text-sectext ml-2 font-mono">Learning Style Match</span>
+        </div>
+        <div class="space-y-3">
+         <div class="flex items-center justify-between p-3 rounded-lg bg-navy/60 border border-elblue/10">
+          <div class="flex items-center gap-3">
+           <div class="w-8 h-8 rounded-full bg-gradient-to-br from-elblue to-cyan flex items-center justify-center text-xs font-bold">
+            V
+           </div><span class="text-sm">Visual Learner</span>
+          </div>
+          <div class="w-24 h-2 rounded-full bg-navy2 overflow-hidden">
+           <div class="h-full rounded-full bg-gradient-to-r from-elblue to-cyan" style="width:85%"></div>
+          </div>
+         </div>
+         <div class="flex items-center justify-between p-3 rounded-lg bg-navy/60 border border-elblue/10">
+          <div class="flex items-center gap-3">
+           <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple to-elblue flex items-center justify-center text-xs font-bold">
+            K
+           </div><span class="text-sm">Kinesthetic</span>
+          </div>
+          <div class="w-24 h-2 rounded-full bg-navy2 overflow-hidden">
+           <div class="h-full rounded-full bg-gradient-to-r from-purple to-elblue" style="width:60%"></div>
+          </div>
+         </div>
+         <div class="flex items-center justify-between p-3 rounded-lg bg-navy/60 border border-elblue/10">
+          <div class="flex items-center gap-3">
+           <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan to-softblue flex items-center justify-center text-xs font-bold">
+            A
+           </div><span class="text-sm">Auditory</span>
+          </div>
+          <div class="w-24 h-2 rounded-full bg-navy2 overflow-hidden">
+           <div class="h-full rounded-full bg-gradient-to-r from-cyan to-softblue" style="width:45%"></div>
+          </div>
+         </div>
+         <div class="mt-4 p-3 rounded-lg bg-cyan/5 border border-cyan/20 text-center">
+          <p class="text-xs text-cyan font-mono">Best Match: Visual + Hands-On Mentor</p>
+         </div>
+        </div>
+       </div><!-- Progress Dashboard Screen -->
+       <div class="app-screen">
+        <div class="flex items-center gap-2 mb-4">
+         <div class="w-3 h-3 rounded-full bg-red-500/60"></div>
+         <div class="w-3 h-3 rounded-full bg-yellow-500/60"></div>
+         <div class="w-3 h-3 rounded-full bg-green-500/60"></div><span class="text-xs text-sectext ml-2 font-mono">Progress Dashboard</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+         <div class="p-3 rounded-lg bg-navy/60 border border-elblue/10 text-center">
+          <p class="text-2xl font-bold gradient-text">92%</p>
+          <p class="text-xs text-sectext">Math Score</p>
+         </div>
+         <div class="p-3 rounded-lg bg-navy/60 border border-elblue/10 text-center">
+          <p class="text-2xl font-bold text-cyan">+18</p>
+          <p class="text-xs text-sectext">Points This Week</p>
+         </div>
+        </div>
+        <div class="space-y-2">
+         <div class="flex justify-between text-xs text-sectext"><span>Algebra</span><span>94%</span>
+         </div>
+         <div class="w-full h-2 rounded-full bg-navy2 overflow-hidden">
+          <div class="h-full rounded-full bg-gradient-to-r from-elblue to-cyan" style="width:94%"></div>
+         </div>
+         <div class="flex justify-between text-xs text-sectext mt-2"><span>Geometry</span><span>87%</span>
+         </div>
+         <div class="w-full h-2 rounded-full bg-navy2 overflow-hidden">
+          <div class="h-full rounded-full bg-gradient-to-r from-purple to-elblue" style="width:87%"></div>
+         </div>
+         <div class="flex justify-between text-xs text-sectext mt-2"><span>Chemistry</span><span>78%</span>
+         </div>
+         <div class="w-full h-2 rounded-full bg-navy2 overflow-hidden">
+          <div class="h-full rounded-full bg-gradient-to-r from-cyan to-softblue" style="width:78%"></div>
+         </div>
+        </div>
+        <div class="mt-4 p-3 rounded-lg bg-elblue/5 border border-elblue/20 text-center">
+         <p class="text-xs text-elblue font-mono">🔥 7-Day Streak</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </section><!-- SUBJECTS -->
+    <section class="py-20 px-4">
+     <div class="max-w-5xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">Subjects We <span class="gradient-text">Cover</span></h2>
+      <p class="text-sectext text-center mb-12 max-w-xl mx-auto">From STEM to test prep, we've got you covered.</p>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+       <div class="subject-pill"><span class="text-lg mr-2">📐</span><span class="font-medium">Math</span>
+       </div>
+       <div class="subject-pill"><span class="text-lg mr-2">🧪</span><span class="font-medium">Chemistry</span>
+       </div>
+       <div class="subject-pill"><span class="text-lg mr-2">⚡</span><span class="font-medium">Physics</span>
+       </div>
+       <div class="subject-pill"><span class="text-lg mr-2">🧬</span><span class="font-medium">Biology</span>
+       </div>
+       <div class="subject-pill"><span class="text-lg mr-2">✍️</span><span class="font-medium">Writing</span>
+       </div>
+       <div class="subject-pill"><span class="text-lg mr-2">🎓</span><span class="font-medium">College Apps</span>
+       </div>
+       <div class="subject-pill"><span class="text-lg mr-2">📝</span><span class="font-medium">SAT/ACT Prep</span>
+       </div>
+      </div>
+     </div>
+    </section><!-- MENTORS -->
+    <section class="py-20 px-4 relative">
+     <div class="absolute inset-0 bg-gradient-to-b from-navy via-navy2/30 to-navy pointer-events-none"></div>
+     <div class="max-w-5xl mx-auto relative z-10">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">Meet Our <span class="gradient-text">Mentors</span></h2>
+      <p class="text-sectext text-center mb-12 max-w-xl mx-auto">Our network of experienced mentors ready to guide you.</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="mentorsList">
+       <!-- Mentors will be rendered here -->
+      </div>
+     </div>
+    </section><!-- MILESTONES -->
+    <section class="py-20 px-4">
+     <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">Why <span class="gradient-text">Us</span></h2>
+      <p class="text-sectext text-center mb-16 max-w-xl mx-auto">What Makes Socratic OC Different</p>
+      <div class="relative"><!-- Timeline Line -->
+       <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-elblue via-cyan to-purple" style="top:0"></div><!-- Milestone Items -->
+       <div class="space-y-12"><!-- 2025 -->
+        <div class="relative">
+         <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-elblue/20 border-2 border-elblue flex items-center justify-center" style="top:24px">
+          <div class="w-2 h-2 rounded-full bg-elblue"></div>
+         </div>
+         <div class="md:w-1/2 md:ml-auto md:pl-8">
+          <div class="glow-card p-6">
+           <div class="flex items-center gap-3 mb-3"><i data-lucide="rocket" style="width:24px;height:24px;color:#3E6BFF"></i> <span class="text-sm font-mono text-elblue uppercase tracking-widest">2025</span>
+           </div>
+           <h3 class="text-xl font-semibold mb-3">100+ Students Taught!</h3>
+           <ul class="space-y-2 text-sectext text-sm">
+            <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#00D1FF;margin-top:2px;flex-shrink:0"></i><span>Marketing campaign kickoff</span></li>
+            <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#00D1FF;margin-top:2px;flex-shrink:0"></i><span>10+ Mentors (1:10 Mentor:Student Ratio)</span></li>
+            <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#00D1FF;margin-top:2px;flex-shrink:0"></i><span>3+ Years Building Startup &amp; 5K+ Revenue Generated</span></li>
+           </ul>
+           <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-elblue/10">
+            <div class="text-center">
+             <p class="text-lg font-bold gradient-text">100</p>
+             <p class="text-xs text-sectext">Customers</p>
+            </div>
+            <div class="text-center">
+             <p class="text-lg font-bold text-cyan">$5,000</p>
+             <p class="text-xs text-sectext">Revenue</p>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div><!-- 2026 Q1 -->
+        <div class="relative">
+         <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-cyan/20 border-2 border-cyan flex items-center justify-center" style="top:24px">
+          <div class="w-2 h-2 rounded-full bg-cyan"></div>
+         </div>
+         <div class="md:w-1/2 md:pr-8">
+          <div class="glow-card p-6">
+           <div class="flex items-center gap-3 mb-3"><i data-lucide="target" style="width:24px;height:24px;color:#00D1FF"></i> <span class="text-sm font-mono text-cyan uppercase tracking-widest">2026 Q1</span>
+           </div>
+           <h3 class="text-xl font-semibold mb-3">School District Expansion</h3>
+           <ul class="space-y-2 text-sectext text-sm">
+            <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#A060FF;margin-top:2px;flex-shrink:0"></i><span>Expanded to Irvine Unified School District (IUSD)</span></li>
+            <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#A060FF;margin-top:2px;flex-shrink:0"></i><span>Refine personalized interface from beta launch</span></li>
+           </ul>
+          </div>
+         </div>
+        </div><!-- 2026 Q2 -->
+        <div class="relative">
+         <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-purple/20 border-2 border-purple flex items-center justify-center" style="top:24px">
+          <div class="w-2 h-2 rounded-full bg-purple"></div>
+         </div>
+         <div class="md:w-1/2 md:ml-auto md:pl-8">
+          <div class="glow-card p-6">
+           <div class="flex items-center gap-3 mb-3"><i data-lucide="trending-up" style="width:24px;height:24px;color:#A060FF"></i> <span class="text-sm font-mono text-purple uppercase tracking-widest">2026 Q2</span>
+           </div>
+           <h3 class="text-xl font-semibold mb-3">250+ Students Taught</h3>
+           <ul class="space-y-2 text-sectext text-sm">
+            <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#4CC9FF;margin-top:2px;flex-shrink:0"></i><span>250+ Students Taught</span></li>
+            <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#4CC9FF;margin-top:2px;flex-shrink:0"></i><span>25+ Mentors</span></li>
+            <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#4CC9FF;margin-top:2px;flex-shrink:0"></i><span>Expand to TUSD, NMUSD School Districts</span></li>
+           </ul>
+          </div>
+         </div>
+        </div><!-- 2026 Q3 -->
+        <div class="relative">
+         <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-cyan/20 border-2 border-cyan flex items-center justify-center" style="top:24px">
+          <div class="w-2 h-2 rounded-full bg-cyan"></div>
+         </div>
+         <div class="md:w-1/2 md:pr-8">
+          <div class="glow-card p-6">
+           <div class="flex items-center gap-3 mb-3"><i data-lucide="award" style="width:24px;height:24px;color:#4CC9FF"></i> <span class="text-sm font-mono text-softblue uppercase tracking-widest">2026 Q3</span>
+           </div>
+           <h3 class="text-xl font-semibold mb-3">300+ Students &amp; Community College Reach</h3>
+           <ul class="space-y-2 text-sectext text-sm">
+            <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#00D1FF;margin-top:2px;flex-shrink:0"></i><span>300+ Students Taught</span></li>
+            <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#00D1FF;margin-top:2px;flex-shrink:0"></i><span>50+ Mentors</span></li>
+            <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#00D1FF;margin-top:2px;flex-shrink:0"></i><span>Expand to Community Colleges (SCC, IVC, OCC, SVC)</span></li>
+           </ul>
+          </div>
+         </div>
+        </div><!-- 2027 -->
+        <div class="relative">
+         <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gradient-to-br from-elblue to-purple border-2 border-purple flex items-center justify-center" style="top:24px">
+          <div class="w-2 h-2 rounded-full bg-purple"></div>
+         </div>
+         <div class="md:w-1/2 md:ml-auto md:pl-8">
+          <div class="glow-card p-6">
+           <div class="flex items-center gap-3 mb-3"><i data-lucide="star" style="width:24px;height:24px;color:#A060FF"></i> <span class="text-sm font-mono text-purple uppercase tracking-widest">2027</span>
+           </div>
+           <h3 class="text-xl font-semibold mb-3">Scalable Solutions for Universities &amp; Beyond</h3>
+           <p class="text-sectext text-sm mb-4">Expand mentorship to universities and create scalable solutions for institutions nationwide.</p>
+           <div class="grid grid-cols-2 gap-4 pt-4 border-t border-elblue/10">
+            <div class="text-center">
+             <p class="text-lg font-bold gradient-text">500</p>
+             <p class="text-xs text-sectext">Customers</p>
+            </div>
+            <div class="text-center">
+             <p class="text-lg font-bold text-purple">$25,000</p>
+             <p class="text-xs text-sectext">Revenue</p>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </section><!-- TESTIMONIALS / NETWORK -->
+    <section class="py-20 px-4">
+     <div class="max-w-5xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">Trusted <span class="gradient-text">Network</span></h2>
+      <p class="text-sectext text-center mb-12 max-w-xl mx-auto">Companies and organizations we've worked with.</p>
+      <div class="flex flex-wrap justify-center items-center gap-8 opacity-60">
+       <div class="glow-card px-6 py-4 text-center"><span class="font-semibold text-sectext">UCI ANTrepreneur Center</span>
+       </div>
+       <div class="glow-card px-6 py-4 text-center"><span class="font-semibold text-sectext">IUSD</span>
+       </div>
+       <div class="glow-card px-6 py-4 text-center"><span class="font-semibold text-sectext">Parker Dewey</span>
+       </div>
+       <div class="glow-card px-6 py-4 text-center"><span class="font-semibold text-sectext">ToastMasters</span>
+       </div>
+       <div class="glow-card px-6 py-4 text-center"><span class="font-semibold text-sectext">Intuit for Education</span>
+       </div>
+      </div>
+     </div>
+    </section><!-- TESTIMONIALS -->
+    <section class="py-20 px-4 relative">
+     <div class="absolute inset-0 bg-gradient-to-b from-navy via-navy2/30 to-navy pointer-events-none"></div>
+     <div class="max-w-5xl mx-auto relative z-10">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">Student <span class="gradient-text">Testimonials</span></h2>
+      <p class="text-sectext text-center mb-12 max-w-xl mx-auto">Hear from students and families whose lives have been transformed.</p>
+      <div class="relative"><!-- Carousel Container -->
+       <div class="relative overflow-hidden">
+        <div id="testimonialTrack" class="flex transition-transform duration-500" style="transform: translateX(0)"><!-- Testimonial 1 -->
+         <div class="w-full flex-shrink-0 px-4">
+          <div class="glow-card p-6 mx-auto max-w-2xl">
+           <div class="flex items-center gap-1 mb-3">
+            <i data-lucide="star" style="width:14px;height:14px;color:#00D1FF;fill:#00D1FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#00D1FF;fill:#00D1FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#00D1FF;fill:#00D1FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#00D1FF;fill:#00D1FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#00D1FF;fill:#00D1FF"></i>
+           </div>
+           <p class="text-sectext text-sm mb-3">"More than just tutoring, it was mentoring to get into <span class="gradient-text font-semibold">my dream college.</span>"</p>
+           <p class="text-xs text-cyan font-mono">— Ben Jankins, Mentored for College Applications with Dyslexia</p>
+          </div>
+         </div><!-- Testimonial 2 -->
+         <div class="w-full flex-shrink-0 px-4">
+          <div class="glow-card p-6 mx-auto max-w-2xl">
+           <div class="flex items-center gap-1 mb-3">
+            <i data-lucide="star" style="width:14px;height:14px;color:#A060FF;fill:#A060FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#A060FF;fill:#A060FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#A060FF;fill:#A060FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#A060FF;fill:#A060FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#A060FF;fill:#A060FF"></i>
+           </div>
+           <p class="text-sectext text-sm mb-3">"They helped me get my grades up from an F and return to playing basketball with confidence."</p>
+           <p class="text-xs text-purple font-mono">— IEP K-12 Student, IUSD School District</p>
+          </div>
+         </div><!-- Testimonial 3 -->
+         <div class="w-full flex-shrink-0 px-4">
+          <div class="glow-card p-6 mx-auto max-w-2xl">
+           <div class="flex items-center gap-1 mb-3">
+            <i data-lucide="star" style="width:14px;height:14px;color:#4CC9FF;fill:#4CC9FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#4CC9FF;fill:#4CC9FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#4CC9FF;fill:#4CC9FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#4CC9FF;fill:#4CC9FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#4CC9FF;fill:#4CC9FF"></i>
+           </div>
+           <p class="text-sectext text-sm mb-3">"They use great visual explanations that make challenging concepts much easier to understand."</p>
+           <p class="text-xs text-softblue font-mono">— Community College Student with Dyscalculia</p>
+          </div>
+         </div><!-- Testimonial 4 -->
+         <div class="w-full flex-shrink-0 px-4">
+          <div class="glow-card p-6 mx-auto max-w-2xl">
+           <div class="flex items-center gap-1 mb-3">
+            <i data-lucide="star" style="width:14px;height:14px;color:#00D1FF;fill:#00D1FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#00D1FF;fill:#00D1FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#00D1FF;fill:#00D1FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#00D1FF;fill:#00D1FF"></i> <i data-lucide="star" style="width:14px;height:14px;color:#00D1FF;fill:#00D1FF"></i>
+           </div>
+           <p class="text-sectext text-sm mb-3">"Guided through work like they were learning themselves, so student could understand and do it themself."</p>
+           <p class="text-xs text-cyan font-mono">— NMUSD School District Student with ADHD</p>
+          </div>
+         </div>
+        </div>
+       </div><!-- Navigation Arrows --> <button onclick="carouselPrev()" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 md:-translate-x-4 btn-secondary p-2 flex items-center justify-center z-10 hidden md:flex"><i data-lucide="chevron-left" style="width:20px;height:20px"></i></button> <button onclick="carouselNext()" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 md:translate-x-4 btn-secondary p-2 flex items-center justify-center z-10 hidden md:flex"><i data-lucide="chevron-right" style="width:20px;height:20px"></i></button> <!-- Pagination Dots -->
+       <div class="flex justify-center gap-2 mt-6"><button onclick="carouselGo(0)" class="w-2 h-2 rounded-full bg-elblue/40 transition-all" id="dot0" style="background-color: #3E6BFF; width: 8px;"></button> <button onclick="carouselGo(1)" class="w-2 h-2 rounded-full bg-elblue/40 transition-all" id="dot1"></button> <button onclick="carouselGo(2)" class="w-2 h-2 rounded-full bg-elblue/40 transition-all" id="dot2"></button> <button onclick="carouselGo(3)" class="w-2 h-2 rounded-full bg-elblue/40 transition-all" id="dot3"></button>
+       </div>
+      </div>
+     </div>
+    </section><!-- FINAL CTA -->
+    <section class="py-24 px-4 relative">
+     <div class="absolute inset-0 bg-gradient-to-t from-navy2/80 to-transparent pointer-events-none"></div>
+     <div class="max-w-3xl mx-auto text-center relative z-10">
+      <h2 id="ctaText" class="text-3xl sm:text-4xl font-bold mb-6">Ready to get matched with the <span class="gradient-text">right mentor?</span></h2><button id="ctaButton" class="btn-primary text-lg px-10 py-4" onclick="navigateTo('quiz')">Get Matched</button>
+     </div>
+    </section><!-- FOOTER -->
+    <footer class="border-t border-elblue/10 py-8 px-4">
+     <div class="max-w-5xl mx-auto"><!-- Top Row: Logo and Description -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-6 pb-6 border-b border-elblue/10">
+       <div class="flex items-center gap-2">
+        <svg width="24" height="24" viewbox="0 0 36 36" fill="none">
+         <circle cx="18" cy="18" r="16" stroke="url(#logoG2)" stroke-width="2.5" fill="none" /> <circle cx="18" cy="18" r="2.5" fill="#3E6BFF" /> <defs>
+          <lineargradient id="logoG2" x1="0" y1="0" x2="36" y2="36">
+           <stop stop-color="#3E6BFF" />
+           <stop offset="1" stop-color="#00D1FF" />
+          </lineargradient>
+         </defs>
+        </svg><span class="font-semibold text-sm">Socratic OC</span>
+       </div>
+       <div class="flex flex-col sm:flex-row gap-6 text-sm text-sectext">
+        <div class="flex items-center gap-2"><i data-lucide="mail" style="width:16px;height:16px;color:#00D1FF"></i> <span>Email: <a href="mailto:octutoringservice@gmail.com" class="text-cyan hover:text-softblue transition-colors">octutoringservice@gmail.com</a></span>
+        </div>
+        <div class="flex items-center gap-2"><i data-lucide="phone" style="width:16px;height:16px;color:#00D1FF"></i> <span>Phone: <a href="tel:9494393004" class="text-cyan hover:text-softblue transition-colors">949-439-3004</a></span>
+        </div>
+       </div>
+      </div><!-- Bottom Row: Copyright and Social Links -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+       <div class="flex flex-col gap-2">
+        <p class="text-sectext/50 text-xs">© 2026 Socratic OC. All rights reserved.</p><span class="text-cyan text-xs cursor-pointer hover:text-softblue transition-colors" onclick="navigateTo('privacy')">Privacy Policy</span>
+       </div><!-- Socials -->
+       <div class="flex flex-col gap-3">
+        <p class="text-xs font-semibold text-maintext">Socials</p>
+        <div class="flex flex-wrap gap-4"><a href="https://www.instagram.com/oc_mentors/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-sectext hover:text-cyan transition-colors group"> <i data-lucide="instagram" style="width:16px;height:16px"></i> <span class="text-xs group-hover:text-cyan">Instagram</span> </a> <a href="https://api.whatsapp.com/send?phone=19494393004" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-sectext hover:text-cyan transition-colors group"> <i data-lucide="message-circle" style="width:16px;height:16px"></i> <span class="text-xs group-hover:text-cyan">WhatsApp</span> </a> <a href="https://www.linkedin.com/company/ocmentors" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-sectext hover:text-cyan transition-colors group"> <i data-lucide="linkedin" style="width:16px;height:16px"></i> <span class="text-xs group-hover:text-cyan">LinkedIn</span> </a> <a href="https://www.facebook.com/people/Daniyal-Rauf-OC-Mentors/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-sectext hover:text-cyan transition-colors group"> <i data-lucide="facebook" style="width:16px;height:16px"></i> <span class="text-xs group-hover:text-cyan">Facebook</span> </a> <a href="https://www.tiktok.com/@oc_mentors" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-sectext hover:text-cyan transition-colors group"> <i data-lucide="music" style="width:16px;height:16px"></i> <span class="text-xs group-hover:text-cyan">TikTok</span> </a> <a href="https://www.youtube.com/@OCTutors" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-sectext hover:text-cyan transition-colors group"> <i data-lucide="youtube" style="width:16px;height:16px"></i> <span class="text-xs group-hover:text-cyan">YouTube</span> </a>
+        </div>
+       </div>
+      </div>
+     </div>
+    </footer>
+   </div><!-- PRIVACY POLICY PAGE -->
+   <div id="page-privacy" class="page pt-20 px-4 pb-12">
+    <div class="max-w-3xl mx-auto">
+     <button class="flex items-center gap-2 text-cyan hover:text-softblue transition-colors mb-8" onclick="navigateTo('home')"><i data-lucide="arrow-left" style="width:20px;height:20px"></i> Back</button>
+     <div class="glow-card p-8 space-y-6">
+      <h1 class="text-3xl font-bold mb-4">Privacy Policy for Socratic OC</h1>
+      <div>
+       <h2 class="text-xl font-bold text-cyan mb-2">Introduction</h2>
+       <p class="text-sectext text-sm leading-relaxed">Socratic OC ("we," "our," or "us") is committed to protecting the privacy of our users, including high school students aged 13-17 and their parents. This Privacy Policy explains how we collect, use, protect, and share personal and educational information. By using our website, you agree to the terms of this Privacy Policy.</p>
+      </div>
+      <div>
+       <h2 class="text-xl font-bold text-cyan mb-2">Information We Collect</h2>
+       <p class="text-sectext text-sm leading-relaxed mb-2">We may collect the following categories of personal and educational information:</p>
+       <ul class="text-sectext text-sm space-y-1 ml-4">
+        <li>• <strong>Personal Information:</strong> Name, email address, and phone number.</li>
+        <li>• <strong>Educational Information:</strong> Academic records, assignments, grades, and other data provided by students, parents, or schools.</li>
+        <li>• <strong>Usage Data:</strong> Non-identifiable information such as browser type, pages visited, and time spent on the site.</li>
+        <li>• <strong>Cookies and Tracking Technologies:</strong> Data collected through cookies and similar technologies to enhance user experience.</li>
+       </ul>
+      </div>
+      <div>
+       <h2 class="text-xl font-bold text-cyan mb-2">Purposes for Collection</h2>
+       <p class="text-sectext text-sm leading-relaxed mb-2">We collect and use your information for the following purposes:</p>
+       <ol class="text-sectext text-sm space-y-1 ml-4">
+        <li>1. <strong>Educational Services:</strong> To provide updates, educational content, and events related to Socratic OC.</li>
+        <li>2. <strong>Account Management:</strong> To create and manage user accounts, including parental controls.</li>
+        <li>3. <strong>Analytics and Improvements:</strong> To analyze website usage and improve our services.</li>
+        <li>4. <strong>Compliance:</strong> To comply with legal obligations, including FERPA, COPPA, and CCPA/CPRA requirements.</li>
+       </ol>
+      </div>
+      <div>
+       <h2 class="text-xl font-bold text-cyan mb-2">How We Protect Your Information</h2>
+       <p class="text-sectext text-sm leading-relaxed">We implement reasonable administrative, technical, and physical safeguards to protect your personal and educational information from unauthorized access, disclosure, or misuse. These measures include encryption, secure servers, and access controls.</p>
+      </div>
+      <div>
+       <h2 class="text-xl font-bold text-cyan mb-2">Sharing of Information</h2>
+       <p class="text-sectext text-sm leading-relaxed mb-2">We do not sell your personal or educational information. We may share your information only in the following circumstances:</p>
+       <ul class="text-sectext text-sm space-y-1 ml-4">
+        <li>• <strong>With Service Providers:</strong> To trusted third-party service providers who assist us in operating our website and delivering services.</li>
+        <li>• <strong>With Schools or Educational Institutions:</strong> To comply with FERPA requirements and provide educational services.</li>
+        <li>• <strong>As Required by Law:</strong> To comply with legal obligations, such as responding to subpoenas or court orders.</li>
+       </ul>
+      </div>
+      <div>
+       <h2 class="text-xl font-bold text-cyan mb-2">Your Rights</h2>
+       <p class="text-sectext text-sm leading-relaxed mb-2">Under applicable laws, you have the following rights regarding your personal and educational information:</p>
+       <ol class="text-sectext text-sm space-y-1 ml-4">
+        <li>1. <strong>Access:</strong> You may request access to the information we have collected about you.</li>
+        <li>2. <strong>Correction:</strong> You may request corrections to inaccurate or incomplete information.</li>
+        <li>3. <strong>Deletion:</strong> You may request the deletion of your personal information, subject to certain exceptions under the law.</li>
+        <li>4. <strong>Opt-Out:</strong> If you are aged 13-16, you have the right to opt out of the sale or sharing of your personal information.</li>
+       </ol>
+       <p class="text-sectext text-sm leading-relaxed mt-2">To exercise these rights, please contact us at octutoringservice@gmail.com.</p>
+      </div>
+      <div>
+       <h2 class="text-xl font-bold text-cyan mb-2">Parental Rights and Consent</h2>
+       <p class="text-sectext text-sm leading-relaxed mb-2">For users under the age of 18, parents or legal guardians have the right to:</p>
+       <ul class="text-sectext text-sm space-y-1 ml-4">
+        <li>• Review the information collected about their child.</li>
+        <li>• Request the deletion of their child's information.</li>
+        <li>• Refuse further collection or use of their child's information.</li>
+       </ul>
+       <p class="text-sectext text-sm leading-relaxed mt-2">We require verifiable parental consent before collecting personal information from users under the age of 13, in compliance with COPPA.</p>
+      </div>
+      <div>
+       <h2 class="text-xl font-bold text-cyan mb-2">Data Retention</h2>
+       <p class="text-sectext text-sm leading-relaxed">We retain personal and educational information only as long as necessary to fulfill the purposes outlined in this Privacy Policy or as required by law. Once the retention period expires, we securely delete or anonymize the data.</p>
+      </div>
+      <div>
+       <h2 class="text-xl font-bold text-cyan mb-2">Contact Us</h2>
+       <p class="text-sectext text-sm leading-relaxed">If you have any questions or concerns about this Privacy Policy or our data practices, please contact us at octutoringservice@gmail.com</p>
+      </div>
+      <div class="pt-4 border-t border-elblue/20">
+       <p class="text-sectext text-xs italic">As the parent or guardian for my student, I acknowledge that I have read and understand the Privacy Policy.</p>
+      </div>
+     </div><button class="flex items-center gap-2 text-cyan hover:text-softblue transition-colors mt-8" onclick="navigateTo('home')"><i data-lucide="arrow-left" style="width:20px;height:20px"></i> Back to Home</button>
+    </div>
+   </div><!-- LEARNER QUIZ PAGE -->
+   <div id="page-quiz" class="page pt-20 px-4 pb-12">
+    <div class="max-w-2xl mx-auto">
+     <h1 class="text-3xl font-bold text-center mb-2">Learner <span class="gradient-text">Quiz</span></h1>
+     <p class="text-sectext text-center mb-8">Discover your learning style so we can match you perfectly.</p>
+     <div id="quizContainer">
+      <div id="quizProgress" class="mb-6">
+       <div class="flex justify-between text-xs text-sectext mb-2"><span id="quizStep">Question 1 of 5</span><span id="quizPct">0%</span>
+       </div>
+       <div class="w-full h-2 rounded-full bg-navy2 overflow-hidden">
+        <div id="quizBar" class="h-full rounded-full bg-gradient-to-r from-elblue to-cyan transition-all duration-500" style="width:0%"></div>
+       </div>
+      </div>
+      <div id="quizQuestion" class="glow-card p-8 mb-6">
+       <h3 id="qText" class="text-lg font-semibold mb-6"></h3>
+       <div id="qOptions" class="space-y-3"></div>
+      </div>
+      <div class="flex justify-between">
+       <button id="quizPrev" class="btn-secondary text-sm" onclick="quizNav(-1)" style="display:none"><i data-lucide="arrow-left" style="width:16px;height:16px"></i> Back</button> <button id="quizNext" class="btn-primary text-sm ml-auto" onclick="quizNav(1)" disabled>Next <i data-lucide="arrow-right" style="width:16px;height:16px"></i></button>
+      </div>
+     </div>
+     <div id="quizResult" style="display:none">
+      <div class="glow-card p-10 text-center mb-6">
+       <div class="w-20 h-20 rounded-full bg-gradient-to-br from-elblue to-cyan flex items-center justify-center mx-auto mb-6">
+        <i data-lucide="sparkles" style="width:36px;height:36px;color:#fff"></i>
+       </div>
+       <h2 class="text-2xl font-bold mb-2">Your Learning Style</h2>
+       <p id="resultType" class="text-3xl font-extrabold gradient-text mb-4"></p>
+       <p id="resultDesc" class="text-sectext mb-6 max-w-md mx-auto"></p><button class="btn-primary" onclick="resetQuiz()"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i> Retake Quiz</button>
+      </div>
+      <div class="glow-card p-10">
+       <h3 class="text-xl font-semibold mb-6 text-center">Mentors Who Match Your Style</h3>
+       <div id="matchedMentorsList" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+      </div>
+     </div>
+    </div>
+   </div><!-- NOTES PAGE -->
+   <div id="page-notes" class="page pt-20 px-4 pb-12">
+    <div class="max-w-3xl mx-auto">
+     <h1 class="text-3xl font-bold text-center mb-2">Notes &amp; <span class="gradient-text">Flashcards</span></h1>
+     <p class="text-sectext text-center mb-8">Review key concepts and test your knowledge.</p>
+     <div class="flex gap-3 mb-8 justify-center flex-wrap">
+      <button class="btn-tab text-sm" id="notesTabBtn" onclick="switchNotesTab('notes')">Notes</button> <button class="btn-tab text-sm" id="flashTabBtn" onclick="switchNotesTab('flash')">Flashcards</button> <button class="btn-tab text-sm" id="guideTabBtn" onclick="switchNotesTab('guide')">Study Guides</button>
+     </div>
+     <div id="notesSection">
+      <div class="space-y-4" id="notesList">
+       <div class="glow-card p-5">
+        <h3 class="font-semibold mb-1">Quadratic Formula</h3>
+        <p class="text-sectext text-sm">x = (-b ± √(b² - 4ac)) / 2a — Used to find roots of ax² + bx + c = 0</p><span class="text-xs text-cyan font-mono mt-2 inline-block">Math</span>
+       </div>
+       <div class="glow-card p-5">
+        <h3 class="font-semibold mb-1">Newton's Second Law</h3>
+        <p class="text-sectext text-sm">F = ma — Force equals mass times acceleration.</p><span class="text-xs text-purple font-mono mt-2 inline-block">Physics</span>
+       </div>
+       <div class="glow-card p-5">
+        <h3 class="font-semibold mb-1">Photosynthesis</h3>
+        <p class="text-sectext text-sm">6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂ — Plants convert light energy into glucose.</p><span class="text-xs text-softblue font-mono mt-2 inline-block">Biology</span>
+       </div>
+      </div>
+      <div class="glow-card p-5 mt-6">
+       <h3 class="font-semibold mb-3">Add a Note</h3>
+       <form onsubmit="addNote(event)">
+        <input type="text" id="noteTitle" placeholder="Title" class="w-full bg-navy/60 border border-elblue/20 rounded-lg px-4 py-2 text-sm text-maintext placeholder-sectext/50 mb-3 outline-none focus:border-cyan/40" required> <label for="noteTitle" class="sr-only">Note title</label> <textarea id="noteContent" placeholder="Content" rows="2" class="w-full bg-navy/60 border border-elblue/20 rounded-lg px-4 py-2 text-sm text-maintext placeholder-sectext/50 mb-3 outline-none focus:border-cyan/40 resize-none" required></textarea> <label for="noteContent" class="sr-only">Note content</label> <button type="submit" class="btn-primary text-sm"><i data-lucide="plus" style="width:14px;height:14px"></i> Add Note</button>
+       </form>
+      </div>
+     </div>
+     <div id="guideSection" style="display:none">
+      <div class="space-y-4" id="guideList">
+       <a href="https://tr.ee/Pdceop" target="_blank" rel="noopener noreferrer" class="glow-card p-5 block hover:border-cyan/50 transition-all"> <h3 class="font-semibold mb-1 text-cyan hover:text-softblue transition-colors">Calculus with Pre-Calc Study Guide</h3><p class="text-sectext text-sm">Comprehensive guide covering calculus fundamentals and pre-calculus concepts.</p><span class="text-xs text-elblue font-mono mt-2 inline-block">📚 Study Guide</span> </a> <a href="https://tr.ee/j2zlYn" target="_blank" rel="noopener noreferrer" class="glow-card p-5 block hover:border-cyan/50 transition-all"> <h3 class="font-semibold mb-1 text-cyan hover:text-softblue transition-colors">Daniyal Rauf Physics Study Guide</h3><p class="text-sectext text-sm">In-depth physics study guide covering mechanics, energy, and motion principles.</p><span class="text-xs text-purple font-mono mt-2 inline-block">📚 Study Guide</span> </a> <a href="https://tr.ee/v0PHqc" target="_blank" rel="noopener noreferrer" class="glow-card p-5 block hover:border-cyan/50 transition-all"> <h3 class="font-semibold mb-1 text-cyan hover:text-softblue transition-colors">Chemistry Study Guide</h3><p class="text-sectext text-sm">Complete chemistry study guide with concepts, reactions, and problem-solving strategies.</p><span class="text-xs text-softblue font-mono mt-2 inline-block">📚 Study Guide</span> </a>
+      </div><button class="btn-primary text-sm mt-6" onclick="openAddStudyGuideModal()"><i data-lucide="plus" style="width:14px;height:14px"></i> Add Study Guide</button>
+     </div>
+     <div id="flashSection" style="display:none">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6" id="flashGrid">
+       <div class="flashcard" id="fc-default-1" onclick="this.classList.toggle('flipped')">
+        <div class="flashcard-inner">
+         <div class="flashcard-front">
+          <p class="text-lg font-semibold">What is the Pythagorean theorem?</p>
+         </div>
+         <div class="flashcard-back">
+          <p class="text-maintext">a² + b² = c² — relates the sides of a right triangle.</p>
+         </div>
+        </div>
+       </div>
+       <div class="flashcard" id="fc-default-2" onclick="this.classList.toggle('flipped')">
+        <div class="flashcard-inner">
+         <div class="flashcard-front">
+          <p class="text-lg font-semibold">What does DNA stand for?</p>
+         </div>
+         <div class="flashcard-back">
+          <p class="text-maintext">Deoxyribonucleic acid — carries genetic instructions.</p>
+         </div>
+        </div>
+       </div>
+       <div class="flashcard" id="fc-default-3" onclick="this.classList.toggle('flipped')">
+        <div class="flashcard-inner">
+         <div class="flashcard-front">
+          <p class="text-lg font-semibold">What is molarity?</p>
+         </div>
+         <div class="flashcard-back">
+          <p class="text-maintext">Moles of solute per liter of solution (mol/L).</p>
+         </div>
+        </div>
+       </div>
+      </div>
+      <p class="text-sectext text-xs text-center mb-6">Click a card to flip it.</p>
+      <div class="flex gap-3 mb-6">
+       <button class="btn-primary text-sm" onclick="generateFlashcardQuiz()"><i data-lucide="help-circle" style="width:14px;height:14px"></i> Generate Quiz</button>
+      </div>
+      <div class="glow-card p-5">
+       <h3 class="font-semibold mb-4">Add a Flashcard</h3>
+       <form onsubmit="addFlashcard(event)">
+        <label for="flashQuestion" class="text-xs text-sectext">Question</label> <input type="text" id="flashQuestion" placeholder="Enter question" class="w-full bg-navy/60 border border-elblue/20 rounded-lg px-4 py-2 text-sm text-maintext placeholder-sectext/50 mb-3 outline-none focus:border-cyan/40 mt-1" required> <label for="flashAnswer" class="text-xs text-sectext">Answer</label> <textarea id="flashAnswer" placeholder="Enter answer" rows="2" class="w-full bg-navy/60 border border-elblue/20 rounded-lg px-4 py-2 text-sm text-maintext placeholder-sectext/50 mb-3 outline-none focus:border-cyan/40 resize-none" required></textarea> <button type="submit" class="btn-primary text-sm"><i data-lucide="plus" style="width:14px;height:14px"></i> Add Flashcard</button>
+       </form>
+      </div>
+     </div>
+     <div id="flashcardQuizContainer" style="display:none">
+      <div class="max-w-2xl mx-auto">
+       <div id="fcQuizProgress" class="mb-6">
+        <div class="flex justify-between text-xs text-sectext mb-2"><span id="fcQuizStep">Question 1 of 5</span><span id="fcQuizPct">0%</span>
+        </div>
+        <div class="w-full h-2 rounded-full bg-navy2 overflow-hidden">
+         <div id="fcQuizBar" class="h-full rounded-full bg-gradient-to-r from-elblue to-cyan transition-all duration-500" style="width:0%"></div>
+        </div>
+       </div>
+       <div class="glow-card p-8 mb-6">
+        <h3 id="fcQuestion" class="text-lg font-semibold mb-6 text-center"></h3>
+        <form onsubmit="submitFlashcardAnswer();return false">
+         <label for="fcAnswerInput" class="text-xs text-sectext">Your Answer</label> <input type="text" id="fcAnswerInput" placeholder="Type your answer..." class="w-full bg-navy/60 border border-elblue/20 rounded-lg px-4 py-3 text-sm text-maintext placeholder-sectext/50 mb-4 outline-none focus:border-cyan/40 mt-1"> <button type="submit" class="btn-primary text-sm w-full"><i data-lucide="arrow-right" style="width:14px;height:14px"></i> Check Answer</button>
+        </form>
+       </div><button class="btn-secondary text-sm" onclick="exitFlashcardQuiz()"><i data-lucide="x" style="width:14px;height:14px"></i> Exit Quiz</button>
+      </div>
+     </div>
+     <div id="fcQuizResult" style="display:none">
+      <div class="glow-card p-10 text-center max-w-2xl mx-auto">
+       <div class="w-20 h-20 rounded-full bg-gradient-to-br from-elblue to-cyan flex items-center justify-center mx-auto mb-6">
+        <i data-lucide="check-circle" style="width:36px;height:36px;color:#fff"></i>
+       </div>
+       <h2 class="text-2xl font-bold mb-2">Quiz Complete!</h2>
+       <p id="fcScoreText" class="text-sectext mb-4"></p>
+       <p id="fcScore" class="text-4xl font-extrabold gradient-text mb-6"></p><button class="btn-primary text-sm" onclick="exitFlashcardQuiz()"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Back to Flashcards</button>
+      </div>
+     </div>
+    </div>
+   </div>
+  <!-- PROFILE PAGE -->
+  <div id="page-profile" class="page pt-20 px-4 pb-12">
+   <div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold text-center mb-8">My <span class="gradient-text">Profile</span></h1>
+    <div class="glow-card p-8 text-center mb-8">
+     <div class="w-24 h-24 rounded-full bg-gradient-to-br from-elblue to-cyan flex items-center justify-center mx-auto mb-4 text-3xl font-bold">
+      U
+     </div>
+     <h2 class="text-xl font-semibold mb-1" id="profileName">Student</h2>
+     <p class="text-sectext text-sm mb-4"><span id="profLearnerType">Visual</span> Learner • <span id="profLearnerSubjects">Math &amp; Physics</span></p>
+     <div class="grid grid-cols-3 gap-4">
+      <div class="p-3 rounded-lg bg-navy/60 border border-elblue/10">
+       <p class="text-lg font-bold gradient-text">12</p>
+       <p class="text-xs text-sectext">Sessions</p>
+      </div>
+      <div class="p-3 rounded-lg bg-navy/60 border border-elblue/10">
+       <p class="text-lg font-bold text-cyan">7</p>
+       <p class="text-xs text-sectext">Day Streak</p>
+      </div>
+      <div class="p-3 rounded-lg bg-navy/60 border border-elblue/10">
+       <p class="text-lg font-bold text-purple">85%</p>
+       <p class="text-xs text-sectext">Avg Score</p>
+      </div>
+     </div>
+    </div>
+    <div class="glow-card p-6 mb-6">
+     <h3 class="font-semibold mb-4">Edit Profile</h3>
+     <form onsubmit="saveProfile(event)">
+      <label for="profNameInput" class="text-xs text-sectext">Display Name</label> <input type="text" id="profNameInput" value="Student" class="w-full bg-navy/60 border border-elblue/20 rounded-lg px-4 py-2 text-sm text-maintext mb-4 outline-none focus:border-cyan/40 mt-1"> <label for="profSubjects" class="text-xs text-sectext">Subjects</label> <input type="text" id="profSubjects" value="Math, Physics" class="w-full bg-navy/60 border border-elblue/20 rounded-lg px-4 py-2 text-sm text-maintext mb-4 outline-none focus:border-cyan/40 mt-1"> <button type="submit" class="btn-primary text-sm"><i data-lucide="save" style="width:14px;height:14px"></i> Save</button>
+     </form>
+    </div>
+    <div class="glow-card p-6">
+     <h3 class="font-semibold mb-4">Accessibility Settings</h3>
+     <div class="space-y-3"><button id="highContrastBtn" class="w-full btn-secondary text-sm justify-between" onclick="toggleHighContrast()"><span>Use High Contrast UI</span> <i data-lucide="toggle-left" style="width:16px;height:16px;margin-left:8px"></i></button> <button id="dyslexiaFontBtn" class="w-full btn-secondary text-sm justify-between" onclick="toggleDyslexiaFont()"><span>Use Dyslexia Friendly Font</span> <i data-lucide="toggle-left" style="width:16px;height:16px;margin-left:8px"></i></button>
+     </div>
+    </div>
+   </div>
+  </div><!-- PROFILE -->
+  <!-- COMMUNITY PAGE -->
+   <div id="page-community" class="page pt-20 px-4 pb-12">
+    <div class="max-w-3xl mx-auto">
+     <h1 class="text-3xl font-bold text-center mb-2">Community <span class="gradient-text">Hub</span></h1>
+     <p class="text-sectext text-center mb-8">Connect with fellow learners and mentors.</p>
+     <div class="glow-card p-5 mb-6">
+      <form onsubmit="addPost(event)">
+       <textarea id="postContent" placeholder="Share something with the community..." rows="3" class="w-full bg-navy/60 border border-elblue/20 rounded-lg px-4 py-3 text-sm text-maintext placeholder-sectext/50 mb-3 outline-none focus:border-cyan/40 resize-none" required></textarea> <label for="postContent" class="sr-only">Post content</label> <button type="submit" class="btn-primary text-sm"><i data-lucide="send" style="width:14px;height:14px"></i> Post</button>
+      </form>
+     </div>
+     <div id="communityFeed" class="space-y-4">
+      <div class="community-post">
+       <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-elblue to-cyan flex items-center justify-center text-xs font-bold">
+         D
+        </div>
+        <div>
+         <p class="text-sm font-semibold">Daniyal Rauf</p>
+         <p class="text-xs text-sectext">Mentor • 2 hours ago</p>
+        </div>
+       </div>
+       <p class="text-sectext text-sm">Just finished an amazing session with one of my students on calculus! They went from struggling with limits to confidently solving them. This is why I love mentoring! 🎓</p>
+       <div class="flex gap-4 mt-3 text-xs text-sectext">
+        <span class="flex items-center gap-1 cursor-pointer hover:text-cyan"><i data-lucide="heart" style="width:12px;height:12px"></i> 24</span> <span class="flex items-center gap-1 cursor-pointer hover:text-cyan"><i data-lucide="message-circle" style="width:12px;height:12px"></i> 5</span>
+       </div>
+      </div>
+      <div class="community-post">
+       <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple to-elblue flex items-center justify-center text-xs font-bold">
+         S
+        </div>
+        <div>
+         <p class="text-sm font-semibold">Sarah Chen</p>
+         <p class="text-xs text-sectext">Student • 4 hours ago</p>
+        </div>
+       </div>
+       <p class="text-sectext text-sm">My new mentor helped me understand physics in a completely different way. Highly recommend Socratic OC to anyone struggling with their classes! 💪</p>
+       <div class="flex gap-4 mt-3 text-xs text-sectext">
+        <span class="flex items-center gap-1 cursor-pointer hover:text-cyan"><i data-lucide="heart" style="width:12px;height:12px"></i> 18</span> <span class="flex items-center gap-1 cursor-pointer hover:text-cyan"><i data-lucide="message-circle" style="width:12px;height:12px"></i> 3</span>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- COMMUNITY -->
+   <!-- CALENDAR PAGE -->
+   <div id="page-calendar" class="page pt-20 px-4 pb-12">
+    <div class="max-w-2xl mx-auto">
+     <h1 class="text-3xl font-bold text-center mb-8">My <span class="gradient-text">Calendar</span></h1>
+     <div class="glow-card p-8">
+      <div class="flex items-center justify-between mb-6">
+       <button class="btn-secondary text-sm p-2" onclick="prevMonth()"><i data-lucide="chevron-left" style="width:16px;height:16px"></i></button>
+       <h2 class="text-xl font-semibold" id="calendarMonth"></h2><button class="btn-secondary text-sm p-2" onclick="nextMonth()"><i data-lucide="chevron-right" style="width:16px;height:16px"></i></button>
+      </div>
+      <div class="grid grid-cols-7 gap-2 mb-4">
+       <div class="text-center text-xs font-semibold text-sectext">
+        Sun
+       </div>
+       <div class="text-center text-xs font-semibold text-sectext">
+        Mon
+       </div>
+       <div class="text-center text-xs font-semibold text-sectext">
+        Tue
+       </div>
+       <div class="text-center text-xs font-semibold text-sectext">
+        Wed
+       </div>
+       <div class="text-center text-xs font-semibold text-sectext">
+        Thu
+       </div>
+       <div class="text-center text-xs font-semibold text-sectext">
+        Fri
+       </div>
+       <div class="text-center text-xs font-semibold text-sectext">
+        Sat
+       </div>
+      </div>
+      <div class="grid grid-cols-7 gap-2" id="calendarGrid">
+      </div>
+     </div>
+     <div class="mt-8" id="calendarEvents">
+     </div>
+    </div>
+   </div>
+  </div><!-- TOAST -->
+  <div id="toast" class="toast"></div><!-- ADD STUDY GUIDE MODAL -->
+  <div id="addStudyGuideModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center">
+   <div class="glow-card p-8 max-w-md w-full mx-4">
+    <h2 class="text-xl font-bold mb-4">Add Study Guide</h2>
+    <form onsubmit="saveStudyGuide(event)">
+     <label for="guideTitle" class="text-xs text-sectext">Study Guide Title</label> <input type="text" id="guideTitle" placeholder="Enter title" class="w-full bg-navy/60 border border-elblue/20 rounded-lg px-4 py-2 text-sm text-maintext placeholder-sectext/50 mb-3 outline-none focus:border-cyan/40 mt-1" required> <label for="guideDescription" class="text-xs text-sectext">Description</label> <textarea id="guideDescription" placeholder="Enter description" rows="2" class="w-full bg-navy/60 border border-elblue/20 rounded-lg px-4 py-2 text-sm text-maintext placeholder-sectext/50 mb-3 outline-none focus:border-cyan/40 resize-none mt-1" required></textarea> <label for="guideLink" class="text-xs text-sectext">Study Guide Link (URL)</label> <input type="url" id="guideLink" placeholder="https://example.com" class="w-full bg-navy/60 border border-elblue/20 rounded-lg px-4 py-2 text-sm text-maintext placeholder-sectext/50 mb-4 outline-none focus:border-cyan/40 mt-1" required>
+     <div class="flex gap-3">
+      <button type="submit" class="btn-primary text-sm flex-1"><i data-lucide="plus" style="width:14px;height:14px"></i> Add</button> <button type="button" class="btn-secondary text-sm flex-1" onclick="closeAddStudyGuideModal()"><i data-lucide="x" style="width:14px;height:14px"></i> Cancel</button>
+     </div>
+    </form>
+   </div>
+  </div>
+  <script>
+// --- NAV ---
+let currentPage = 'home';
+function navigateTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + page);
+  if (!pageEl) return;
+  pageEl.classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll(`.nav-link[data-page="${page}"]`).forEach(l => l.classList.add('active'));
+  currentPage = page;
+  document.getElementById('app').scrollTop = 0;
+}
+function toggleMobile() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+// --- TOAST ---
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// --- QUIZ ---
+const quizData = [
+  { q: "When studying something new, I prefer to:", opts: ["Watch a video or diagram", "Listen to a lecture or podcast", "Do hands-on practice", "Read and take notes"], types: ["Visual", "Auditory", "Kinesthetic", "Reading"] },
+  { q: "I remember things best when I:", opts: ["See pictures or charts", "Hear someone explain it", "Try it myself", "Write it down"], types: ["Visual", "Auditory", "Kinesthetic", "Reading"] },
+  { q: "In a group project, I usually:", opts: ["Create the visuals and slides", "Lead the discussion", "Build the prototype", "Write the report"], types: ["Visual", "Auditory", "Kinesthetic", "Reading"] },
+  { q: "My ideal study space has:", opts: ["Color-coded notes and diagrams", "Background music or quiet talk", "Room to move around", "Textbooks and notebooks"], types: ["Visual", "Auditory", "Kinesthetic", "Reading"] },
+  { q: "When I'm stuck on a problem, I:", opts: ["Draw it out", "Talk through it", "Try different approaches physically", "Re-read the material"], types: ["Visual", "Auditory", "Kinesthetic", "Reading"] }
+];
+let quizIdx = 0, quizAnswers = [], learnerType = 'Visual';
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  document.getElementById('qText').textContent = q.q;
+  const optC = document.getElementById('qOptions');
+  optC.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const d = document.createElement('div');
+    d.className = 'quiz-option' + (quizAnswers[quizIdx] === i ? ' selected' : '');
+    d.textContent = o;
+    d.onclick = () => { quizAnswers[quizIdx] = i; renderQuiz(); };
+    optC.appendChild(d);
+  });
+  document.getElementById('quizStep').textContent = `Question ${quizIdx + 1} of ${quizData.length}`;
+  const pct = Math.round(((quizIdx) / quizData.length) * 100);
+  document.getElementById('quizPct').textContent = pct + '%';
+  document.getElementById('quizBar').style.width = pct + '%';
+  document.getElementById('quizPrev').style.display = quizIdx > 0 ? '' : 'none';
+  const nb = document.getElementById('quizNext');
+  nb.disabled = quizAnswers[quizIdx] === undefined;
+  nb.innerHTML = quizIdx === quizData.length - 1 ? 'See Results <i data-lucide="sparkles" style="width:16px;height:16px"></i>' : 'Next <i data-lucide="arrow-right" style="width:16px;height:16px"></i>';
+  lucide.createIcons();
+}
+function quizNav(dir) {
+  if (dir === 1 && quizAnswers[quizIdx] === undefined) return;
+  if (dir === 1 && quizIdx === quizData.length - 1) { showQuizResult(); return; }
+  quizIdx = Math.max(0, Math.min(quizData.length - 1, quizIdx + dir));
+  renderQuiz();
+}
+function showQuizResult() {
+  const counts = { Visual: 0, Auditory: 0, Kinesthetic: 0, Reading: 0 };
+  quizAnswers.forEach((a, i) => { counts[quizData[i].types[a]]++; });
+  const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  learnerType = best;
+  const descs = {
+    Visual: "You learn best through images, diagrams, and spatial understanding. Your ideal mentor uses visual aids and demonstrations.",
+    Auditory: "You thrive with verbal explanations and discussions. Your ideal mentor excels at talking through concepts.",
+    Kinesthetic: "You learn by doing — hands-on practice and real-world examples work best. Your mentor will focus on active problem-solving.",
+    Reading: "You absorb information through text and written notes. Your mentor will provide structured reading and detailed explanations."
+  };
+  
+  // Get icon for learner type
+  const iconMap = {
+    Visual: 'eye',
+    Auditory: 'ear',
+    Kinesthetic: 'hand',
+    Reading: 'book'
+  };
+  
+  const iconHtml = `<i data-lucide="${iconMap[best]}" style="width:36px;height:36px;color:#fff"></i>`;
+  
+  document.getElementById('resultType').textContent = best + ' Learner';
+  document.getElementById('resultDesc').textContent = descs[best];
+  
+  // Update the icon in the results section
+  const iconDiv = document.querySelector('#quizResult .w-20.h-20');
+  if (iconDiv) {
+    iconDiv.innerHTML = iconHtml;
+  }
+  
+  // Filter mentors by learning style
+  const matchedMentors = mentorsData.filter(m => m.style === best);
+  renderMentors(matchedMentors, 'matchedMentorsList');
+  document.getElementById('quizContainer').style.display = 'none';
+  document.getElementById('quizResult').style.display = '';
+  document.getElementById('quizBar').style.width = '100%';
+  document.getElementById('quizPct').textContent = '100%';
+  updateProfileWithLearner(best);
+  lucide.createIcons();
+}
+function resetQuiz() {
+  quizIdx = 0; quizAnswers = [];
+  document.getElementById('quizContainer').style.display = '';
+  document.getElementById('quizResult').style.display = 'none';
+  renderQuiz();
+}
+
+// --- UPDATE PROFILE WITH LEARNER TYPE ---
+function updateProfileWithLearner(type) {
+  const subjectMap = {
+    Visual: 'Math & Physics',
+    Auditory: 'Communication & Languages',
+    Kinesthetic: 'Hands-On Subjects',
+    Reading: 'Literature & Writing'
+  };
+  document.getElementById('profLearnerType').textContent = type;
+  document.getElementById('profLearnerSubjects').textContent = subjectMap[type] || 'Math & Physics';
+}
+
+// --- MENTORS DATA ---
+const mentorsData = [
+  {
+    id: 'daniyal',
+    name: 'Daniyal Rauf',
+    teaches: 'College Planning & ANY STEM CLASSES',
+    studying: 'Biomedical Engineering PreMed & Biological Science',
+    yearsExperience: 5,
+    style: 'Visual',
+    bio: "Hi! I'm Daniyal Rauf, a student at UC Irvine and a member of the ANTrepreneur Center. I founded Socratic OC, a student-led platform focused on mentorship, tutoring, and skill-building. I've tutored hundreds of students across subjects like biology, chemistry, calculus, and college applications financial literacy with an emphasis on visual style.",
+    avatar: '🎓',
+    avatarBg: 'from-elblue to-cyan'
+  },
+  {
+    id: 'tanvi',
+    name: 'Tanvi Badadare',
+    teaches: 'ICS (computer science classes) coding skills & geometry',
+    studying: 'Computer Science',
+    yearsExperience: 2,
+    style: 'Auditory',
+    bio: "Hi, I'm Tanvi, a Computer Science student at the University of California Irvine and a former Learning Assistant for ICS 33, where I mentored 100+ students. I tutor Python, Java, C++, data structures, and core CS concepts, focusing on breaking down complex topics into simple, intuitive steps and helping students build lasting understanding.",
+    avatar: '💻',
+    avatarBg: 'from-purple to-elblue'
+  },
+  {
+    id: 'shawn',
+    name: 'Shawn Pallil',
+    teaches: 'Engineering and Physics',
+    studying: 'Mechanical Engineering, Music, & Business Management',
+    yearsExperience: 2,
+    style: 'Kinesthetic',
+    bio: "Hi, I'm Shawn, an engineering and physics mentor dedicated to helping students build a strong academic foundation and perform with confidence. I specialize in Physics, and engineering, with a focus on deep understanding rather than short term memorization with hands-on learning.",
+    avatar: '⚙️',
+    avatarBg: 'from-cyan to-softblue'
+  }
+];
+
+function renderMentors(mentors = mentorsData, container = 'mentorsList') {
+  const grid = document.getElementById(container);
+  grid.innerHTML = '';
+  mentors.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'mentor-card-expanded';
+    const styleColors = { Visual: 'text-cyan', Auditory: 'text-purple', Kinesthetic: 'text-softblue', Reading: 'text-elblue' };
+    const iconMap = {
+      Visual: 'eye',
+      Auditory: 'ear',
+      Kinesthetic: 'hand',
+      Reading: 'book'
+    };
+    const mentorLabel = `${m.style} Mentor`;
+    card.innerHTML = `
+      <div class="flex gap-4 mb-4">
+        <div class="mentor-avatar bg-gradient-to-br ${m.avatarBg}">${m.avatar}</div>
+        <div class="text-left flex-1">
+          <h3 class="font-semibold text-lg text-maintext">${m.name}</h3>
+          <p class="text-sm text-sectext mb-1"><strong>Teaches:</strong> ${m.teaches}</p>
+          <p class="text-sm text-sectext mb-1"><strong>Studying:</strong> ${m.studying}</p>
+          <p class="text-sm text-sectext mb-2"><strong>Years of Teaching Experience:</strong> ${m.yearsExperience}</p>
+          <div class="flex items-center gap-1 text-xs font-mono ${styleColors[m.style] || 'text-cyan'} uppercase tracking-widest">
+            <i data-lucide="${iconMap[m.style]}" style="width:14px;height:14px"></i>
+            <span>${mentorLabel}</span>
+          </div>
+        </div>
+      </div>
+      <p class="text-sectext text-sm mb-4 text-left">${m.bio}</p>
+      <a href="https://calendly.com/daniyalr1202/" target="_blank" rel="noopener noreferrer" class="btn-primary text-sm inline-flex"><i data-lucide="calendar" style="width:14px;height:14px"></i> Book Session</a>
+    `;
+    grid.appendChild(card);
+  });
+  lucide.createIcons();
+}
+
+// Render mentors on page load
+renderMentors();
+
+// Add delete functionality to default flashcards on page load
+function initializeDefaultFlashcards() {
+  const defaultCardIds = ['fc-default-1', 'fc-default-2', 'fc-default-3'];
+  defaultCardIds.forEach(id => {
+    const card = document.getElementById(id);
+    if (card) {
+      // Create a wrapper div for the card with delete buttons
+      const wrapper = document.createElement('div');
+      wrapper.className = 'relative';
+      card.parentNode.insertBefore(wrapper, card);
+      wrapper.appendChild(card);
+      
+      // Add delete button controls
+      const controls = document.createElement('div');
+      controls.className = 'flex gap-2 justify-center mt-2';
+      controls.innerHTML = `
+        <button class="text-xs text-sectext hover:text-red-400 transition-colors" onclick="deleteFlashcard('${id}')"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
+      `;
+      wrapper.appendChild(controls);
+    }
+  });
+  lucide.createIcons();
+}
+
+// Call this when the page loads
+document.addEventListener('DOMContentLoaded', initializeDefaultFlashcards);
+function switchNotesTab(tab) {
+  document.getElementById('notesSection').style.display = tab === 'notes' ? '' : 'none';
+  document.getElementById('flashSection').style.display = tab === 'flash' ? '' : 'none';
+  document.getElementById('guideSection').style.display = tab === 'guide' ? '' : 'none';
+  
+  // Update button states
+  const notesBtn = document.getElementById('notesTabBtn');
+  const flashBtn = document.getElementById('flashTabBtn');
+  const guideBtn = document.getElementById('guideTabBtn');
+  
+  notesBtn.classList.toggle('btn-tab-active', tab === 'notes');
+  notesBtn.classList.toggle('btn-tab', tab !== 'notes');
+  flashBtn.classList.toggle('btn-tab-active', tab === 'flash');
+  flashBtn.classList.toggle('btn-tab', tab !== 'flash');
+  guideBtn.classList.toggle('btn-tab-active', tab === 'guide');
+  guideBtn.classList.toggle('btn-tab', tab !== 'guide');
+}
+function addNote(e) {
+  e.preventDefault();
+  const title = document.getElementById('noteTitle').value;
+  const content = document.getElementById('noteContent').value;
+  if (!title || !content) return;
+  const card = document.createElement('div');
+  card.className = 'glow-card p-5';
+  card.innerHTML = `<h3 class="font-semibold mb-1">${title}</h3><p class="text-sectext text-sm">${content}</p><span class="text-xs text-cyan font-mono mt-2 inline-block">Custom</span>`;
+  document.getElementById('notesList').prepend(card);
+  document.getElementById('noteTitle').value = '';
+  document.getElementById('noteContent').value = '';
+  showToast('Note added!');
+}
+function addFlashcard(e) {
+  e.preventDefault();
+  const question = document.getElementById('flashQuestion').value;
+  const answer = document.getElementById('flashAnswer').value;
+  if (!question || !answer) return;
+  const id = 'fc-' + Date.now();
+  const card = document.createElement('div');
+  card.className = 'flashcard';
+  card.id = id;
+  card.innerHTML = `<div class="flashcard-inner" onclick="this.parentElement.classList.toggle('flipped')">
+   <div class="flashcard-front">
+    <p class="text-lg font-semibold">${question}</p>
+   </div>
+   <div class="flashcard-back">
+    <p class="text-maintext">${answer}</p>
+   </div>
+  </div>
+  <div class="flex gap-2 justify-center mt-2">
+   <button class="text-xs text-sectext hover:text-cyan transition-colors" onclick="editFlashcard('${id}')"><i data-lucide="edit-2" style="width:14px;height:14px"></i></button>
+   <button class="text-xs text-sectext hover:text-red-400 transition-colors" onclick="deleteFlashcard('${id}')"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
+  </div>`;
+  document.getElementById('flashGrid').appendChild(card);
+  document.getElementById('flashQuestion').value = '';
+  document.getElementById('flashAnswer').value = '';
+  showToast('Flashcard added!');
+  lucide.createIcons();
+}
+function editFlashcard(id) {
+  const card = document.getElementById(id);
+  const front = card.querySelector('.flashcard-front p');
+  const back = card.querySelector('.flashcard-back p');
+  const newQuestion = prompt('Edit question:', front.textContent);
+  if (newQuestion !== null && newQuestion.trim()) {
+    front.textContent = newQuestion;
+  }
+  const newAnswer = prompt('Edit answer:', back.textContent);
+  if (newAnswer !== null && newAnswer.trim()) {
+    back.textContent = newAnswer;
+  }
+}
+function deleteFlashcard(id) {
+  document.getElementById(id).remove();
+  showToast('Flashcard deleted!');
+}
+
+// Delete default flashcards function
+function deleteDefaultFlashcard(id) {
+  document.getElementById(id).remove();
+  showToast('Flashcard deleted!');
+}
+
+let flashcardQuizData = [];
+let flashcardQuizIdx = 0;
+let flashcardQuizAnswers = {};
+
+function generateFlashcardQuiz() {
+  const cards = document.querySelectorAll('#flashGrid .flashcard');
+  if (cards.length === 0) {
+    showToast('No flashcards to quiz on!');
+    return;
+  }
+  flashcardQuizData = [];
+  cards.forEach((card, idx) => {
+    const front = card.querySelector('.flashcard-front p').textContent;
+    const back = card.querySelector('.flashcard-back p').textContent;
+    flashcardQuizData.push({ q: front, a: back, id: idx });
+  });
+  flashcardQuizIdx = 0;
+  flashcardQuizAnswers = {};
+  showFlashcardQuiz();
+}
+
+function showFlashcardQuiz() {
+  document.getElementById('flashSection').style.display = 'none';
+  document.getElementById('flashcardQuizContainer').style.display = '';
+  renderFlashcardQuiz();
+}
+
+function renderFlashcardQuiz() {
+  if (flashcardQuizIdx >= flashcardQuizData.length) {
+    showFlashcardQuizResults();
+    return;
+  }
+  const q = flashcardQuizData[flashcardQuizIdx];
+  const pct = Math.round((flashcardQuizIdx / flashcardQuizData.length) * 100);
+  document.getElementById('fcQuizStep').textContent = `Question ${flashcardQuizIdx + 1} of ${flashcardQuizData.length}`;
+  document.getElementById('fcQuizPct').textContent = pct + '%';
+  document.getElementById('fcQuizBar').style.width = pct + '%';
+  document.getElementById('fcQuestion').textContent = q.q;
+  document.getElementById('fcAnswerInput').value = '';
+  lucide.createIcons();
+}
+
+function submitFlashcardAnswer() {
+  const userAnswer = document.getElementById('fcAnswerInput').value.trim().toLowerCase();
+  const correctAnswer = flashcardQuizData[flashcardQuizIdx].a.toLowerCase();
+  const isCorrect = userAnswer.length > 0 && correctAnswer.includes(userAnswer);
+  flashcardQuizAnswers[flashcardQuizIdx] = { user: userAnswer, correct: flashcardQuizData[flashcardQuizIdx].a, isCorrect };
+  flashcardQuizIdx++;
+  renderFlashcardQuiz();
+}
+
+function showFlashcardQuizResults() {
+  const correct = Object.values(flashcardQuizAnswers).filter(a => a.isCorrect).length;
+  const total = flashcardQuizData.length;
+  const pct = Math.round((correct / total) * 100);
+  document.getElementById('flashcardQuizContainer').style.display = 'none';
+  document.getElementById('fcQuizResult').style.display = '';
+  document.getElementById('fcScore').textContent = pct + '%';
+  document.getElementById('fcScoreText').textContent = `You got ${correct} out of ${total} correct!`;
+  document.getElementById('fcQuizBar').style.width = '100%';
+}
+
+function exitFlashcardQuiz() {
+  document.getElementById('flashcardQuizContainer').style.display = 'none';
+  document.getElementById('fcQuizResult').style.display = 'none';
+  document.getElementById('flashSection').style.display = '';
+  flashcardQuizData = [];
+  flashcardQuizIdx = 0;
+  flashcardQuizAnswers = {};
+}
+
+// --- COMMUNITY ---
+function addPost(e) {
+  e.preventDefault();
+  const content = document.getElementById('postContent').value;
+  if (!content) return;
+  const post = document.createElement('div');
+  post.className = 'community-post';
+  post.innerHTML = `<div class="flex items-center gap-3 mb-3"><div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan to-softblue flex items-center justify-center text-xs font-bold">U</div><div><p class="text-sm font-semibold">${document.getElementById('profNameInput').value || 'Student'}</p><p class="text-xs text-sectext">Student • Just now</p></div></div><p class="text-sectext text-sm">${content}</p><div class="flex gap-4 mt-3 text-xs text-sectext"><span class="flex items-center gap-1 cursor-pointer hover:text-cyan"><i data-lucide="heart" style="width:12px;height:12px"></i> 0</span><span class="flex items-center gap-1 cursor-pointer hover:text-cyan"><i data-lucide="message-circle" style="width:12px;height:12px"></i> 0</span></div>`;
+  document.getElementById('communityFeed').prepend(post);
+  document.getElementById('postContent').value = '';
+  
+  // Show pending approval toast
+  showPendingApprovalToast();
+  lucide.createIcons();
+}
+
+function showPendingApprovalToast() {
+  const toastContainer = document.createElement('div');
+  toastContainer.className = 'fixed bottom-6 right-6 bg-gradient-to-r from-purple to-elblue border border-purple/40 rounded-lg px-6 py-4 text-maintext z-1000 flex items-center gap-3 animate-fade-in';
+  toastContainer.innerHTML = `
+    <i data-lucide="clock" style="width:16px;height:16px;color:#A060FF"></i>
+    <span class="text-sm font-medium">Your post is pending approval</span>
+  `;
+  document.body.appendChild(toastContainer);
+  
+  setTimeout(() => {
+    toastContainer.remove();
+  }, 3000);
+  
+  lucide.createIcons();
+}
+
+// --- PROFILE ---
+let highContrastEnabled = false;
+let dyslexiaFontEnabled = false;
+
+function saveProfile(e) {
+  e.preventDefault();
+  const name = document.getElementById('profNameInput').value;
+  document.getElementById('profileName').textContent = name || 'Student';
+  showToast('Profile saved!');
+}
+
+function toggleHighContrast() {
+  highContrastEnabled = !highContrastEnabled;
+  const btn = document.getElementById('highContrastBtn');
+  const icon = btn.querySelector('i');
+  
+  if (highContrastEnabled) {
+    // Apply high contrast light mode
+    document.body.style.backgroundColor = '#FFFFFF';
+    document.body.style.color = '#0A0F24';
+    document.documentElement.style.backgroundColor = '#FFFFFF';
+    
+    // Update all text colors
+    document.querySelectorAll('.text-maintext').forEach(el => el.style.color = '#0A0F24');
+    document.querySelectorAll('.text-sectext').forEach(el => el.style.color = '#333333');
+    
+    // Update card backgrounds and borders for contrast
+    document.querySelectorAll('.glow-card').forEach(el => {
+      el.style.backgroundColor = '#F5F5F5';
+      el.style.borderColor = '#0A0F24';
+    });
+    
+    icon.setAttribute('data-lucide', 'toggle-right');
+    btn.classList.add('bg-cyan/20', 'border-cyan/40');
+    showToast('High Contrast Mode ON');
+  } else {
+    // Return to dark mode
+    document.body.style.backgroundColor = '#0A0F24';
+    document.body.style.color = '#E6ECFF';
+    document.documentElement.style.backgroundColor = '#0A0F24';
+    
+    // Reset colors
+    document.querySelectorAll('.text-maintext').forEach(el => el.style.color = '#E6ECFF');
+    document.querySelectorAll('.text-sectext').forEach(el => el.style.color = '#C7D2FF');
+    
+    // Reset card backgrounds
+    document.querySelectorAll('.glow-card').forEach(el => {
+      el.style.backgroundColor = '';
+      el.style.borderColor = '';
+    });
+    
+    icon.setAttribute('data-lucide', 'toggle-left');
+    btn.classList.remove('bg-cyan/20', 'border-cyan/40');
+    showToast('High Contrast Mode OFF');
+  }
+  lucide.createIcons();
+}
+
+function toggleDyslexiaFont() {
+  dyslexiaFontEnabled = !dyslexiaFontEnabled;
+  const btn = document.getElementById('dyslexiaFontBtn');
+  const icon = btn.querySelector('i');
+  
+  if (dyslexiaFontEnabled) {
+    // Apply dyslexia friendly font
+    document.body.style.fontFamily = 'Arial, sans-serif';
+    icon.setAttribute('data-lucide', 'toggle-right');
+    btn.classList.add('bg-purple/20', 'border-purple/40');
+    showToast('Dyslexia Friendly Font ON');
+  } else {
+    // Return to default font
+    document.body.style.fontFamily = 'Outfit, sans-serif';
+    icon.setAttribute('data-lucide', 'toggle-left');
+    btn.classList.remove('bg-purple/20', 'border-purple/40');
+    showToast('Dyslexia Friendly Font OFF');
+  }
+  lucide.createIcons();
+}
+
+// --- TESTIMONIALS CAROUSEL ---
+let carouselIdx = 0;
+function updateCarousel() {
+  const track = document.getElementById('testimonialTrack');
+  track.style.transform = `translateX(-${carouselIdx * 100}%)`;
+  // Update dots
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById(`dot${i}`);
+    if (i === carouselIdx) {
+      dot.style.backgroundColor = '#3E6BFF';
+      dot.style.width = '8px';
+    } else {
+      dot.style.backgroundColor = 'rgba(62, 107, 255, 0.4)';
+      dot.style.width = '6px';
+    }
+  }
+}
+function carouselPrev() {
+  carouselIdx = (carouselIdx - 1 + 4) % 4;
+  updateCarousel();
+}
+function carouselNext() {
+  carouselIdx = (carouselIdx + 1) % 4;
+  updateCarousel();
+}
+function carouselGo(idx) {
+  carouselIdx = idx;
+  updateCarousel();
+}
+
+// --- ELEMENT SDK ---
+const defaultConfig = {
+  hero_headline: 'Personalized Mentorship Built for How You Learn',
+  hero_subtext: 'Socratic OC matches students with mentors based on learning style, subject needs, and personality.',
+  cta_text: 'Ready to get matched with the right mentor?',
+  cta_button: 'Get Matched',
+  background_color: '#0A0F24',
+  surface_color: '#111C44',
+  text_color: '#E6ECFF',
+  primary_action_color: '#3E6BFF',
+  secondary_action_color: '#00D1FF',
+  font_family: 'Outfit',
+  font_size: 16
+};
+
+function applyConfig(config) {
+  const h = document.getElementById('heroHeadline');
+  if (h) {
+    const hl = config.hero_headline || defaultConfig.hero_headline;
+    const words = hl.split(' ');
+    const half = Math.ceil(words.length / 2);
+    h.innerHTML = words.slice(0, half).join(' ') + ' <span class="gradient-text">' + words.slice(half).join(' ') + '</span>';
+  }
+  const st = document.getElementById('heroSubtext');
+  if (st) st.textContent = config.hero_subtext || defaultConfig.hero_subtext;
+  const ct = document.getElementById('ctaText');
+  if (ct) {
+    const txt = config.cta_text || defaultConfig.cta_text;
+    ct.innerHTML = txt.replace(/(right mentor\??)/, '<span class="gradient-text">$1</span>');
+  }
+  const cb = document.getElementById('ctaButton');
+  if (cb) {
+    const btnTxt = config.cta_button || defaultConfig.cta_button;
+    cb.textContent = btnTxt;
+  }
+  // Colors
+  document.body.style.backgroundColor = config.background_color || defaultConfig.background_color;
+  document.body.style.color = config.text_color || defaultConfig.text_color;
+  // Font
+  const ff = (config.font_family || defaultConfig.font_family) + ', sans-serif';
+  document.body.style.fontFamily = ff;
+  // Font size
+  const fs = config.font_size || defaultConfig.font_size;
+  document.body.style.fontSize = fs + 'px';
+  lucide.createIcons();
+}
+
+if (window.elementSdk && typeof window.elementSdk.init === 'function') {
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange: async (config) => { applyConfig(config); },
+  mapToCapabilities: (config) => ({
+    recolorables: [
+      { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+      { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+      { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+      { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+      { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
+    ],
+    borderables: [],
+    fontEditable: {
+      get: () => config.font_family || defaultConfig.font_family,
+      set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+    },
+    fontSizeable: {
+      get: () => config.font_size || defaultConfig.font_size,
+      set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+    }
+  }),
+  mapToEditPanelValues: (config) => new Map([
+    ['hero_headline', config.hero_headline || defaultConfig.hero_headline],
+    ['hero_subtext', config.hero_subtext || defaultConfig.hero_subtext],
+    ['cta_text', config.cta_text || defaultConfig.cta_text],
+    ['cta_button', config.cta_button || defaultConfig.cta_button]
+  ])
+});
+}
+
+// Init
+renderQuiz();
+lucide.createIcons();
+// Set initial Notes tab as active
+switchNotesTab('notes');
+
+// --- CALENDAR ---
+let currentMonthIdx = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+
+const calendarEvents = {
+  '2026-5-15': 'Geometry Homework Due',
+  '2026-5-20': 'Tutoring Session'
+};
+
+function renderCalendar() {
+  const firstDay = new Date(currentYear, currentMonthIdx, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonthIdx + 1, 0).getDate();
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  
+  document.getElementById('calendarMonth').textContent = `${monthNames[currentMonthIdx]} ${currentYear}`;
+  
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = '';
+  
+  // Empty cells for days before month starts
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'p-2';
+    grid.appendChild(empty);
+  }
+  
+  // Days of month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const day = document.createElement('button');
+    const dateStr = `${currentYear}-${currentMonthIdx + 1}-${d}`;
+    const hasEvent = calendarEvents[dateStr];
+    
+    day.className = 'p-2 rounded-lg border border-elblue/20 bg-navy/40 hover:bg-navy/60 transition-all text-sm font-semibold text-maintext';
+    day.textContent = d;
+    if (hasEvent) {
+      day.classList.add('bg-gradient-to-br', 'from-cyan/20', 'to-cyan/10', 'border-cyan/40');
+    }
+    day.onclick = () => showCalendarEvent(dateStr, hasEvent);
+    grid.appendChild(day);
+  }
+  
+  renderCalendarEvents();
+}
+
+function showCalendarEvent(dateStr, event) {
+  if (event) {
+    showToast(`${event}`);
+  }
+}
+
+function renderCalendarEvents() {
+  const eventsContainer = document.getElementById('calendarEvents');
+  eventsContainer.innerHTML = '';
+  
+  Object.entries(calendarEvents).forEach(([date, event]) => {
+    const [year, month, day] = date.split('-').map(Number);
+    if (year === currentYear && month === currentMonthIdx + 1) {
+      const eventCard = document.createElement('div');
+      eventCard.className = 'glow-card p-4';
+      eventCard.innerHTML = `<div class="flex items-center gap-3"><i data-lucide="calendar" style="width:20px;height:20px;color:#00D1FF"></i><div><p class="font-semibold text-maintext">${event}</p><p class="text-xs text-sectext">${new Date(year, month - 1, day).toLocaleDateString()}</p></div></div>`;
+      eventsContainer.appendChild(eventCard);
+    }
+  });
+  
+  lucide.createIcons();
+}
+
+function prevMonth() {
+  currentMonthIdx--;
+  if (currentMonthIdx < 0) {
+    currentMonthIdx = 11;
+    currentYear--;
+  }
+  renderCalendar();
+}
+
+function nextMonth() {
+  currentMonthIdx++;
+  if (currentMonthIdx > 11) {
+    currentMonthIdx = 0;
+    currentYear++;
+  }
+  renderCalendar();
+}
+
+// Initialize calendar on page load
+renderCalendar();
+
+// --- STUDY GUIDE MODAL ---
+function openAddStudyGuideModal() {
+  document.getElementById('addStudyGuideModal').style.display = 'flex';
+}
+
+function closeAddStudyGuideModal() {
+  document.getElementById('addStudyGuideModal').style.display = 'none';
+  document.getElementById('guideTitle').value = '';
+  document.getElementById('guideDescription').value = '';
+  document.getElementById('guideLink').value = '';
+}
+
+function saveStudyGuide(e) {
+  e.preventDefault();
+  const title = document.getElementById('guideTitle').value;
+  const description = document.getElementById('guideDescription').value;
+  const link = document.getElementById('guideLink').value;
+  
+  if (!title || !description || !link) return;
+  
+  const guideCard = document.createElement('a');
+  guideCard.href = link;
+  guideCard.target = '_blank';
+  guideCard.rel = 'noopener noreferrer';
+  guideCard.className = 'glow-card p-5 block hover:border-cyan/50 transition-all';
+  guideCard.innerHTML = `<h3 class="font-semibold mb-1 text-cyan hover:text-softblue transition-colors">${title}</h3><p class="text-sectext text-sm">${description}</p><span class="text-xs text-elblue font-mono mt-2 inline-block">📚 Study Guide</span>`;
+  
+  document.getElementById('guideList').insertBefore(guideCard, document.getElementById('guideList').firstChild);
+  closeAddStudyGuideModal();
+  showToast('Study guide added!');
+  lucide.createIcons();
+}
+</script>
+</body>
+</html>

@@ -49,7 +49,14 @@ export default function ThemeCustomizationPage() {
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
-            <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>Appearance</h1>
+            <div>
+              <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+                Appearance
+              </h1>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5" style={{ color: colors.textTertiary }}>
+                Socratic OC
+              </p>
+            </div>
           </div>
         </div>
 

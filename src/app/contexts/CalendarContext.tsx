@@ -51,25 +51,17 @@ interface CalendarContextType {
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
 
-function getDefaultSessions(): Session[] {
-  return [];
-}
-
-function getDefaultCalendarEvents(): CalendarEvent[] {
-  return [];
-}
-
 export function CalendarProvider({ children }: { children: ReactNode }) {
   const [sessions, setSessions] = useState<Session[]>(() => {
-    const stored = localStorage.getItem('sessions_v2');
+    const stored = localStorage.getItem("sessions_v3");
     if (stored) {
       return JSON.parse(stored);
     }
-    return getDefaultSessions();
+    return [];
   });
 
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(() => {
-    const stored = localStorage.getItem('calendarEvents_v3');
+    const stored = localStorage.getItem("calendarEvents_v4");
     if (stored) {
       const parsed = JSON.parse(stored);
       return parsed.map((event: any) => ({
@@ -77,25 +69,25 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
         date: new Date(event.date)
       }));
     }
-    return getDefaultCalendarEvents();
+    return [];
   });
 
   const [removedSessionIds, setRemovedSessionIds] = useState<number[]>(() => {
-    const stored = localStorage.getItem('removedSessions_v2');
+    const stored = localStorage.getItem("removedSessions_v3");
     return stored ? JSON.parse(stored) : [];
   });
 
   // Save to localStorage whenever state changes
   useEffect(() => {
-    localStorage.setItem('sessions_v2', JSON.stringify(sessions));
+    localStorage.setItem("sessions_v3", JSON.stringify(sessions));
   }, [sessions]);
 
   useEffect(() => {
-    localStorage.setItem('calendarEvents_v3', JSON.stringify(calendarEvents));
+    localStorage.setItem("calendarEvents_v4", JSON.stringify(calendarEvents));
   }, [calendarEvents]);
 
   useEffect(() => {
-    localStorage.setItem('removedSessions_v2', JSON.stringify(removedSessionIds));
+    localStorage.setItem("removedSessions_v3", JSON.stringify(removedSessionIds));
   }, [removedSessionIds]);
 
   const addSession = (session: Session) => {
