@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { LearningComfortProvider } from "./contexts/LearningComfortContext";
 import { CalendarProvider } from "./contexts/CalendarContext";
 import { CanvasAuthProvider } from "./contexts/CanvasAuthContext";
 import { CanvasCoursesProvider } from "./contexts/CanvasCoursesContext";
@@ -42,6 +43,7 @@ import SubjectTutorsPage from "./pages/SubjectTutorsPage";
 import CourseNotificationSettingsPage from "./pages/CourseNotificationSettingsPage";
 import ThemeCustomizationPage from "./pages/ThemeCustomizationPage";
 import AcademicInfoPage from "./pages/AcademicInfoPage";
+import WellBeingPage from "./pages/WellBeingPage";
 
 export default function App() {
   return (
@@ -51,6 +53,7 @@ export default function App() {
           <TutorsProvider>
           <ConversationsProvider>
             <ThemeProvider>
+              <LearningComfortProvider>
               <CalendarProvider>
                 <CanvasAuthProvider>
                   <CanvasCoursesProvider>
@@ -60,6 +63,7 @@ export default function App() {
                   </CanvasCoursesProvider>
                 </CanvasAuthProvider>
               </CalendarProvider>
+              </LearningComfortProvider>
             </ThemeProvider>
           </ConversationsProvider>
           </TutorsProvider>
@@ -170,6 +174,7 @@ function AppRoutes() {
         <Route path="/course/:courseId/notifications" element={isAuthenticated ? <CourseNotificationSettingsPage /> : <Navigate to="/login" replace />} />
         <Route path="/theme-customization" element={isAuthenticated ? <ThemeCustomizationPage /> : <Navigate to="/login" replace />} />
         <Route path="/academic-info" element={isAuthenticated ? <AcademicInfoPage /> : <Navigate to="/login" replace />} />
+        <Route path="/well-being" element={isAuthenticated ? <WellBeingPage /> : <Navigate to="/login" replace />} />
         
         {/* Tutor-specific Routes */}
         <Route path="/tutor-students" element={isAuthenticated ? <TutorStudentsPage /> : <Navigate to="/login" replace />} />
@@ -180,7 +185,6 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to={isAuthenticated ? "/home" : "/login"} replace />} />
       </Routes>
 
-      {/* Login success animation — fixed overlay, survives route changes */}
       <AnimatePresence>
         {showLoginAnimation && <LoginAnimation key="login-anim" />}
       </AnimatePresence>

@@ -5,9 +5,11 @@ import svgPaths from "../../imports/svg-2ctauirw4p";
 import { EditProfileModal } from "../components/EditProfileModal";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, ChevronRight, ChevronDown, Bell, Mail, Globe, Moon, Sun, Eye, Ear, BookOpen, Hand, Layers, Target, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronDown, Bell, Mail, Globe, Moon, Sun, Eye, Ear, BookOpen, Hand, Layers, Target, RefreshCw, Type, Sparkles, Minimize2, Wind } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useLearningComfort } from "../contexts/LearningComfortContext";
+import { BionicText } from "../components/BionicText";
 import { LEARNING_STYLE_QUIZ_QUESTIONS, getQuizAnswerText } from "../lib/learningStyleQuiz";
 
 export default function SettingsPage() {
@@ -16,6 +18,14 @@ export default function SettingsPage() {
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(true);
   const { mode, accentColor, colors } = useTheme();
+  const {
+    dyslexiaFriendlyFont,
+    readingAssistEnabled,
+    reduceDistractions,
+    setDyslexiaFriendlyFont,
+    setReadingAssistEnabled,
+    setReduceDistractions,
+  } = useLearningComfort();
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [quizAnswersExpanded, setQuizAnswersExpanded] = useState(false);
@@ -359,6 +369,143 @@ export default function SettingsPage() {
                     <ChevronRight className="w-5 h-5" style={{ color: colors.textSecondary }} />
                   </div>
                 </motion.button>
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Learning comfort — optional tools; anyone can use them */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="mb-6"
+          >
+            <h2 className="text-[13px] font-semibold uppercase tracking-wider mb-2" style={{ color: colors.textSecondary }}>
+              <BionicText text="Learning comfort" />
+            </h2>
+            <p className="text-[13px] leading-relaxed mb-4 px-0.5" style={{ color: colors.textTertiary }}>
+              <BionicText text="These are optional suggestions—not medical advice. Anyone can turn them on or off; nothing here replaces professional support." />
+            </p>
+            <div className="space-y-3">
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="w-full rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-between gap-3"
+                style={{ backgroundColor: colors.bgCard }}
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-11 h-11 rounded-[16px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: colors.bgTertiary }}>
+                    <Type className="w-5 h-5" style={{ color: accentColor.primary }} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[15px] font-medium block" style={{ color: colors.textPrimary }}>Dyslexia-friendly font</span>
+                    <span className="text-[12px] block mt-0.5" style={{ color: colors.textSecondary }}>
+                      <BionicText text="OpenDyslexic-style reading font app-wide" />
+                    </span>
+                  </div>
+                </div>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setDyslexiaFriendlyFont(!dyslexiaFriendlyFont)}
+                  className="relative w-[51px] h-[31px] rounded-full transition-colors flex-shrink-0"
+                  style={{ backgroundColor: dyslexiaFriendlyFont ? accentColor.primary : colors.bgTertiary }}
+                  aria-pressed={dyslexiaFriendlyFont}
+                  aria-label="Toggle dyslexia-friendly font"
+                >
+                  <motion.div
+                    animate={{ x: dyslexiaFriendlyFont ? 20 : 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className="absolute left-[3px] top-[3px] w-[25px] h-[25px] bg-white rounded-full shadow-md"
+                  />
+                </motion.button>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="w-full rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-between gap-3"
+                style={{ backgroundColor: colors.bgCard }}
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-11 h-11 rounded-[16px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: colors.bgTertiary }}>
+                    <Sparkles className="w-5 h-5" style={{ color: accentColor.primary }} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[15px] font-medium block" style={{ color: colors.textPrimary }}>Reading assist</span>
+                    <span className="text-[12px] block mt-0.5" style={{ color: colors.textSecondary }}>
+                      <BionicText text="Emphasize word beginnings in Calm space, quiz, and across the app" />
+                    </span>
+                  </div>
+                </div>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setReadingAssistEnabled(!readingAssistEnabled)}
+                  className="relative w-[51px] h-[31px] rounded-full transition-colors flex-shrink-0"
+                  style={{ backgroundColor: readingAssistEnabled ? accentColor.primary : colors.bgTertiary }}
+                  aria-pressed={readingAssistEnabled}
+                  aria-label="Toggle reading assist"
+                >
+                  <motion.div
+                    animate={{ x: readingAssistEnabled ? 20 : 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className="absolute left-[3px] top-[3px] w-[25px] h-[25px] bg-white rounded-full shadow-md"
+                  />
+                </motion.button>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="w-full rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-between gap-3"
+                style={{ backgroundColor: colors.bgCard }}
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-11 h-11 rounded-[16px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: colors.bgTertiary }}>
+                    <Minimize2 className="w-5 h-5" style={{ color: accentColor.primary }} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[15px] font-medium block" style={{ color: colors.textPrimary }}>Reduce distractions (ADHD)</span>
+                    <span className="text-[12px] block mt-0.5" style={{ color: colors.textSecondary }}>
+                      <BionicText text="Simpler home, larger type, fewer promos" />
+                    </span>
+                  </div>
+                </div>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setReduceDistractions(!reduceDistractions)}
+                  className="relative w-[51px] h-[31px] rounded-full transition-colors flex-shrink-0"
+                  style={{ backgroundColor: reduceDistractions ? accentColor.primary : colors.bgTertiary }}
+                  aria-pressed={reduceDistractions}
+                  aria-label="Toggle reduce distractions"
+                >
+                  <motion.div
+                    animate={{ x: reduceDistractions ? 20 : 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className="absolute left-[3px] top-[3px] w-[25px] h-[25px] bg-white rounded-full shadow-md"
+                  />
+                </motion.button>
+              </motion.div>
+
+              <Link to="/well-being">
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-between"
+                  style={{ backgroundColor: colors.bgCard }}
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-11 h-11 rounded-[16px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: colors.bgTertiary }}>
+                      <Wind className="w-5 h-5" style={{ color: accentColor.primary }} />
+                    </div>
+                    <div className="min-w-0 text-left">
+                      <span className="text-[15px] font-medium block" style={{ color: colors.textPrimary }}>Calm space</span>
+                      <span className="text-[12px] block mt-0.5" style={{ color: colors.textSecondary }}>
+                        <BionicText text="Breathing and quiet time — optional for anyone" />
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 flex-shrink-0" style={{ color: colors.textSecondary }} />
+                </motion.div>
               </Link>
             </div>
           </motion.div>

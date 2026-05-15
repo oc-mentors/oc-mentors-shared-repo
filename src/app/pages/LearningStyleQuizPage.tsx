@@ -8,6 +8,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import type { LearningStyle } from "../contexts/AuthContext";
 import { LEARNING_STYLE_QUIZ_QUESTIONS as quizQuestions, getQuizAnswerText } from "../lib/learningStyleQuiz";
+import { BionicText } from "../components/BionicText";
 
 const learningStyles: LearningStyle[] = ["Visual", "Auditory", "Reading/Writing", "Kinesthetic"];
 
@@ -256,7 +257,7 @@ export default function LearningStyleQuizPage() {
 
                   {/* Description */}
                   <p className="text-[14px] text-[rgba(255,255,255,0.9)] text-center leading-[22px] px-2">
-                    {getDescription()}
+                    <BionicText text={getDescription()} />
                   </p>
 
                   {/* Continue Button */}
@@ -297,10 +298,10 @@ export default function LearningStyleQuizPage() {
                     <div className="text-[30px] leading-[45px] flex-shrink-0">{tip.emoji}</div>
                     <div className="flex-1">
                       <h4 className="text-[15px] font-semibold mb-1" style={{ color: colors.textPrimary }}>
-                        {tip.title}
+                        <BionicText text={tip.title} />
                       </h4>
                       <p className="text-[13px] leading-[18px]" style={{ color: colors.textSecondary }}>
-                        {tip.description}
+                        <BionicText text={tip.description} />
                       </p>
                     </div>
                   </div>
@@ -398,7 +399,7 @@ export default function LearningStyleQuizPage() {
           className="px-6 text-[15px] mb-4"
           style={{ color: colors.textSecondary }}
         >
-          Tell us a bit more about how you learn best — we’ll use this to personalize your experience.
+          <BionicText text="Tell us a bit more about how you learn best — we'll use this to personalize your experience." />
         </motion.p>
 
         {/* Progress Bar */}
@@ -428,7 +429,7 @@ export default function LearningStyleQuizPage() {
             className="px-6 mb-8"
           >
             <h2 className="text-[22px] font-semibold mb-8 leading-[30px]" style={{ color: colors.textPrimary }}>
-              {quizQuestions[currentQuestion].question}
+              <BionicText text={quizQuestions[currentQuestion].question} />
             </h2>
 
             <div className="space-y-3">
@@ -463,7 +464,9 @@ export default function LearningStyleQuizPage() {
                         />
                       )}
                     </div>
-                    <span className="text-[15px]" style={{ color: colors.textPrimary }}>{option}</span>
+                    <span className="text-[15px]" style={{ color: colors.textPrimary }}>
+                      <BionicText text={option} />
+                    </span>
                   </div>
                 </motion.button>
               ))}

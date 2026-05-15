@@ -73,7 +73,14 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       const code = err && typeof err === "object" && "code" in err ? (err as { code: string }).code : "";
-      const message = code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found"
+      const message =
+        code === "app/firebase-not-configured"
+          ? "Firebase is not connected: add .env.local in the project root with VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, and VITE_FIREBASE_PROJECT_ID (copy from .env.example, get values from Firebase Console → Project settings). Restart npm run dev after saving."
+          : code === "auth/invalid-api-key" || code === "auth/api-key-not-valid"
+            ? "Invalid Firebase API key. Check VITE_FIREBASE_API_KEY in .env.local matches your Firebase project."
+            : code === "auth/network-request-failed"
+              ? "Network error — check your internet connection or firewall."
+            : code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found"
         ? "No account found. Please sign up first."
         : code === "auth/email-already-in-use"
           ? "This email is already registered. Try signing in."
@@ -98,11 +105,13 @@ export default function LoginPage() {
     try {
       await loginWithGoogle(selectedRole);
     } catch (err: unknown) {
-      const message = err && typeof err === "object" && "code" in err
-        ? (err as { code: string }).code === "auth/popup-closed-by-user"
-          ? "Sign-in was cancelled."
-          : "Something went wrong with Google sign-in. Try again."
-        : "Something went wrong. Please try again.";
+      const code = err && typeof err === "object" && "code" in err ? (err as { code: string }).code : "";
+      const message =
+        code === "app/firebase-not-configured"
+          ? "Firebase is not connected: add .env.local with your VITE_FIREBASE_* keys (see sign-in error details on email/password form). Restart dev server."
+          : code === "auth/popup-closed-by-user"
+            ? "Sign-in was cancelled."
+            : "Something went wrong with Google sign-in. Try again.";
       setError(message);
     } finally {
       setIsGoogleLoading(false);
