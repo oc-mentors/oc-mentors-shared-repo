@@ -128,6 +128,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function assertFirebaseAuth(): asserts auth is NonNullable<typeof auth> {
+  if (!isFirebaseConfigured || !auth) {
+    const err = new Error("Firebase is not configured") as Error & { code: string };
+    err.code = "app/firebase-not-configured";
+    throw err;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -449,12 +457,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string, _role: UserRole) => {
+    assertFirebaseAuth();
     await signInWithEmailAndPassword(auth, email, password);
     setLoginAnimationMode("login");
     setShowLoginAnimation(true);
   };
 
   const loginWithGoogle = async (role: UserRole) => {
+    assertFirebaseAuth();
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
     const fbUser = result.user;
@@ -507,6 +517,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signup = async (name: string, email: string, password: string, role: UserRole) => {
+    assertFirebaseAuth();
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     const fbUser = cred.user;
     const uid = fbUser.uid;
@@ -574,6 +585,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    if (!auth) {
+      setUser(null);
+      return;
+    }
     setShowLogoutAnimation(true);
     await signOut(auth);
     setUser(null);
@@ -659,6 +674,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const changePassword = async (_email: string, newPassword: string) => {
+    assertFirebaseAuth();
     const currentUser = auth.currentUser;
     if (!currentUser) throw new Error("No authenticated user");
     await firebaseUpdatePassword(currentUser, newPassword);

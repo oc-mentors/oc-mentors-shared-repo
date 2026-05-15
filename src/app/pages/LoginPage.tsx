@@ -75,7 +75,14 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const code = err && typeof err === "object" && "code" in err ? (err as { code: string }).code : "";
       let message: string;
-      if (code === "auth/user-not-found") {
+      if (code === "app/firebase-not-configured") {
+        message =
+          "Firebase is not connected: add .env.local in the project root with VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, and VITE_FIREBASE_PROJECT_ID (get values from Firebase Console → Project settings). Restart npm run dev after saving.";
+      } else if (code === "auth/invalid-api-key" || code === "auth/api-key-not-valid") {
+        message = "Invalid Firebase API key. Check VITE_FIREBASE_API_KEY in .env.local matches your Firebase project.";
+      } else if (code === "auth/network-request-failed") {
+        message = "Network error — check your internet connection or firewall.";
+      } else if (code === "auth/user-not-found") {
         message = "No account found. Please sign up first.";
         if (mode === "login") setMode("signup");
       } else if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
@@ -101,11 +108,13 @@ export default function LoginPage() {
     try {
       await loginWithGoogle(selectedRole);
     } catch (err: unknown) {
-      const message = err && typeof err === "object" && "code" in err
-        ? (err as { code: string }).code === "auth/popup-closed-by-user"
-          ? "Sign-in was cancelled."
-          : "Something went wrong with Google sign-in. Try again."
-        : "Something went wrong. Please try again.";
+      const code = err && typeof err === "object" && "code" in err ? (err as { code: string }).code : "";
+      const message =
+        code === "app/firebase-not-configured"
+          ? "Firebase is not connected: add .env.local with your VITE_FIREBASE_* keys (see sign-in error details on email/password form). Restart dev server."
+          : code === "auth/popup-closed-by-user"
+            ? "Sign-in was cancelled."
+            : "Something went wrong with Google sign-in. Try again.";
       setError(message);
     } finally {
       setIsGoogleLoading(false);

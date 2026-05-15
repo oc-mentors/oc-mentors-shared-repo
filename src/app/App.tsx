@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { LearningComfortProvider } from "./contexts/LearningComfortContext";
 import { CalendarProvider } from "./contexts/CalendarContext";
 import { CanvasAuthProvider } from "./contexts/CanvasAuthContext";
 import { CanvasCoursesProvider } from "./contexts/CanvasCoursesContext";
@@ -52,6 +53,7 @@ import LandingPage from "./pages/LandingPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import NotesPage from "./pages/NotesPage";
 import CommunityPage from "./pages/CommunityPage";
+import WellBeingPage from "./pages/WellBeingPage";
 import { Toaster } from "sonner";
 import { useTheme } from "./contexts/ThemeContext";
 
@@ -70,6 +72,7 @@ export default function App() {
           <TutorRequestsProvider>
           <ConversationsProvider>
             <ThemeProvider>
+              <LearningComfortProvider>
               <CalendarProvider>
                 <CanvasAuthProvider>
                   <CanvasCoursesProvider>
@@ -80,6 +83,7 @@ export default function App() {
                   </CanvasCoursesProvider>
                 </CanvasAuthProvider>
               </CalendarProvider>
+              </LearningComfortProvider>
             </ThemeProvider>
           </ConversationsProvider>
           </TutorRequestsProvider>
@@ -290,6 +294,7 @@ function AppRoutes() {
         <Route path="/watch" element={guardProtected(<YouTubeViewerPage />)} />
         <Route path="/notes" element={guardProtected(<NotesPage />)} />
         <Route path="/community" element={guardProtected(<CommunityPage />)} />
+        <Route path="/well-being" element={guardProtected(<WellBeingPage />)} />
         
         {/* Tutor-specific Routes */}
         <Route path="/tutor-students" element={guardProtected(<TutorStudentsPage />)} />
@@ -302,7 +307,6 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to={isAuthenticated ? "/home" : "/login"} replace />} />
       </Routes>
 
-      {/* Login success animation — fixed overlay, survives route changes */}
       <AnimatePresence>
         {showLoginAnimation && <LoginAnimation key="login-anim" />}
       </AnimatePresence>

@@ -9,6 +9,8 @@ import { SubjectIcon } from "../components/SubjectIcon";
 import { useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { useLearningComfort } from "../contexts/LearningComfortContext";
+import { BionicText } from "../components/BionicText";
 import { useAllCourseColors } from "../hooks/useCourseColor";
 import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
 import { useCalendar } from "../contexts/CalendarContext";
@@ -31,6 +33,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { colors, accentColor } = useTheme();
+  const { reduceDistractions } = useLearningComfort();
   const courseColors = useAllCourseColors();
   const { isCourseIgnored } = useCanvasCourses();
   const { sessions, removedSessionIds } = useCalendar();
@@ -72,7 +75,7 @@ export default function HomePage() {
 
   return (
     <div className="h-screen overflow-hidden flex flex-col" style={{ backgroundColor: colors.bgPrimary }}>
-      <div className="max-w-md mx-auto w-full h-full flex flex-col">
+      <div className={`${reduceDistractions ? "max-w-lg" : "max-w-md"} mx-auto w-full h-full flex flex-col`}>
         {/* Fixed Header */}
         <div className="flex-shrink-0 px-6 pt-12 pb-3">
           <div className="flex items-center justify-between">
@@ -115,22 +118,27 @@ export default function HomePage() {
               className="px-6 pt-1 pb-8"
             >
               <div className="space-y-3">
-                <h1 className="text-[44px] font-bold leading-tight" style={{ color: colors.textPrimary }}>
-                  Hi, {greetingName} 👋
-                </h1>
-                <Link
-                  to="/schedule"
-                  className="inline-flex items-center gap-2 group cursor-pointer"
-                  aria-label="Open your schedule"
+                <h1
+                  className={`font-bold leading-tight ${reduceDistractions ? "text-[52px]" : "text-[44px]"}`}
+                  style={{ color: colors.textPrimary }}
                 >
-                  <Clock className="w-5 h-5 flex-shrink-0" style={{ color: colors.textSecondary }} />
-                  <span
-                    className="text-base italic underline underline-offset-[5px] decoration-1"
-                    style={{ color: colors.textSecondary, textDecorationColor: "currentColor" }}
+                  <BionicText text={`Hi, ${greetingName} 👋`} />
+                </h1>
+                {!reduceDistractions && (
+                  <Link
+                    to="/schedule"
+                    className="inline-flex items-center gap-2 group cursor-pointer"
+                    aria-label="Open your schedule"
                   >
-                    View your schedule
-                  </span>
-                </Link>
+                    <Clock className="w-5 h-5 flex-shrink-0" style={{ color: colors.textSecondary }} />
+                    <span
+                      className="text-base italic underline underline-offset-[5px] decoration-1"
+                      style={{ color: colors.textSecondary, textDecorationColor: "currentColor" }}
+                    >
+                      <BionicText text="View your schedule" />
+                    </span>
+                  </Link>
+                )}
               </div>
 
               <Link to="/progress">
@@ -140,7 +148,7 @@ export default function HomePage() {
                   transition={{ delay: 0.2 }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full mt-6 py-4 rounded-2xl font-bold text-white text-[17px] transition-shadow cursor-pointer"
+                  className={`w-full mt-6 py-4 rounded-2xl font-bold text-white transition-shadow cursor-pointer ${reduceDistractions ? "text-[19px]" : "text-[17px]"}`}
                   style={{
                     backgroundColor: accentColor.primary,
                     boxShadow: `0px 4px 24px 0px ${accentColor.primary}40`,
@@ -152,7 +160,7 @@ export default function HomePage() {
                     e.currentTarget.style.boxShadow = `0px 4px 24px 0px ${accentColor.primary}40`;
                   }}
                 >
-                  Start Today's Learning Plan
+                  <BionicText text="Start Today's Learning Plan" className="text-white font-bold" />
                 </motion.button>
               </Link>
 
@@ -178,13 +186,16 @@ export default function HomePage() {
               </div>
             </motion.div>
 
+            {!reduceDistractions && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               className="px-6 mb-8"
             >
-              <h3 className="text-xl font-bold mb-4" style={{ color: colors.textPrimary }}>Today's Plan</h3>
+              <h3 className={`font-bold mb-4 ${reduceDistractions ? "text-xl" : "text-lg"}`} style={{ color: colors.textPrimary }}>
+                <BionicText text="Today's Plan" />
+              </h3>
               <motion.div
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
@@ -208,23 +219,28 @@ export default function HomePage() {
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-2xl font-bold" style={{ color: colors.textPrimary }}>80%</span>
+                      <span className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+                        <BionicText text="80%" />
+                      </span>
                     </div>
                   </div>
                   <div className="flex-1">
                     <h4 className="text-lg font-bold mb-1" style={{ color: colors.textPrimary }}>
-                      80% Complete
+                      <BionicText text="80% Complete" />
                     </h4>
                     <div className="space-y-0.5">
-                      <p className="text-sm font-medium" style={{ color: colors.textSecondary }}>Next task:</p>
+                      <p className="text-sm font-medium" style={{ color: colors.textSecondary }}>
+                        <BionicText text="Next task:" />
+                      </p>
                       <p className="text-sm" style={{ color: colors.textSecondary }}>
-                        Finish Math Homework<br />(2 min)
+                        <BionicText text="Finish Math Homework (2 min)" />
                       </p>
                     </div>
                   </div>
                 </div>
               </motion.div>
             </motion.div>
+            )}
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -233,7 +249,9 @@ export default function HomePage() {
               className="px-6 mb-8"
             >
               <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-lg font-bold" style={{ color: colors.textPrimary }}>Choose a subject</h3>
+                <h3 className={`font-bold ${reduceDistractions ? "text-xl" : "text-lg"}`} style={{ color: colors.textPrimary }}>
+                  <BionicText text="Choose a subject" />
+                </h3>
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.1 }}
@@ -271,9 +289,11 @@ export default function HomePage() {
                       >
                         <SubjectIcon type={subject.icon} />
                       </div>
-                      <span className="text-[11px] font-medium" style={{ color: colors.textSecondary }}>
-                        {subject.name}
-                      </span>
+                      <BionicText
+                        text={subject.name}
+                        className="text-[11px] font-medium text-center block"
+                        style={{ color: colors.textSecondary }}
+                      />
                     </motion.button>
                   </Link>
                 ))}
@@ -291,9 +311,15 @@ export default function HomePage() {
                     className="rounded-2xl p-6 w-full max-w-sm shadow-xl"
                     style={{ backgroundColor: colors.bgCard }}
                   >
-                    <h4 className="text-lg font-bold mb-1" style={{ color: colors.textPrimary }}>Create a subject</h4>
-                    <p className="text-sm mb-3" style={{ color: colors.textSecondary }}>Enter a new subject to add to your list.</p>
-                    <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Subject name</label>
+                    <h4 className="text-lg font-bold mb-1" style={{ color: colors.textPrimary }}>
+                      <BionicText text="Create a subject" />
+                    </h4>
+                    <p className="text-sm mb-3" style={{ color: colors.textSecondary }}>
+                      <BionicText text="Enter a new subject to add to your list." />
+                    </p>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>
+                      <BionicText text="Subject name" />
+                    </label>
                     <input
                       type="text"
                       value={newSubjectName}
@@ -310,7 +336,7 @@ export default function HomePage() {
                         className="flex-1 py-2.5 rounded-xl font-semibold"
                         style={{ backgroundColor: colors.bgTertiary, color: colors.textSecondary }}
                       >
-                        Cancel
+                        <BionicText text="Cancel" />
                       </button>
                       <button
                         type="button"
@@ -319,7 +345,7 @@ export default function HomePage() {
                         className="flex-1 py-2.5 rounded-xl font-semibold text-white disabled:opacity-50"
                         style={{ backgroundColor: accentColor.primary }}
                       >
-                        Create
+                        <BionicText text="Create" />
                       </button>
                     </div>
                   </motion.div>
@@ -327,6 +353,8 @@ export default function HomePage() {
               )}
             </motion.div>
 
+            {!reduceDistractions && (
+            <>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -334,7 +362,9 @@ export default function HomePage() {
               className="px-6 mb-8"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold" style={{ color: colors.textPrimary }}>Upcoming Meeting</h3>
+                <h3 className="text-lg font-bold" style={{ color: colors.textPrimary }}>
+                  <BionicText text="Upcoming Meeting" />
+                </h3>
                 {upcomingMeetings.length > 0 && (
                   <Link to="/schedule">
                     <motion.button
@@ -343,7 +373,7 @@ export default function HomePage() {
                       className="text-[13px] font-semibold"
                       style={{ color: accentColor.primary }}
                     >
-                      View All
+                      <BionicText text="View All" />
                     </motion.button>
                   </Link>
                 )}
@@ -405,6 +435,7 @@ export default function HomePage() {
                   </motion.div>
                 </Link>
               )}
+
             </motion.div>
 
             {resources.length > 0 && (
@@ -414,7 +445,9 @@ export default function HomePage() {
               transition={{ delay: 0.6 }}
               className="px-6"
             >
-              <h3 className="text-lg font-bold mb-4" style={{ color: colors.textPrimary }}>Recommended Resources</h3>
+              <h3 className="text-lg font-bold mb-4" style={{ color: colors.textPrimary }}>
+                <BionicText text="Recommended Resources" />
+              </h3>
               <div className="grid grid-cols-2 gap-3">
                 {resources.map((resource, index) => {
                   const href = "url" in resource && resource.url ? resource.url : `https://www.youtube.com/results?search_query=${encodeURIComponent(resource.title)}`;
@@ -440,7 +473,9 @@ export default function HomePage() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                         <div className="absolute bottom-0 left-0 right-0 p-3">
-                          <p className="text-white text-sm font-semibold">{resource.title}</p>
+                          <p className="text-white text-sm font-semibold">
+                            <BionicText text={resource.title} className="text-white text-sm font-semibold" />
+                          </p>
                         </div>
                       </motion.div>
                     </a>
@@ -448,6 +483,8 @@ export default function HomePage() {
                 })}
               </div>
             </motion.div>
+            )}
+            </>
             )}
           </div>
         </div>

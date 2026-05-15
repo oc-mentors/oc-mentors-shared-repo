@@ -1,0 +1,39 @@
+/* OpenDyslexic — loaded when class oc-dyslexia-font is on <html> (browser fetches when used) */
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/@fontsource/opendyslexic@5.2.5/files/opendyslexic-latin-400-normal.woff2")
+    format("woff2");
+}
+
+html.oc-dyslexia-font,
+html.oc-dyslexia-font body,
+html.oc-dyslexia-font #root {
+  font-family: "OpenDyslexic", system-ui, -apple-system, "Segoe UI", sans-serif;
+  letter-spacing: 0.03em;
+}
+
+html.oc-dyslexia-font p,
+html.oc-dyslexia-font li,
+html.oc-dyslexia-font span {
+  line-height: 1.65;
+}
+
+/* Reading assist: slightly roomier type app-wide (bionic word heads use .oc-reading-assist-head in components) */
+html[data-reading-assist="on"] #root {
+  font-size: 1.045rem;
+  line-height: 1.55;
+}
+
+html[data-reading-assist="on"] .oc-reading-assist-head {
+  color: inherit;
+}
+
+/* ADHD / reduce distractions: larger, calmer UI while keeping layout balanced */
+html[data-reduce-distractions="on"] #root {
+  font-size: 1.09rem;
+  line-height: 1.58;
+  letter-spacing: 0.01em;
+}

@@ -31,6 +31,7 @@ const OVERLAY_PATHS = [
   "/community",
   "/privacy",
   "/landing",
+  "/well-being",
 ];
 
 // Map any pathname to a tab id
