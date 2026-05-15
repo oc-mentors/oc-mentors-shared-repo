@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Socratic OC</string>
-    <string name="title_activity_main">Socratic OC</string>
+    <string name="app_name">OC Mentors</string>
+    <string name="title_activity_main">OC Mentors</string>
     <string name="package_name">com.ocmentors.app</string>
     <string name="custom_url_scheme">com.ocmentors.app</string>
 </resources>

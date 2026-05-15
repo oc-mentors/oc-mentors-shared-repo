@@ -1,6 +1,6 @@
 {
   "appId": "com.ocmentors.app",
-  "appName": "Socratic OC",
+  "appName": "OC Mentors",
   "webDir": "dist",
   "ios": {
     "contentInset": "automatic"

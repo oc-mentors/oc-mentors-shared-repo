@@ -16,7 +16,8 @@
     "seed-tutor-profiles": "node scripts/seed-tutor-profiles.js",
     "clear-all": "node scripts/clear-all.js",
     "reset-and-seed": "node scripts/clear-all.js && node scripts/seed-users.js && node scripts/seed-tutors.js",
-    "qr": "node scripts/qr-code.js"
+    "qr": "node scripts/qr-code.js",
+    "icons:regen": "bash scripts/regenerate-app-icons.sh"
   },
   "dependencies": {
     "@capacitor/android": "^7.2.0",
