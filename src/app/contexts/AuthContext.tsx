@@ -258,6 +258,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const sp = studentSnap.data() as StudentProfileDoc;
                 merged.learningStyle = sp.learningStyle as LearningStyle | undefined;
                 merged.learningStyleQuestionAnswers = sp.learningStyleQuestionAnswers;
+                const spMissingName = !(sp.firstName && String(sp.firstName).trim());
+                if (spMissingName && (firstName || lastName)) {
+                  setDoc(
+                    studentRef,
+                    {
+                      firstName: firstName || "",
+                      lastName: lastName || "",
+                      displayName: name,
+                      updatedAt: serverTimestamp(),
+                    },
+                    { merge: true }
+                  ).catch((err) => console.warn("[Auth] Backfill studentProfiles name:", err));
+                }
               }
             }
             setUser(merged);
@@ -353,6 +366,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   studentRef,
                   {
                     uid,
+                    firstName: merged.firstName || "",
+                    lastName: merged.lastName || "",
+                    displayName: merged.name,
                     learningStyle: merged.learningStyle,
                     learningStyleQuestionAnswers: merged.learningStyleQuestionAnswers,
                     createdAt: serverTimestamp(),
@@ -391,15 +407,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }),
             `setDoc users/${uid} (bootstrap)`
           );
+          const name = [first, last].filter(Boolean).join(" ").trim() || first || "User";
           await firestoreRead(
             setDoc(doc(db, "studentProfiles", uid), {
               uid,
+              firstName: first || "",
+              lastName: last || "",
+              displayName: name,
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
             }),
             `setDoc studentProfiles/${uid} (bootstrap)`
           );
-          const name = [first, last].filter(Boolean).join(" ").trim() || first || "User";
           setUser({
             ...minimalUser,
             name,
@@ -461,6 +480,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (role === "student") {
         await setDoc(doc(db, "studentProfiles", fbUser.uid), {
           uid: fbUser.uid,
+          firstName: first,
+          lastName: last,
+          displayName: fromAuth,
+          photoURL: fbUser.photoURL || null,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
@@ -508,6 +531,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (role === "student") {
         await setDoc(doc(db, "studentProfiles", uid), {
           uid,
+          firstName: firstName || "",
+          lastName: lastName || "",
+          displayName,
+          photoURL: null,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
@@ -589,6 +616,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         { photoURL: updates.avatar, updatedAt: serverTimestamp() },
         { merge: true }
       ).catch((err) => console.error("[Auth] updateUser tutorProfiles photoURL failed:", err));
+    }
+
+    if (
+      user.role === "student" &&
+      (updates.firstName != null ||
+        updates.lastName != null ||
+        updates.name != null ||
+        updates.avatar != null)
+    ) {
+      setDoc(
+        doc(db, "studentProfiles", uid),
+        {
+          uid,
+          firstName: updatedUser.firstName ?? "",
+          lastName: updatedUser.lastName ?? "",
+          displayName: updatedUser.name ?? "",
+          ...(updates.avatar != null ? { photoURL: updates.avatar } : {}),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      ).catch((err) => console.error("[Auth] updateUser studentProfiles identity failed:", err));
     }
 
     const studentKeys = ["learningStyle", "learningStyleQuestionAnswers"];

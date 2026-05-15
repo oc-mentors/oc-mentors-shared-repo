@@ -43,6 +43,11 @@ export interface UserDoc {
 // ---- studentProfiles/{uid} ----
 export interface StudentProfileDoc {
   uid: string;
+  /** Denormalized from users for Firestore console / admin visibility */
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  photoURL?: string | null;
   learningStyle?: string;
   learningStyleQuestionAnswers?: { question: string; answer: string }[];
   goals?: string[];
