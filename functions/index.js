@@ -124,3 +124,128 @@ export const onMessageCreated = onDocumentCreated(
     });
   }
 );
+
+// Keep aligned with src/app/lib/socraticPrompt.ts
+const SOCRATIC_SYSTEM = `You are an expert Socratic study mentor for college students (OC Mentors). You help them think—not by handing them answers.
+
+NON-NEGOTIABLE RULES:
+1. Never give the final answer, full solution, or a list of steps they can copy verbatim.
+2. You MAY explain a concept briefly (1–2 sentences) when they are genuinely confused—but always end with a question that makes them apply the idea.
+3. Read the full conversation. Never repeat the same question, opening line, or advice you already gave. Each reply must move the dialogue forward.
+4. Reference something specific the student just said (their words, their attempt, or their mistake).
+5. Vary your approach: clarify goals → probe reasoning → test with a scenario → ask them to predict → narrow the problem.
+6. If they ask "just tell me the answer," acknowledge the frustration, then offer one smaller hint plus one focused question.
+7. When they are correct, affirm briefly (one sentence), then ask a deeper follow-up.
+8. Tone: warm, patient, clear. 2–6 sentences unless they need a short concept explanation.
+9. Any subject: math, science, writing, history, languages, etc.
+
+CONVERSATION MEMORY:
+- Track what they have already tried and what you already asked.
+- If they repeat a question, say what changed since last time and ask a different angle.
+- If they give a partial answer, build on the correct part before questioning the weak part.
+
+SOCRATIC MOVES (rotate; do not reuse the same move twice in a row):
+- "What is this problem asking you to find, in your own words?"
+- "What would have to be true for your idea to work?"
+- "What evidence supports that, and what would disprove it?"
+- "Can you think of a simpler case or example first?"
+- "What's the next smallest step you could try—not the whole solution?"`;
+
+/** Multi-turn Gemini contents (user/model), not one blob. */
+function buildGeminiContents(topic, history, latestUserMessage) {
+  const contents = [];
+  const topicNote = topic ? `[Study focus for this session: ${topic}]\n\n` : "";
+  const trimmedHistory = history
+    .filter((h) => h && typeof h.content === "string" && h.content.trim())
+    .slice(-16);
+
+  if (trimmedHistory.length === 0) {
+    contents.push({
+      role: "user",
+      parts: [{ text: topicNote + latestUserMessage }],
+    });
+    return contents;
+  }
+
+  let first = true;
+  for (const turn of trimmedHistory) {
+    const role = turn.role === "assistant" ? "model" : "user";
+    const text = turn.content.trim();
+    if (first && role === "user" && topicNote) {
+      contents.push({ role: "user", parts: [{ text: topicNote + text }] });
+      first = false;
+    } else {
+      contents.push({ role, parts: [{ text }] });
+    }
+  }
+
+  const last = trimmedHistory[trimmedHistory.length - 1];
+  if (last?.role === "user" && last.content.trim() === latestUserMessage.trim()) {
+    return contents;
+  }
+  contents.push({ role: "user", parts: [{ text: latestUserMessage }] });
+  return contents;
+}
+
+/**
+ * Callable: socraticStudyChat — Study Hub Socratic tutor (text only, no OCR).
+ * Set GEMINI_API_KEY in Firebase Functions config / secrets.
+ */
+export const socraticStudyChat = onCall(
+  { enforceAppCheck: false },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Must be signed in.");
+    }
+    const message = typeof request.data?.message === "string" ? request.data.message.trim() : "";
+    if (!message) {
+      throw new HttpsError("invalid-argument", "message is required.");
+    }
+    const topic = typeof request.data?.topic === "string" ? request.data.topic.trim() : "";
+    const history = Array.isArray(request.data?.history) ? request.data.history : [];
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new HttpsError(
+        "failed-precondition",
+        "GEMINI_API_KEY is not configured on Cloud Functions."
+      );
+    }
+
+    const body = {
+      systemInstruction: { parts: [{ text: SOCRATIC_SYSTEM }] },
+      contents: buildGeminiContents(topic, history, message),
+      generationConfig: {
+        temperature: 0.88,
+        topP: 0.92,
+        maxOutputTokens: 640,
+      },
+    };
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("[socraticStudyChat] Gemini error:", res.status, errText);
+      throw new HttpsError("internal", "AI mentor unavailable. Try again later.");
+    }
+
+    const json = await res.json();
+    const reply =
+      json?.candidates?.[0]?.content?.parts
+        ?.map((p) => p.text)
+        .filter(Boolean)
+        .join("") || "";
+
+    if (!reply.trim()) {
+      throw new HttpsError("internal", "Empty response from AI mentor.");
+    }
+
+    return { reply: reply.trim() };
+  }
+);

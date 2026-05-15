@@ -7,6 +7,7 @@ import {
 } from "firebase/auth";
 import { getFirestore, enableNetwork } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getFunctions } from "firebase/functions";
 import { Capacitor } from "@capacitor/core";
 
 const firebaseConfig = {
@@ -59,6 +60,7 @@ function createAuth() {
 export const auth = isFirebaseConfigured && app ? createAuth() : (null as unknown as ReturnType<typeof getAuth>);
 export const db = app ? getFirestore(app) : (null as unknown as ReturnType<typeof getFirestore>);
 export const storage = app ? getStorage(app) : (null as unknown as ReturnType<typeof getStorage>);
+export const functions = app ? getFunctions(app) : (null as unknown as ReturnType<typeof getFunctions>);
 
 const FIRESTORE_ENABLE_NETWORK_MS = 12_000;
 
