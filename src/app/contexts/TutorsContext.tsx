@@ -27,6 +27,11 @@ export interface Tutor {
   responseTime?: string;
   experience?: string;
   location?: string;
+  supportedLearningDifferences?: string[];
+  teachingAdjustments?: string[];
+  accessibilityExperience?: string;
+  /** Pitch/demo card — not a live Firestore tutor */
+  isDemo?: boolean;
 }
 
 function mapTutorProfileToTutor(docId: string, d: TutorProfileDoc): Tutor {
@@ -49,6 +54,11 @@ function mapTutorProfileToTutor(docId: string, d: TutorProfileDoc): Tutor {
     responseTime: d.responseTime ?? (d.responseTimeMinutes != null ? `< ${d.responseTimeMinutes} min` : undefined),
     experience: d.experience ?? d.experienceLabel,
     location: d.location,
+    supportedLearningDifferences: Array.isArray(d.supportedLearningDifferences)
+      ? d.supportedLearningDifferences
+      : [],
+    teachingAdjustments: Array.isArray(d.teachingAdjustments) ? d.teachingAdjustments : [],
+    accessibilityExperience: d.accessibilityExperience,
   };
 }
 

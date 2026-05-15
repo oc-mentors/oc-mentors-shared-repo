@@ -11,7 +11,8 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { motion } from "motion/react";
-import { ArrowLeft, BookOpen, Layers, Plus, Trash2, ClipboardCheck, X } from "lucide-react";
+import { ArrowLeft, BookOpen, Layers, Plus, Trash2, ClipboardCheck, X, Sparkles } from "lucide-react";
+import { SocraticTutorChat } from "../components/SocraticTutorChat";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import { useAuth } from "../contexts/AuthContext";
@@ -19,7 +20,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { db, firestoreReady, isFirebaseConfigured } from "../lib/firebase";
 import { toast } from "sonner";
 
-type Tab = "notes" | "flashcards" | "guides";
+type Tab = "notes" | "flashcards" | "guides" | "tutor";
 
 type NoteDoc = { id: string; title: string; body: string; tag?: string };
 type FlashDoc = { id: string; question: string; answer: string };
@@ -271,6 +272,7 @@ export default function NotesPage() {
         <div className="px-6 flex gap-2 mb-6 flex-wrap">
           {(
             [
+              { id: "tutor" as const, label: "Tutor", Icon: Sparkles },
               { id: "notes" as const, label: "Notes", Icon: BookOpen },
               { id: "flashcards" as const, label: "Cards", Icon: Layers },
               { id: "guides" as const, label: "Guides", Icon: ClipboardCheck },
@@ -293,7 +295,9 @@ export default function NotesPage() {
           ))}
         </div>
 
-        <div className="px-6 space-y-4 pb-8">
+        <motion.div className="px-6 space-y-4 pb-8">
+          {tab === "tutor" && <SocraticTutorChat />}
+
           {tab === "notes" && (
             <>
               {notes.map((n) => (
@@ -542,7 +546,7 @@ export default function NotesPage() {
               )}
             </>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {quizOpen && (
