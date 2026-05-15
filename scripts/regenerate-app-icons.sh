@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
-# Rebuild launcher / PWA icons from branding/oc-mentors-title-card.png (ImageMagick).
+# Rebuild launcher / PWA icons from branding/oc-mark-logo.png (ImageMagick).
+# Source: OC mark on a flat light background (white/near-white); transparency is applied to that backdrop only.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SRC="${ROOT}/branding/oc-mentors-title-card.png"
+SRC="${ROOT}/branding/oc-mark-logo.png"
 MASTER="${ROOT}/public/oc-mark-raster.png"
 command -v magick >/dev/null || { echo "Install ImageMagick (magick)"; exit 1; }
 [[ -f "$SRC" ]] || { echo "Missing $SRC"; exit 1; }
 
-# Isolate gradient OC mark: strip top banner, keep right strip, trim, pad to square.
-magick "$SRC" -gravity North -chop 0x22% +repage \
-  -gravity East -crop 24%x100%+0+0 +repage \
-  -fuzz 1% -trim +repage \
-  -resize 680x680 -background white -gravity center -extent 1024x1024 "$MASTER"
+# App primary blue (matches theme-color / brand).
+ICON_BG="#4361d9"
+
+# Drop flat white backdrop so the mark can sit on blue; trim, scale (mask-safe), center on blue tile.
+magick "$SRC" -fuzz 8% -transparent white -trim +repage \
+  -resize 532x532 \
+  \( -size 1024x1024 "xc:${ICON_BG}" \) +swap -gravity center -compose over -composite \
+  -alpha off "$MASTER"
 
 magick "$MASTER" -resize 512x512 "${ROOT}/public/icon-512.png"
 magick "$MASTER" -resize 192x192 "${ROOT}/public/icon-192.png"

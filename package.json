@@ -6,6 +6,7 @@
   "scripts": {
     "build": "vite build",
     "cap:sync": "npm run build && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx cap sync",
+    "cap:copy:ios": "npm run build && npx cap copy ios",
     "cap:open:android": "npx cap open android",
     "cap:open:ios": "npx cap open ios",
     "android:prep": "npm run cap:sync",
