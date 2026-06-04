@@ -467,7 +467,7 @@ export default function SettingsPage() {
                   <div className="min-w-0">
                     <span className="text-[15px] font-medium block" style={{ color: colors.textPrimary }}>Reduce distractions (ADHD)</span>
                     <span className="text-[12px] block mt-0.5" style={{ color: colors.textSecondary }}>
-                      <BionicText text="Simpler home, larger type, fewer promos" />
+                      <BionicText text="Larger text, subject tiles, and buttons across the app" />
                     </span>
                   </div>
                 </div>

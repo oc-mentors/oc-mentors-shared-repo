@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">OC Mentors</string>
     <string name="title_activity_main">OC Mentors</string>
-    <string name="package_name">com.ocmentors.app</string>
-    <string name="custom_url_scheme">com.ocmentors.app</string>
+    <string name="package_name">com.ocmentorscorp.app</string>
+    <string name="custom_url_scheme">com.ocmentorscorp.app</string>
 </resources>

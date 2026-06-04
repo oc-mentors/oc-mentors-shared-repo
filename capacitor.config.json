@@ -1,8 +1,13 @@
 {
-  "appId": "com.ocmentors.app",
+  "appId": "com.ocmentorscorp.app",
   "appName": "OC Mentors",
   "webDir": "dist",
   "ios": {
     "contentInset": "automatic"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
   }
 }

@@ -9,6 +9,7 @@ import { Bell, FileText, Settings, RefreshCw, ExternalLink, AlertCircle, EyeOff 
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import { CanvasLoginPromptModal } from "../components/CanvasLoginPromptModal";
+import { CanvasLogoutButton } from "../components/CanvasLogoutButton";
 import { useState, useRef } from "react";
 
 export default function CanvasClassesPage() {
@@ -108,15 +109,32 @@ export default function CanvasClassesPage() {
             className="h-full overflow-y-auto pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
           >
             <div className="px-6 pt-4">
-              {isCanvasConnected && lastRefreshed && (
-                <p className="text-[12px] mb-6" style={{ color: colors.textSecondary }}>
-                  Last updated: {new Date(lastRefreshed).toLocaleString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })}
-                </p>
+              {isCanvasConnected && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 p-4 rounded-2xl border"
+                  style={{
+                    backgroundColor: colors.bgCard,
+                    borderColor: colors.borderPrimary,
+                  }}
+                >
+                  <p className="text-[14px] font-medium mb-1" style={{ color: colors.textPrimary }}>
+                    Canvas connected
+                  </p>
+                  {lastRefreshed && (
+                    <p className="text-[12px] mb-3" style={{ color: colors.textSecondary }}>
+                      Last updated:{" "}
+                      {new Date(lastRefreshed).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  )}
+                  <CanvasLogoutButton />
+                </motion.div>
               )}
 
               {!isCanvasConnected && (

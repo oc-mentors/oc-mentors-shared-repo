@@ -45,5 +45,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>OC Mentors uses the camera so you can take a profile photo or upload images for your account and tutoring materials.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>OC Mentors needs access to your photo library so you can choose a profile picture or attach images in messages and verification.</string>
 </dict>
 </plist>

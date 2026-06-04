@@ -7,7 +7,7 @@ export type LearningComfortState = {
   dyslexiaFriendlyFont: boolean;
   /** Bold first characters of words in supported reading areas */
   readingAssistEnabled: boolean;
-  /** Hide non-essential home content + larger, calmer typography (ADHD-friendly) */
+  /** Larger typography and subject tiles app-wide; simpler home layout (ADHD-friendly) */
   reduceDistractions: boolean;
 };
 

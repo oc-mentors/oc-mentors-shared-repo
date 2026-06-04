@@ -5,9 +5,9 @@ Text-only Socratic mentor in **Study hub → Tutor** tab. No screen reading or O
 ## How it works
 
 1. Student types in the chat (optional **Studying** topic, e.g. "Chem 1A").
-2. App calls Firebase callable **`socraticStudyChat`** (signed-in users only).
-3. Function calls **Gemini 1.5 Flash** with a Socratic system prompt (questions, not answers).
-4. If the function is unavailable, the app uses a **local fallback** that still asks Socratic-style questions.
+2. App calls Firebase callable **`socraticStudyChat`** (signed-in users only), or ZotGPT directly in dev.
+3. **UCI ZotGPT** (`gpt-4o`) receives the Socratic system prompt plus full conversation history.
+4. If the API is unavailable, the app uses a **local fallback** that still asks Socratic-style questions.
 
 ## Setup (full AI — recommended)
 
@@ -15,29 +15,34 @@ Text-only Socratic mentor in **Study hub → Tutor** tab. No screen reading or O
 Add to `.env.local`:
 
 ```
-VITE_GEMINI_API_KEY=your_key_from_aistudio
+VITE_ZOTGPT_API_KEY=your_zotgpt_api_key
 ```
 
-Restart `npm run dev`. The app calls Gemini directly with **multi-turn** conversation (no repeated generic lines).
+Restart `npm run dev`. The app calls ZotGPT directly with **multi-turn** conversation.
 
 **Option B — production**
 
 ```bash
-firebase functions:secrets:set GEMINI_API_KEY
+firebase functions:secrets:set ZOTGPT_API_KEY
 firebase deploy --only functions:socraticStudyChat
 ```
 
-Get a key from [Google AI Studio](https://aistudio.google.com/apikey).
+Get an API key from [ZotGPT](https://azureapi.zotgpt.uci.edu) (UCI).
 
-## Files
+**Endpoint:** `POST https://azureapi.zotgpt.uci.edu/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-01`  
+**Header:** `api-key: <your-key>`
+
+## Prompt source of truth
 
 | File | Role |
 |------|------|
+| `src/app/lib/socraticPrompt.ts` | `SOCRATIC_TUTOR_SYSTEM_PROMPT` + `buildZotGptMessages` |
+| `functions/index.js` | Same prompt in `SOCRATIC_SYSTEM` (keep in sync) |
+
+## Related files
+
+| File | Purpose |
+|------|---------|
 | `src/app/components/SocraticTutorChat.tsx` | Chat UI |
-| `src/app/lib/socraticChat.ts` | Client + fallback |
-| `src/app/lib/socraticPrompt.ts` | System prompt text |
+| `src/app/lib/socraticChat.ts` | Client: Cloud Function → ZotGPT → fallback |
 | `functions/index.js` | `socraticStudyChat` callable |
-
-## Adapted from CalHacks
-
-Inspired by CalHacks Socratic / conversational flow, but **without** OCR, screen capture, or desktop hooks—only chat.

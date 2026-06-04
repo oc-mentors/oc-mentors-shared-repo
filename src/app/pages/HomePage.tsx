@@ -50,7 +50,12 @@ export default function HomePage() {
   };
 
   const greetingName = (() => {
-    const n = user?.firstName || user?.name?.split(" ")[0] || "there";
+    const fromEmail = user?.email?.split("@")[0]?.replace(/[._+]/g, " ").trim();
+    const n =
+      user?.firstName ||
+      user?.name?.split(" ")[0] ||
+      (fromEmail ? fromEmail.split(/\s+/)[0] : "") ||
+      "there";
     return n && n !== "User" && n !== "user" ? n : "there";
   })();
   const visibleSubjects = subjects.filter((s) => !isCourseIgnored(s.courseId));

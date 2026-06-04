@@ -1,6 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from "react";
 import { canvasCourses as defaultCanvasCourses } from "../data/courses";
 import { setCourseColor } from "../hooks/useCourseColor";
+import {
+  registerCanvasDataResetHandler,
+  CANVAS_COURSES_KEY,
+  CANVAS_LAST_REFRESHED_KEY,
+  CANVAS_ASSIGNMENTS_KEY,
+  CANVAS_IGNORED_COURSES_KEY,
+} from "../lib/canvasStorage";
+import { buildMockCanvasAssignments, buildMockCanvasCourses } from "../lib/mockCanvasData";
+import { useCanvasAuth } from "./CanvasAuthContext";
 
 export interface CanvasAssignment {
   id: number;
@@ -42,14 +51,16 @@ interface CanvasCoursesContextType {
   ignoreCourse: (id: number) => void;
   unignoreCourse: (id: number) => void;
   isCourseIgnored: (id: number) => boolean;
+  /** Loads demo Canvas classes + assignments (after login). */
+  loadMockCanvasCatalog: () => Promise<void>;
 }
 
 const CanvasCoursesContext = createContext<CanvasCoursesContextType | null>(null);
 
-const STORAGE_KEY = "canvas_courses_v1";
-const LAST_REFRESHED_KEY = "canvas_last_refreshed_v1";
-const ASSIGNMENTS_KEY = "canvas_assignments_v2"; // bumped to pick up canonical data
-const IGNORED_KEY = "ignored_courses_v1";
+const STORAGE_KEY = CANVAS_COURSES_KEY;
+const LAST_REFRESHED_KEY = CANVAS_LAST_REFRESHED_KEY;
+const ASSIGNMENTS_KEY = CANVAS_ASSIGNMENTS_KEY;
+const IGNORED_KEY = CANVAS_IGNORED_COURSES_KEY;
 
 // Default Canvas URLs for each course
 const defaultCanvasUrls: Record<number, string> = {
@@ -140,6 +151,7 @@ function getRandomLessons(): number {
 }
 
 export function CanvasCoursesProvider({ children }: { children: ReactNode }) {
+  const { isCanvasConnected } = useCanvasAuth();
   const [courses, setCourses] = useState<CanvasCourse[]>(loadCoursesFromStorage);
   const [assignments, setAssignments] = useState<CanvasAssignment[]>(
     loadAssignmentsFromStorage
@@ -177,13 +189,43 @@ export function CanvasCoursesProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(IGNORED_KEY, JSON.stringify(ignoredCourseIds));
   }, [ignoredCourseIds]);
 
-  const refreshCourses = async () => {
+  useEffect(() => {
+    return registerCanvasDataResetHandler(() => {
+      setCourses(loadCoursesFromStorage());
+      setAssignments(loadAssignmentsFromStorage());
+      setLastRefreshed(null);
+      setIgnoredCourseIds([]);
+    });
+  }, []);
+
+  const loadMockCanvasCatalog = useCallback(async () => {
     setIsRefreshing(true);
-    
-    // Simulate API call to Canvas
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+
+    setCourses(buildMockCanvasCourses());
+    setAssignments(buildMockCanvasAssignments());
+
+    const now = new Date();
+    setLastRefreshed(now);
+    localStorage.setItem(LAST_REFRESHED_KEY, now.toISOString());
+    setIsRefreshing(false);
+  }, []);
+
+  useEffect(() => {
+    if (isCanvasConnected && courses.length === 0) {
+      void loadMockCanvasCatalog();
+    }
+  }, [isCanvasConnected, courses.length, loadMockCanvasCatalog]);
+
+  const refreshCourses = async () => {
+    if (courses.length === 0) {
+      await loadMockCanvasCatalog();
+      return;
+    }
+
+    setIsRefreshing(true);
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // Update courses with refreshed data
     const refreshedCourses = courses.map((course) => ({
       ...course,
       progress: getRandomProgress(),
@@ -191,11 +233,11 @@ export function CanvasCoursesProvider({ children }: { children: ReactNode }) {
     }));
 
     setCourses(refreshedCourses);
-    
+
     const now = new Date();
     setLastRefreshed(now);
     localStorage.setItem(LAST_REFRESHED_KEY, now.toISOString());
-    
+
     setIsRefreshing(false);
   };
 
@@ -289,6 +331,7 @@ export function CanvasCoursesProvider({ children }: { children: ReactNode }) {
         ignoreCourse,
         unignoreCourse,
         isCourseIgnored,
+        loadMockCanvasCatalog,
       }}
     >
       {children}

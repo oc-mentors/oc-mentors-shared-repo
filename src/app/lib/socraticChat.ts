@@ -1,18 +1,13 @@
 import { httpsCallable } from "firebase/functions";
 import { functions, isFirebaseConfigured } from "./firebase";
-import {
-  SOCRATIC_TUTOR_SYSTEM_PROMPT,
-  buildGeminiRequestBody,
-  type ChatTurn,
-} from "./socraticPrompt";
+import { requestZotGpt, hasZotGptApiKey } from "./zotGptRequest";
+import type { ChatTurn } from "./socraticPrompt";
 
 export type SocraticChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
 };
-
-const GEMINI_MODEL = "gemini-1.5-flash";
 
 function normalizeForCompare(s: string): string {
   return s
@@ -42,7 +37,7 @@ function pickNonRepeating(candidates: string[], priorAssistant: string[]): strin
   return candidates[candidates.length % candidates.length] ?? candidates[0] ?? "What's your next step?";
 }
 
-/** Smarter offline mentor when Cloud Function / API key unavailable. Uses full history. */
+/** Offline mentor when API unavailable. */
 function localSocraticFallback(
   userMessage: string,
   topic: string | undefined,
@@ -118,41 +113,33 @@ function localSocraticFallback(
   return pickNonRepeating(ordered, priorAssistant);
 }
 
-async function callGeminiDirect(params: {
+async function callCloudSocratic(params: {
   message: string;
   topic?: string;
   history: ChatTurn[];
 }): Promise<string | null> {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-  if (!apiKey?.trim()) return null;
-
-  const body = buildGeminiRequestBody(params.topic, params.history, params.message);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey.trim())}`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    console.warn("[SocraticTutor] Direct Gemini error:", res.status, await res.text());
+  if (!isFirebaseConfigured || !functions) return null;
+  try {
+    const call = httpsCallable<
+      { message: string; topic?: string; history: ChatTurn[] },
+      { reply: string }
+    >(functions, "socraticStudyChat");
+    const res = await call({
+      message: params.message,
+      topic: params.topic,
+      history: params.history,
+    });
+    return res.data?.reply?.trim() || null;
+  } catch (e) {
+    console.warn("[SocraticTutor] Cloud function unavailable:", e);
     return null;
   }
-
-  const json = await res.json();
-  const reply =
-    json?.candidates?.[0]?.content?.parts
-      ?.map((p: { text?: string }) => p.text)
-      .filter(Boolean)
-      .join("") ?? "";
-
-  return reply.trim() || null;
 }
 
 /**
  * Send a message to the Socratic tutor.
- * Order: Cloud Function → direct Gemini (VITE_GEMINI_API_KEY) → local fallback.
+ * Order: ZotGPT direct (native HTTP on Android) → Cloud Function → local fallback.
+ * Never throws — always returns a reply string.
  */
 export async function sendSocraticTutorMessage(params: {
   message: string;
@@ -169,38 +156,28 @@ export async function sendSocraticTutorMessage(params: {
     .filter((h) => h.role === "user" || h.role === "assistant")
     .map((h) => ({ role: h.role, content: h.content }));
 
-  if (isFirebaseConfigured && functions) {
-    try {
-      const call = httpsCallable<
-        {
-          message: string;
-          topic?: string;
-          history: ChatTurn[];
-        },
-        { reply: string }
-      >(functions, "socraticStudyChat");
-
-      const res = await call({
-        message: trimmed,
-        topic: topic?.trim() || undefined,
-        history: prior,
-      });
-      const reply = res.data?.reply?.trim();
-      if (reply) {
-        return { reply, usedCloud: true };
+  try {
+    if (hasZotGptApiKey()) {
+      const direct = await requestZotGpt(
+        topic?.trim() || undefined,
+        prior,
+        trimmed
+      );
+      if (direct) {
+        return { reply: direct, usedCloud: true };
       }
-    } catch (e) {
-      console.warn("[SocraticTutor] Cloud function unavailable:", e);
     }
-  }
 
-  const direct = await callGeminiDirect({
-    message: trimmed,
-    topic: topic?.trim() || undefined,
-    history: prior,
-  });
-  if (direct) {
-    return { reply: direct, usedCloud: true };
+    const cloud = await callCloudSocratic({
+      message: trimmed,
+      topic: topic?.trim() || undefined,
+      history: prior,
+    });
+    if (cloud) {
+      return { reply: cloud, usedCloud: true };
+    }
+  } catch (err) {
+    console.warn("[SocraticTutor] Unexpected error:", err);
   }
 
   return {
@@ -209,4 +186,4 @@ export async function sendSocraticTutorMessage(params: {
   };
 }
 
-export { SOCRATIC_TUTOR_SYSTEM_PROMPT };
+export { SOCRATIC_TUTOR_SYSTEM_PROMPT } from "./socraticPrompt";

@@ -58,8 +58,18 @@ export function SocraticTutorChat() {
         ...prev,
         { id: newId(), role: "assistant", content: reply },
       ]);
-    } catch {
+    } catch (err) {
+      console.error("[SocraticTutor] send failed:", err);
       toast.error("Could not reach the mentor. Try again.");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: newId(),
+          role: "assistant",
+          content:
+            "I'm having trouble connecting right now. What topic are you studying? Describe one step you've tried so we can keep going.",
+        },
+      ]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -167,7 +177,7 @@ export function SocraticTutorChat() {
 
       {usedCloud === false && messages.length > 2 && (
         <p className="px-4 text-[10px]" style={{ color: colors.textTertiary }}>
-          Offline mentor mode. Add <code className="text-[9px]">VITE_GEMINI_API_KEY</code> to .env.local or deploy Cloud Functions with GEMINI_API_KEY for full AI.
+          Offline mentor mode. Add <code className="text-[9px]">VITE_ZOTGPT_API_KEY</code> to .env.local or deploy Cloud Functions with ZOTGPT_API_KEY for full AI.
         </p>
       )}
 

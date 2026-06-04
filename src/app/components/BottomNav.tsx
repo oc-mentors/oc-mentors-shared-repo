@@ -124,10 +124,10 @@ export function BottomNav({ currentPage }: BottomNavProps) {
                   className="transition-colors"
                   style={{ color: isActive ? accentColor.primary : isMuted ? colors.textTertiary : colors.textSecondary }}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-5 h-5 oc-bottom-nav-icon" />
                 </div>
                 <span
-                  className="text-[10px] font-medium transition-colors"
+                  className="text-[10px] font-medium transition-colors oc-bottom-nav-label"
                   style={{ color: isActive ? accentColor.primary : isMuted ? colors.textTertiary : colors.textSecondary }}
                 >
                   {item.label}

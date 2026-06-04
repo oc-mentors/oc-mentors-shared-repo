@@ -29,13 +29,20 @@ SOCRATIC MOVES (rotate; do not reuse the same move twice in a row):
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };
 
-/** Build Gemini multi-turn contents (user/model roles) for proper dialogue. */
-export function buildGeminiContents(
+export type OpenAIChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
+/** Multi-turn OpenAI-style messages (ZotGPT / gpt-4o). */
+export function buildZotGptMessages(
   topic: string | undefined,
   history: ChatTurn[],
   latestUserMessage: string
-): { role: "user" | "model"; parts: { text: string }[] }[] {
-  const contents: { role: "user" | "model"; parts: { text: string }[] }[] = [];
+): OpenAIChatMessage[] {
+  const messages: OpenAIChatMessage[] = [
+    { role: "system", content: SOCRATIC_TUTOR_SYSTEM_PROMPT },
+  ];
 
   const topicNote = topic?.trim()
     ? `[Study focus for this session: ${topic.trim()}]\n\n`
@@ -46,47 +53,47 @@ export function buildGeminiContents(
     .slice(-16);
 
   if (trimmedHistory.length === 0) {
-    contents.push({
+    messages.push({
       role: "user",
-      parts: [{ text: `${topicNote}${latestUserMessage.trim()}` }],
+      content: `${topicNote}${latestUserMessage.trim()}`,
     });
-    return contents;
+    return messages;
   }
 
   let first = true;
   for (const turn of trimmedHistory) {
-    const role = turn.role === "assistant" ? "model" : "user";
+    const role = turn.role === "assistant" ? "assistant" : "user";
     const text = turn.content.trim();
     if (!text) continue;
     if (first && role === "user" && topicNote) {
-      contents.push({ role: "user", parts: [{ text: topicNote + text }] });
+      messages.push({ role: "user", content: topicNote + text });
       first = false;
     } else {
-      contents.push({ role, parts: [{ text }] });
+      messages.push({ role, content: text });
     }
   }
 
   const last = trimmedHistory[trimmedHistory.length - 1];
   if (last?.role === "user" && last.content.trim() === latestUserMessage.trim()) {
-    return contents;
+    return messages;
   }
 
-  contents.push({ role: "user", parts: [{ text: latestUserMessage.trim() }] });
-  return contents;
+  messages.push({ role: "user", content: latestUserMessage.trim() });
+  return messages;
 }
 
-export function buildGeminiRequestBody(
+/** Request body for UCI ZotGPT (Azure OpenAI gpt-4o). */
+export function buildZotGptRequestBody(
   topic: string | undefined,
   history: ChatTurn[],
   latestUserMessage: string
 ) {
   return {
-    systemInstruction: { parts: [{ text: SOCRATIC_TUTOR_SYSTEM_PROMPT }] },
-    contents: buildGeminiContents(topic, history, latestUserMessage),
-    generationConfig: {
-      temperature: 0.88,
-      topP: 0.92,
-      maxOutputTokens: 640,
-    },
+    temperature: 1,
+    top_p: 1,
+    stream: false,
+    stop: null,
+    max_completion_tokens: 1024,
+    messages: buildZotGptMessages(topic, history, latestUserMessage),
   };
 }

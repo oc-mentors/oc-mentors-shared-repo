@@ -61,6 +61,7 @@ export interface TutorProfileDoc {
   /** Denormalized from users for list/inbox display */
   firstName?: string;
   lastName?: string;
+  displayName?: string;
   photoURL?: string;
   headline?: string;
   bio?: string;

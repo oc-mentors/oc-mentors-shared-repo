@@ -1,4 +1,4 @@
-package com.ocmentors.app;
+package com.ocmentorscorp.app;
 
 import com.getcapacitor.BridgeActivity;
 

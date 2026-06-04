@@ -151,45 +151,45 @@ SOCRATIC MOVES (rotate; do not reuse the same move twice in a row):
 - "Can you think of a simpler case or example first?"
 - "What's the next smallest step you could try—not the whole solution?"`;
 
-/** Multi-turn Gemini contents (user/model), not one blob. */
-function buildGeminiContents(topic, history, latestUserMessage) {
-  const contents = [];
+const ZOTGPT_CHAT_URL =
+  "https://azureapi.zotgpt.uci.edu/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-01";
+
+/** Multi-turn OpenAI-style messages for ZotGPT (gpt-4o). */
+function buildZotGptMessages(topic, history, latestUserMessage) {
+  const messages = [{ role: "system", content: SOCRATIC_SYSTEM }];
   const topicNote = topic ? `[Study focus for this session: ${topic}]\n\n` : "";
   const trimmedHistory = history
     .filter((h) => h && typeof h.content === "string" && h.content.trim())
     .slice(-16);
 
   if (trimmedHistory.length === 0) {
-    contents.push({
-      role: "user",
-      parts: [{ text: topicNote + latestUserMessage }],
-    });
-    return contents;
+    messages.push({ role: "user", content: topicNote + latestUserMessage });
+    return messages;
   }
 
   let first = true;
   for (const turn of trimmedHistory) {
-    const role = turn.role === "assistant" ? "model" : "user";
+    const role = turn.role === "assistant" ? "assistant" : "user";
     const text = turn.content.trim();
     if (first && role === "user" && topicNote) {
-      contents.push({ role: "user", parts: [{ text: topicNote + text }] });
+      messages.push({ role: "user", content: topicNote + text });
       first = false;
     } else {
-      contents.push({ role, parts: [{ text }] });
+      messages.push({ role, content: text });
     }
   }
 
   const last = trimmedHistory[trimmedHistory.length - 1];
   if (last?.role === "user" && last.content.trim() === latestUserMessage.trim()) {
-    return contents;
+    return messages;
   }
-  contents.push({ role: "user", parts: [{ text: latestUserMessage }] });
-  return contents;
+  messages.push({ role: "user", content: latestUserMessage });
+  return messages;
 }
 
 /**
  * Callable: socraticStudyChat — Study Hub Socratic tutor (text only, no OCR).
- * Set GEMINI_API_KEY in Firebase Functions config / secrets.
+ * Set ZOTGPT_API_KEY in Firebase Functions secrets.
  */
 export const socraticStudyChat = onCall(
   { enforceAppCheck: false },
@@ -204,43 +204,41 @@ export const socraticStudyChat = onCall(
     const topic = typeof request.data?.topic === "string" ? request.data.topic.trim() : "";
     const history = Array.isArray(request.data?.history) ? request.data.history : [];
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.ZOTGPT_API_KEY;
     if (!apiKey) {
       throw new HttpsError(
         "failed-precondition",
-        "GEMINI_API_KEY is not configured on Cloud Functions."
+        "ZOTGPT_API_KEY is not configured on Cloud Functions."
       );
     }
 
     const body = {
-      systemInstruction: { parts: [{ text: SOCRATIC_SYSTEM }] },
-      contents: buildGeminiContents(topic, history, message),
-      generationConfig: {
-        temperature: 0.88,
-        topP: 0.92,
-        maxOutputTokens: 640,
-      },
+      temperature: 1,
+      top_p: 1,
+      stream: false,
+      stop: null,
+      max_completion_tokens: 1024,
+      messages: buildZotGptMessages(topic, history, message),
     };
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-    const res = await fetch(url, {
+    const res = await fetch(ZOTGPT_CHAT_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache",
+        "api-key": apiKey,
+      },
       body: JSON.stringify(body),
     });
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error("[socraticStudyChat] Gemini error:", res.status, errText);
+      console.error("[socraticStudyChat] ZotGPT error:", res.status, errText);
       throw new HttpsError("internal", "AI mentor unavailable. Try again later.");
     }
 
     const json = await res.json();
-    const reply =
-      json?.candidates?.[0]?.content?.parts
-        ?.map((p) => p.text)
-        .filter(Boolean)
-        .join("") || "";
+    const reply = json?.choices?.[0]?.message?.content ?? "";
 
     if (!reply.trim()) {
       throw new HttpsError("internal", "Empty response from AI mentor.");

@@ -6,7 +6,12 @@ export function LoginAnimation() {
   const { colors, accentColor } = useTheme();
   const { user, loginAnimationMode } = useAuth();
 
-  const raw = user?.firstName || user?.name?.split(" ")[0] || "there";
+  const fromEmail = user?.email?.split("@")[0]?.replace(/[._+]/g, " ").trim();
+  const raw =
+    user?.firstName ||
+    user?.name?.split(" ")[0] ||
+    (fromEmail ? fromEmail.split(/\s+/)[0] : "") ||
+    "there";
   const firstName = raw && raw !== "User" && raw !== "user" ? raw : "there";
   const isSignup = loginAnimationMode === "signup";
 

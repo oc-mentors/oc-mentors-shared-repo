@@ -35,7 +35,7 @@ export default function TutorsPage() {
   const [selectedSubject, setSelectedSubject] = useState(initialSubject);
   const { colors, accentColor } = useTheme();
   const { user } = useAuth();
-  const { tutors, isLoading, error } = useTutors();
+  const { tutors, isLoading, error, refreshTutors } = useTutors();
   const [matchFilterOnly, setMatchFilterOnly] = useState(false);
   const [accommodationFilterOnly, setAccommodationFilterOnly] = useState(false);
   const learningSupport = user?.learningSupport;
@@ -106,7 +106,14 @@ export default function TutorsPage() {
             subject.toLowerCase().includes(searchQuery.toLowerCase())
           );
         const matchesSubject =
-          selectedSubject === "All" || tutor.subjects.includes(selectedSubject);
+          selectedSubject === "All" ||
+          tutor.subjects.includes(selectedSubject) ||
+          tutor.subjects.some(
+            (s) =>
+              s.toLowerCase() === "general" ||
+              s.toLowerCase().includes(selectedSubject.toLowerCase()) ||
+              selectedSubject.toLowerCase().includes(s.toLowerCase())
+          );
         if (!matchesSearch || !matchesSubject) return false;
         if (matchFilterOnly && !match) return false;
         if (accommodationFilterOnly && (!match || match.accommodationScore === 0)) return false;
@@ -424,9 +431,23 @@ export default function TutorsPage() {
             </div>
           )}
           {error && (
-            <div className="px-6 py-8 text-center" style={{ color: colors.textSecondary }}>
-              {error}
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="px-6 py-4 text-center"
+            >
+              <p className="text-[14px] mb-3" style={{ color: colors.textSecondary }}>
+                {error}
+              </p>
+              <button
+                type="button"
+                onClick={refreshTutors}
+                className="px-4 py-2 rounded-xl text-[13px] font-medium"
+                style={{ backgroundColor: accentColor.primary, color: "#fff" }}
+              >
+                Retry
+              </button>
+            </motion.div>
           )}
           {/* Top fade overlay */}
           <AnimatePresence>

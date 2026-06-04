@@ -1,4 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  CANVAS_CONNECTED_KEY,
+  disconnectCanvasSession,
+} from "../lib/canvasStorage";
 
 interface CanvasAuthContextType {
   isCanvasConnected: boolean;
@@ -7,8 +11,6 @@ interface CanvasAuthContextType {
 }
 
 const CanvasAuthContext = createContext<CanvasAuthContextType | null>(null);
-
-const CANVAS_CONNECTED_KEY = "canvasConnected";
 
 export function CanvasAuthProvider({ children }: { children: ReactNode }) {
   const [isCanvasConnected, setIsCanvasConnected] = useState(() => {
@@ -21,7 +23,7 @@ export function CanvasAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const disconnectCanvas = () => {
-    localStorage.removeItem(CANVAS_CONNECTED_KEY);
+    disconnectCanvasSession();
     setIsCanvasConnected(false);
   };
 

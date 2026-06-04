@@ -8,6 +8,7 @@ import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
 import { useCanvasAuth } from "../contexts/CanvasAuthContext";
 import { useAllCourseColors } from "../hooks/useCourseColor";
 import { CanvasLoginPromptModal } from "../components/CanvasLoginPromptModal";
+import { CanvasLogoutButton } from "../components/CanvasLogoutButton";
 
 const achievements: { id: number; title: string; date: string; icon: string }[] = [];
 
@@ -127,6 +128,12 @@ export default function ProgressPage() {
                 minute: '2-digit' 
               })}
             </p>
+          )}
+
+          {isCanvasConnected && (
+            <div className="mt-2">
+              <CanvasLogoutButton variant="inline" />
+            </div>
           )}
           
           {!isCanvasConnected && (

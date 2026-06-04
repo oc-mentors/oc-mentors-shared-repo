@@ -2,11 +2,14 @@ import { useNavigate } from "react-router";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useCanvasAuth } from "../contexts/CanvasAuthContext";
+import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
 import { BottomNav } from "../components/BottomNav";
+import { CanvasLogoutButton } from "../components/CanvasLogoutButton";
 
 export default function CanvasLoginPage() {
   const navigate = useNavigate();
-  const { connectCanvas } = useCanvasAuth();
+  const { connectCanvas, isCanvasConnected } = useCanvasAuth();
+  const { loadMockCanvasCatalog } = useCanvasCourses();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -16,18 +19,62 @@ export default function CanvasLoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate login process
-    setTimeout(() => {
+    // Simulate Canvas sign-in, then import mock classes
+    setTimeout(async () => {
+      connectCanvas();
+      await loadMockCanvasCatalog();
       setIsLoading(false);
       setShowSuccess(true);
-      connectCanvas();
-      
-      // Navigate after showing success animation
+
       setTimeout(() => {
         navigate("/canvas-classes");
       }, 2000);
     }, 1500);
   };
+
+  if (isCanvasConnected && !showSuccess) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="min-h-screen bg-[#1a1d29] flex flex-col items-center justify-center px-6 pb-20"
+      >
+        <div className="max-w-md w-full text-center">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-[#22c55e] flex items-center justify-center">
+            <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-[#e8edf5] mb-2">Canvas is connected</h1>
+          <p className="text-sm text-[#a8b3cf] mb-8">
+            Your courses and assignments are linked to Socratic OC on this device.
+          </p>
+          <div className="space-y-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => navigate("/canvas-classes")}
+              className="w-full py-3 bg-[#5b7ceb] text-white font-semibold rounded-xl"
+            >
+              Open Canvas hub
+            </motion.button>
+            <CanvasLogoutButton className="!border-[rgba(255,255,255,0.12)] !bg-[#1e2139] !text-[#fca5a5]" />
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => navigate(-1)}
+              className="w-full py-3 text-[#a8b3cf] font-semibold rounded-xl border border-[rgba(255,255,255,0.12)]"
+            >
+              Go back
+            </motion.button>
+          </div>
+        </div>
+        <BottomNav currentPage="canvas" />
+      </motion.div>
+    );
+  }
 
   if (showSuccess) {
     return (
