@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { Capacitor } from "@capacitor/core";
-import { Mail, Lock, User, GraduationCap, Users, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Mail, Lock, User, GraduationCap, Users, Eye, EyeOff, Loader2, Play } from "lucide-react";
 import { useAuth, UserRole } from "../contexts/AuthContext";
+import { useDemoMode } from "../contexts/DemoModeContext";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
 
 /** Google popup auth is unreliable in Capacitor WKWebView; keep it on web only for TestFlight v1. */
@@ -29,6 +30,7 @@ const panelVariants = {
 
 export default function LoginPage() {
   const { login, signup, loginWithGoogle } = useAuth();
+  const { startExpoDemo, isStarting: isDemoStarting } = useDemoMode();
   
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -142,6 +144,28 @@ export default function LoginPage() {
             {mode === "login" ? "Sign in to continue your learning" : "Create your account to begin"}
           </p>
         </motion.div>
+
+        <motion.button
+          type="button"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          disabled={isDemoStarting || isLoading}
+          onClick={() => startExpoDemo()}
+          className="w-full mb-6 py-4 px-5 rounded-2xl border-2 border-[#8b5cf6]/50 bg-gradient-to-r from-[#4361d9]/30 via-[#5b7ceb]/25 to-[#8b5cf6]/30 shadow-[0px_8px_32px_0px_rgba(91,124,235,0.35)] disabled:opacity-60"
+        >
+          <div className="flex items-center justify-center gap-3">
+            {isDemoStarting ? (
+              <Loader2 className="w-5 h-5 text-[#e8edf5] animate-spin" />
+            ) : (
+              <Play className="w-5 h-5 text-[#c4b5fd]" />
+            )}
+            <div className="text-left">
+              <p className="text-base font-bold text-[#e8edf5]">Expo Demo</p>
+              <p className="text-xs text-[#a8b3cf]">Guided tour · Maya Chen</p>
+            </div>
+          </div>
+        </motion.button>
 
         {/* Single AnimatePresence — role picker OR auth form */}
         <AnimatePresence mode="wait" custom={slideDir}>

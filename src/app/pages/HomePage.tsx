@@ -10,6 +10,7 @@ import { useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLearningComfort } from "../contexts/LearningComfortContext";
+import { useDemoModeOptional } from "../contexts/DemoModeContext";
 import { BionicText } from "../components/BionicText";
 import { useAllCourseColors } from "../hooks/useCourseColor";
 import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
@@ -34,6 +35,8 @@ export default function HomePage() {
   const { user } = useAuth();
   const { colors, accentColor } = useTheme();
   const { reduceDistractions } = useLearningComfort();
+  const demoMode = useDemoModeOptional();
+  const isExpoDemo = demoMode?.isDemoMode ?? false;
   const courseColors = useAllCourseColors();
   const { isCourseIgnored } = useCanvasCourses();
   const { sessions, removedSessionIds } = useCalendar();
@@ -79,14 +82,31 @@ export default function HomePage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className={
+        isExpoDemo
+          ? "w-full flex flex-col"
+          : "h-screen overflow-hidden flex flex-col"
+      }
+      style={{ backgroundColor: colors.bgPrimary }}
+    >
       <div className={`${reduceDistractions ? "max-w-lg" : "max-w-md"} mx-auto w-full h-full flex flex-col`}>
         {/* Fixed Header */}
         <div className="flex-shrink-0 px-6 pt-12 pb-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold tracking-[1.95px] uppercase" style={{ color: colors.textSecondary }}>
-              Socratic OC
-            </h2>
+            <div className="flex flex-col gap-1 min-w-0">
+              <h2 className="text-sm font-bold tracking-[1.95px] uppercase" style={{ color: colors.textSecondary }}>
+                Socratic OC
+              </h2>
+              {isExpoDemo && (
+                <span
+                  className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit"
+                  style={{ backgroundColor: `${accentColor.primary}25`, color: accentColor.primary }}
+                >
+                  Expo demo · Maya
+                </span>
+              )}
+            </div>
             <ProfileButton />
           </div>
         </div>
@@ -219,26 +239,36 @@ export default function HomePage() {
                         strokeLinecap="round"
                         strokeDasharray={2 * Math.PI * 44}
                         initial={{ strokeDashoffset: 2 * Math.PI * 44 }}
-                        animate={{ strokeDashoffset: 2 * Math.PI * 44 - (80 / 100) * 2 * Math.PI * 44 }}
+                        animate={{
+                          strokeDashoffset:
+                            2 * Math.PI * 44 -
+                            ((isExpoDemo ? 72 : 80) / 100) * 2 * Math.PI * 44,
+                        }}
                         transition={{ duration: 1.5, ease: "easeOut" }}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
-                        <BionicText text="80%" />
+                        <BionicText text={isExpoDemo ? "72%" : "80%"} />
                       </span>
                     </div>
                   </div>
                   <div className="flex-1">
                     <h4 className="text-lg font-bold mb-1" style={{ color: colors.textPrimary }}>
-                      <BionicText text="80% Complete" />
+                      <BionicText text={isExpoDemo ? "72% Complete" : "80% Complete"} />
                     </h4>
                     <div className="space-y-0.5">
                       <p className="text-sm font-medium" style={{ color: colors.textSecondary }}>
                         <BionicText text="Next task:" />
                       </p>
                       <p className="text-sm" style={{ color: colors.textSecondary }}>
-                        <BionicText text="Finish Math Homework (2 min)" />
+                        <BionicText
+                          text={
+                            isExpoDemo
+                              ? "Chem lab report due tomorrow · 25 pts"
+                              : "Finish Math Homework (2 min)"
+                          }
+                        />
                       </p>
                     </div>
                   </div>

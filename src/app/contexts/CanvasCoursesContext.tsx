@@ -71,9 +71,8 @@ const defaultCanvasUrls: Record<number, string> = {
   5: "https://canvas.uci.edu/courses/67894", // BIO SCI 93
 };
 
-/** No local demo assignments — list stays empty until Canvas sync or user-added items populate storage. */
 function generateDefaultAssignments(): CanvasAssignment[] {
-  return [];
+  return buildMockCanvasAssignments();
 }
 
 function loadAssignmentsFromStorage(): CanvasAssignment[] {
@@ -81,11 +80,12 @@ function loadAssignmentsFromStorage(): CanvasAssignment[] {
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
-      // Convert date strings back to Date objects
-      return parsed.map((assignment: any) => ({
-        ...assignment,
-        dueDate: new Date(assignment.dueDate),
-      }));
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((assignment: CanvasAssignment & { dueDate: string | Date }) => ({
+          ...assignment,
+          dueDate: new Date(assignment.dueDate),
+        }));
+      }
     } catch (error) {
       console.error("Error loading assignments from storage:", error);
     }
@@ -212,10 +212,10 @@ export function CanvasCoursesProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (isCanvasConnected && courses.length === 0) {
+    if (isCanvasConnected && (courses.length === 0 || assignments.length === 0)) {
       void loadMockCanvasCatalog();
     }
-  }, [isCanvasConnected, courses.length, loadMockCanvasCatalog]);
+  }, [isCanvasConnected, courses.length, assignments.length, loadMockCanvasCatalog]);
 
   const refreshCourses = async () => {
     if (courses.length === 0) {

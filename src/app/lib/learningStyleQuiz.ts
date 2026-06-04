@@ -7,6 +7,32 @@ export interface QuizQuestionItem {
   options: string[];
 }
 
+/** Display option with index into learning style (0=Visual … 3=Kinesthetic). */
+export type ShuffledQuizOption = { text: string; styleIndex: number };
+
+export type ShuffledQuizQuestion = QuizQuestionItem & {
+  shuffledOptions: ShuffledQuizOption[];
+};
+
+/** Fisher–Yates shuffle; each call produces a new random order. */
+export function shuffleQuizOptions(options: string[]): ShuffledQuizOption[] {
+  const items = options.map((text, styleIndex) => ({ text, styleIndex }));
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  return items;
+}
+
+export function buildShuffledQuizQuestions(
+  questions: QuizQuestionItem[] = LEARNING_STYLE_QUIZ_QUESTIONS
+): ShuffledQuizQuestion[] {
+  return questions.map((q) => ({
+    ...q,
+    shuffledOptions: shuffleQuizOptions(q.options),
+  }));
+}
+
 export const LEARNING_STYLE_QUIZ_QUESTIONS: QuizQuestionItem[] = [
   {
     id: 1,

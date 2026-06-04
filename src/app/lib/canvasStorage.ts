@@ -22,6 +22,14 @@ export function clearCanvasLocalStorage(): void {
   localStorage.removeItem(CANVAS_IGNORED_COURSES_KEY);
 }
 
+/** Clears per-assignment hide/complete state so mock Canvas items show on Assignments. */
+export function resetAssignmentVisibilityFilters(): void {
+  localStorage.setItem("ignoredAssignments", "[]");
+  localStorage.setItem("completedAssignmentIds", "[]");
+  localStorage.setItem("ignoredAssignmentIds", "[]");
+  window.dispatchEvent(new CustomEvent("assignmentVisibilityReset"));
+}
+
 /** Clears Canvas auth + cached sync data and resets course state in the app. */
 export function disconnectCanvasSession(): void {
   clearCanvasLocalStorage();

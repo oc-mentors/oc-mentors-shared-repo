@@ -1,12 +1,17 @@
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import svgPaths from "../../imports/svg-in824s3fr2";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Check, ChevronLeft, Eye, Layers } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import type { LearningStyle, LearningSupport } from "../contexts/AuthContext";
-import { LEARNING_STYLE_QUIZ_QUESTIONS as quizQuestions, getQuizAnswerText } from "../lib/learningStyleQuiz";
+import {
+  LEARNING_STYLE_QUIZ_QUESTIONS as quizQuestions,
+  buildShuffledQuizQuestions,
+  getQuizAnswerText,
+} from "../lib/learningStyleQuiz";
+import { useDemoModeOptional } from "../contexts/DemoModeContext";
 
 const learningStyles: LearningStyle[] = ["Visual", "Auditory", "Reading/Writing", "Kinesthetic"];
 
@@ -22,6 +27,14 @@ export default function LearningStyleQuizPage() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showResults, setShowResults] = useState(!isRetake && !!savedResult);
   const { colors, accentColor } = useTheme();
+  const demoMode = useDemoModeOptional();
+  const isExpoDemo = !!(demoMode?.isDemoMode || demoMode?.isStarting);
+  const shuffledQuestions = useMemo(() => buildShuffledQuizQuestions(quizQuestions), []);
+  const pageBackgroundStyle = isExpoDemo
+    ? { backgroundColor: colors.bgPrimary }
+    : {
+        background: `linear-gradient(to bottom right, ${colors.bgPrimary}, ${colors.bgSecondary})`,
+      };
   const currentQuestionRef = useRef(0);
   const [barProgress, setBarProgress] = useState(0);
   const [quizPhase, setQuizPhase] = useState<"quiz" | "transitioning" | "dsc" | "results">(
@@ -56,19 +69,31 @@ export default function LearningStyleQuizPage() {
     setSelectedAnswers(indices);
     currentQuestionRef.current = 0;
     setCurrentQuestion(0);
-    setSelectedOption(indices[0] ?? null);
+    const styleIdx = indices[0];
+    const displayIdx =
+      styleIdx >= 0
+        ? shuffledQuestions[0].shuffledOptions.findIndex((o) => o.styleIndex === styleIdx)
+        : -1;
+    setSelectedOption(displayIdx >= 0 ? displayIdx : null);
     setBarProgress(0 / quizQuestions.length);
-  }, [isRetake, user?.id, user?.learningStyle, user?.learningStyleQuestionAnswers]);
+  }, [isRetake, user?.id, user?.learningStyle, user?.learningStyleQuestionAnswers, shuffledQuestions]);
 
-  const handleOptionSelect = (optionIndex: number) => {
-    setSelectedOption(optionIndex);
-    
+  const styleIndexForDisplay = (questionIndex: number, displayIndex: number) =>
+    shuffledQuestions[questionIndex]?.shuffledOptions[displayIndex]?.styleIndex ?? displayIndex;
+
+  const displayIndexForStyle = (questionIndex: number, styleIndex: number) =>
+    shuffledQuestions[questionIndex]?.shuffledOptions.findIndex((o) => o.styleIndex === styleIndex) ?? -1;
+
+  const handleOptionSelect = (displayIndex: number) => {
+    setSelectedOption(displayIndex);
+
     // Auto-advance after a short delay
     setTimeout(() => {
       const cq = currentQuestionRef.current;
-      setSelectedAnswers(prev => {
+      const styleIndex = styleIndexForDisplay(cq, displayIndex);
+      setSelectedAnswers((prev) => {
         const newAnswers = [...prev];
-        newAnswers[cq] = optionIndex;
+        newAnswers[cq] = styleIndex;
         return newAnswers;
       });
 
@@ -389,8 +414,15 @@ export default function LearningStyleQuizPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: `linear-gradient(to bottom right, ${colors.bgPrimary}, ${colors.bgSecondary})` }}>
-      <div className="w-full max-w-md">
+    <div
+      className={
+        isExpoDemo
+          ? "w-full p-6 pt-4"
+          : "min-h-screen flex items-center justify-center p-6"
+      }
+      style={pageBackgroundStyle}
+    >
+      <div className="w-full max-w-md mx-auto" style={isExpoDemo ? pageBackgroundStyle : undefined}>
 
         {/* Back Arrow */}
         <div className="px-6 mb-4" style={{ marginTop: "-1rem" }}>
@@ -507,9 +539,9 @@ export default function LearningStyleQuizPage() {
                 </h2>
 
                 <div className="space-y-3">
-                  {quizQuestions[currentQuestion].options.map((option, index) => (
+                  {shuffledQuestions[currentQuestion].shuffledOptions.map((option, index) => (
                     <motion.button
-                      key={index}
+                      key={`${currentQuestion}-${option.styleIndex}`}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 + index * 0.05 }}
@@ -538,7 +570,7 @@ export default function LearningStyleQuizPage() {
                             />
                           )}
                         </div>
-                        <span className="text-[15px]" style={{ color: colors.textPrimary }}>{option}</span>
+                        <span className="text-[15px]" style={{ color: colors.textPrimary }}>{option.text}</span>
                       </div>
                     </motion.button>
                   ))}

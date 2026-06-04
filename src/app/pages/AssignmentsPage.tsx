@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Filter, AlertCircle, Calendar, Check, Trash2, Plus } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useCanvasCourses, type CanvasAssignment } from "../contexts/CanvasCoursesContext";
+import { useDemoModeOptional } from "../contexts/DemoModeContext";
 import { useAllCourseColors } from "../hooks/useCourseColor";
 import { AddAssignmentModal } from "../components/AddAssignmentModal";
 
@@ -44,9 +45,11 @@ function formatFullDate(date: Date): string {
 
 export default function AssignmentsPage() {
   const navigate = useNavigate();
-  const { getAllAssignments, isCourseIgnored } = useCanvasCourses();
+  const { getAllAssignments, isCourseIgnored, loadMockCanvasCatalog } = useCanvasCourses();
   const { colors, accentColor } = useTheme();
   const courseColors = useAllCourseColors();
+  const demoMode = useDemoModeOptional();
+  const isExpoDemo = !!(demoMode?.isDemoMode || demoMode?.isStarting);
 
   // All canvas assignments (already filtered by ignored courses in the context)
   const allCanvasAssignments = getAllAssignments();
@@ -54,7 +57,7 @@ export default function AssignmentsPage() {
   // Unique course short-codes for the filter panel
   const availableCourses = [...new Set(allCanvasAssignments.map((a) => a.courseName))];
 
-  const [selectedCourses, setSelectedCourses] = useState<string[]>(() => availableCourses);
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [showFilter, setShowFilter] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
   const [pendingRemoveAssignment, setPendingRemoveAssignment] = useState<CanvasAssignment | null>(null);
@@ -91,16 +94,32 @@ export default function AssignmentsPage() {
     return () => window.removeEventListener("assignmentCompleted", handler);
   }, []);
 
-  // Keep selectedCourses in sync if available courses change (e.g. Canvas sync adds a new course)
+  // Select all courses once assignments load (initial state must not use empty sync)
   useEffect(() => {
+    if (availableCourses.length === 0) return;
     setSelectedCourses((prev) => {
+      if (prev.length === 0) return [...availableCourses];
       const next = availableCourses.filter((c) => prev.includes(c));
-      // If nothing was previously selected for a new course, add it automatically
       const newCourses = availableCourses.filter((c) => !prev.includes(c));
       return [...next, ...newCourses];
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availableCourses.join(",")]);
+
+  useEffect(() => {
+    const resetFilters = () => {
+      setIgnoredIds([]);
+      setCompletedIds(new Set());
+      setSelectedStatus("All");
+    };
+    window.addEventListener("assignmentVisibilityReset", resetFilters);
+    return () => window.removeEventListener("assignmentVisibilityReset", resetFilters);
+  }, []);
+
+  useEffect(() => {
+    if (!isExpoDemo || allCanvasAssignments.length > 0) return;
+    void loadMockCanvasCatalog();
+  }, [isExpoDemo, allCanvasAssignments.length, loadMockCanvasCatalog]);
 
   const statuses = ["All", "Upcoming", "Urgent", "Missing"];
 
@@ -121,8 +140,8 @@ export default function AssignmentsPage() {
     .filter((a) => !a.submitted)
     // Hide assignments marked complete via the calendar — they're done, not "left to turn in"
     .filter((a) => !completedIds.has(String(10000 + a.id)))
-    // Course filter
-    .filter((a) => selectedCourses.includes(a.courseName))
+    // Course filter (empty selection = show all, avoids blank list before filters sync)
+    .filter((a) => selectedCourses.length === 0 || selectedCourses.includes(a.courseName))
     // Status filter
     .filter((a) => {
       if (selectedStatus === "All") return true;

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { Send, Sparkles, RotateCcw } from "lucide-react";
+import { Send, HelpCircle, RotateCcw } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -110,7 +110,7 @@ export function SocraticTutorChat() {
       >
         <div>
           <motion.div className="flex items-center gap-2" layout={false}>
-            <Sparkles className="w-4 h-4" style={{ color: accentColor.primary }} />
+            <HelpCircle className="w-4 h-4" style={{ color: accentColor.primary }} />
             <h3 className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
               Socratic tutor
             </h3>

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { Search, Star, Sparkles, Shield } from "lucide-react";
+import { Search, Star, UserCheck, Shield } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
 import { BottomNav } from "../components/BottomNav";
@@ -198,7 +198,7 @@ export default function TutorsPage() {
                   className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: `${accentColor.primary}30`, color: accentColor.primary }}
                 >
-                  <Sparkles className="w-3 h-3" />
+                  <UserCheck className="w-3 h-3" />
                   Match · {match.matchLabels.join(" · ")}
                 </span>
               </div>

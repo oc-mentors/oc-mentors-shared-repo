@@ -5,7 +5,7 @@ import svgPaths from "../../imports/svg-2ctauirw4p";
 import { EditProfileModal } from "../components/EditProfileModal";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, ChevronRight, ChevronDown, Bell, Mail, Globe, Moon, Sun, Eye, Ear, BookOpen, Hand, Layers, Target, RefreshCw, Contrast, Type, Sparkles, Minimize2, Wind } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronDown, Bell, Mail, Globe, Moon, Sun, Eye, Ear, BookOpen, Hand, Layers, Target, RefreshCw, Contrast, Type, Minimize2, Wind } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useLearningComfort } from "../contexts/LearningComfortContext";
@@ -429,7 +429,7 @@ export default function SettingsPage() {
               >
                 <div className="flex items-center gap-4 min-w-0">
                   <div className="w-11 h-11 rounded-[16px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: colors.bgTertiary }}>
-                    <Sparkles className="w-5 h-5" style={{ color: accentColor.primary }} />
+                    <Type className="w-5 h-5" style={{ color: accentColor.primary }} />
                   </div>
                   <div className="min-w-0">
                     <span className="text-[15px] font-medium block" style={{ color: colors.textPrimary }}>Reading assist</span>

@@ -6,6 +6,9 @@ import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "r
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LearningComfortProvider } from "./contexts/LearningComfortContext";
+import { DemoModeProvider } from "./contexts/DemoModeContext";
+import { DemoAppScrollShell } from "./components/DemoAppScrollShell";
+import { DEMO_STORAGE_KEY } from "./lib/demoExpoConfig";
 import { CalendarProvider } from "./contexts/CalendarContext";
 import { CanvasAuthProvider } from "./contexts/CanvasAuthContext";
 import { CanvasCoursesProvider } from "./contexts/CanvasCoursesContext";
@@ -76,10 +79,14 @@ export default function App() {
               <CalendarProvider>
                 <CanvasAuthProvider>
                   <CanvasCoursesProvider>
-                    <CanvasSyncManager />
-                    <ScrollToTop />
-                    <ThemedToaster />
-                    <SafeAppRoutes />
+                    <DemoModeProvider>
+                      <CanvasSyncManager />
+                      <ScrollToTop />
+                      <ThemedToaster />
+                      <DemoAppScrollShell>
+                        <SafeAppRoutes />
+                      </DemoAppScrollShell>
+                    </DemoModeProvider>
                   </CanvasCoursesProvider>
                 </CanvasAuthProvider>
               </CalendarProvider>
@@ -125,8 +132,11 @@ function AppRoutes() {
     clearLogoutAnimation,
   } = useAuth();
 
+  const isExpoDemo =
+    typeof sessionStorage !== "undefined" && sessionStorage.getItem(DEMO_STORAGE_KEY) === "1";
   // Require the learning style quiz only for students who don't have a result yet.
-  const needsQuiz = !!user && user.role === "student" && !user.learningStyle;
+  const needsQuiz =
+    !!user && user.role === "student" && !user.learningStyle && !isExpoDemo;
   // Require the tutor onboarding quiz only for tutors who haven't completed it yet.
   const needsTutorOnboarding = !!user && user.role === "tutor" && !user.tutorOnboardingCompleted;
 
