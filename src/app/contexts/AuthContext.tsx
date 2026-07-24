@@ -586,62 +586,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string, role: UserRole) => {
     assertFirebaseAuth();
     loginRoleRef.current = role;
-    await signInWithEmailAndPassword(auth, email, password);
+    // Show welcome immediately so the quiz can't flash before auth/profile finish
     setLoginAnimationMode("login");
     setShowLoginAnimation(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      setShowLoginAnimation(false);
+      throw err;
+    }
   };
 
   const loginWithGoogle = async (role: UserRole) => {
     assertFirebaseAuth();
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const fbUser = result.user;
-    await firestoreReady;
-    if (!db) return;
-    const userRef = doc(db, "users", fbUser.uid);
-    const snap = await getDocFromServer(userRef);
-    if (!snap.exists()) {
-      const fromAuth = (fbUser.displayName || "User").trim();
-      const first = fromAuth.split(/\s+/)[0] || "";
-      const last = fromAuth.split(/\s+/).slice(1).join(" ") || "";
-      await setDoc(userRef, {
-        uid: fbUser.uid,
-        email: fbUser.email || "",
-        firstName: first,
-        lastName: last,
-        photoURL: fbUser.photoURL || null,
-        roles: roleToRoles(role),
-        status: "active",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      if (role === "student") {
-        await setDoc(doc(db, "studentProfiles", fbUser.uid), {
-          uid: fbUser.uid,
-          firstName: first,
-          lastName: last,
-          displayName: fromAuth,
-          photoURL: fbUser.photoURL || null,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-      } else {
-        await setDoc(doc(db, "tutorProfiles", fbUser.uid), {
-          uid: fbUser.uid,
-          firstName: first,
-          lastName: last,
-          photoURL: fbUser.photoURL || null,
-          subjects: [],
-          isActive: true,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-      }
-      setLoginAnimationMode("signup");
-    } else {
-      setLoginAnimationMode("login");
-    }
+    // Cover the UI before the popup / profile load can redirect to the quiz
+    setLoginAnimationMode("login");
     setShowLoginAnimation(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const fbUser = result.user;
+      await firestoreReady;
+      if (!db) return;
+      const userRef = doc(db, "users", fbUser.uid);
+      const snap = await getDocFromServer(userRef);
+      if (!snap.exists()) {
+        const fromAuth = (fbUser.displayName || "User").trim();
+        const first = fromAuth.split(/\s+/)[0] || "";
+        const last = fromAuth.split(/\s+/).slice(1).join(" ") || "";
+        await setDoc(userRef, {
+          uid: fbUser.uid,
+          email: fbUser.email || "",
+          firstName: first,
+          lastName: last,
+          photoURL: fbUser.photoURL || null,
+          roles: roleToRoles(role),
+          status: "active",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        if (role === "student") {
+          await setDoc(doc(db, "studentProfiles", fbUser.uid), {
+            uid: fbUser.uid,
+            firstName: first,
+            lastName: last,
+            displayName: fromAuth,
+            photoURL: fbUser.photoURL || null,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          await setDoc(doc(db, "tutorProfiles", fbUser.uid), {
+            uid: fbUser.uid,
+            firstName: first,
+            lastName: last,
+            photoURL: fbUser.photoURL || null,
+            subjects: [],
+            isActive: true,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        }
+        setLoginAnimationMode("signup");
+      } else {
+        setLoginAnimationMode("login");
+      }
+    } catch (err) {
+      setShowLoginAnimation(false);
+      throw err;
+    }
   };
 
   const signup = async (name: string, email: string, password: string, role: UserRole) => {
@@ -651,71 +664,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const lastName = parts.slice(1).join(" ") ?? "";
     const displayName = [firstName, lastName].filter(Boolean).join(" ").trim() || firstName;
 
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const fbUser = cred.user;
-    const uid = fbUser.uid;
-
-    pendingProfileRef.current = { uid, firstName, lastName, name: displayName, role };
-
-    await firestoreReady;
-    if (db) {
-      await setDoc(doc(db, "users", uid), {
-        uid,
-        email,
-        firstName: firstName || "",
-        lastName: lastName || "",
-        name: displayName,
-        role,
-        photoURL: null,
-        roles: roleToRoles(role),
-        status: "active",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      if (role === "student") {
-        await setDoc(doc(db, "studentProfiles", uid), {
-          uid,
-          firstName: firstName || "",
-          lastName: lastName || "",
-          displayName,
-          photoURL: null,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-      } else {
-        await setDoc(doc(db, "tutorProfiles", uid), {
-          uid,
-          firstName: firstName || "",
-          lastName: lastName || "",
-          displayName,
-          photoURL: fbUser.photoURL || null,
-          subjects: ["General"],
-          isActive: true,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-      }
-    }
-
-    try {
-      if (fbUser && displayName) {
-        const { updateProfile } = await import("firebase/auth");
-        await updateProfile(fbUser, { displayName });
-      }
-    } catch (e) {
-      console.warn("[Auth] Failed to sync displayName on signup:", e);
-    }
-
-    commitUser(uid, {
-      id: uid,
-      name: displayName,
-      firstName: firstName || undefined,
-      lastName: lastName || undefined,
-      email,
-      role,
-    });
+    // Welcome first — commitUser below will redirect, and must not outrun this overlay
     setLoginAnimationMode("signup");
     setShowLoginAnimation(true);
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const fbUser = cred.user;
+      const uid = fbUser.uid;
+
+      pendingProfileRef.current = { uid, firstName, lastName, name: displayName, role };
+
+      await firestoreReady;
+      if (db) {
+        await setDoc(doc(db, "users", uid), {
+          uid,
+          email,
+          firstName: firstName || "",
+          lastName: lastName || "",
+          name: displayName,
+          role,
+          photoURL: null,
+          roles: roleToRoles(role),
+          status: "active",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        if (role === "student") {
+          await setDoc(doc(db, "studentProfiles", uid), {
+            uid,
+            firstName: firstName || "",
+            lastName: lastName || "",
+            displayName,
+            photoURL: null,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          await setDoc(doc(db, "tutorProfiles", uid), {
+            uid,
+            firstName: firstName || "",
+            lastName: lastName || "",
+            displayName,
+            photoURL: fbUser.photoURL || null,
+            subjects: ["General"],
+            isActive: true,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        }
+      }
+
+      try {
+        if (fbUser && displayName) {
+          const { updateProfile } = await import("firebase/auth");
+          await updateProfile(fbUser, { displayName });
+        }
+      } catch (e) {
+        console.warn("[Auth] Failed to sync displayName on signup:", e);
+      }
+
+      commitUser(uid, {
+        id: uid,
+        name: displayName,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        email,
+        role,
+      });
+    } catch (err) {
+      setShowLoginAnimation(false);
+      throw err;
+    }
   };
 
   const logout = async () => {

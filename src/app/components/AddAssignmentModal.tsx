@@ -2,9 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, BookOpen, Calendar, Hash, AlignLeft, ChevronDown, Check } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
-import { useCanvasCourses, type CanvasAssignment } from "../contexts/CanvasCoursesContext";
+import { useCalendar } from "../contexts/CalendarContext";
 import { useAllCourseColors } from "../hooks/useCourseColor";
 import { useScrollLock } from "../hooks/useScrollLock";
+import { subjects } from "../data/courses";
+import { courses } from "../data/courses";
 
 interface Props {
   open: boolean;
@@ -13,13 +15,24 @@ interface Props {
 
 export function AddAssignmentModal({ open, onClose }: Props) {
   const { colors, accentColor } = useTheme();
-  const { courses, addAssignment } = useCanvasCourses();
+  const { addCalendarEvent } = useCalendar();
   const courseColors = useAllCourseColors();
   useScrollLock(open);
 
+  const courseOptions = courses.length > 0
+    ? courses
+    : subjects
+        .filter((s) => s.courseId > 0)
+        .map((s) => ({
+          id: s.courseId,
+          name: s.name,
+          code: s.name,
+          color: s.defaultColor,
+        }));
+
   const [title, setTitle] = useState("");
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
-  const [dueDateStr, setDueDateStr] = useState(""); // "YYYY-MM-DD"
+  const [dueDateStr, setDueDateStr] = useState("");
   const [dueTimeStr, setDueTimeStr] = useState("23:59");
   const [points, setPoints] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -30,7 +43,6 @@ export function AddAssignmentModal({ open, onClose }: Props) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
-  // Reset form when opening
   useEffect(() => {
     if (open) {
       setTitle("");
@@ -46,7 +58,6 @@ export function AddAssignmentModal({ open, onClose }: Props) {
     }
   }, [open]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -57,7 +68,7 @@ export function AddAssignmentModal({ open, onClose }: Props) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const selectedCourse = courses.find((c) => c.id === selectedCourseId) ?? null;
+  const selectedCourse = courseOptions.find((c) => c.id === selectedCourseId) ?? null;
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -74,38 +85,38 @@ export function AddAssignmentModal({ open, onClose }: Props) {
       return;
     }
 
-    const course = courses.find((c) => c.id === selectedCourseId)!;
+    const course = courseOptions.find((c) => c.id === selectedCourseId)!;
     const [year, month, day] = dueDateStr.split("-").map(Number);
     const [hour, minute] = dueTimeStr.split(":").map(Number);
     const dueDate = new Date(year, month - 1, day, hour, minute);
 
     const courseColor = courseColors[course.id] || course.color;
+    const period = hour >= 12 ? "PM" : "AM";
+    const displayH = hour % 12 || 12;
+    const timeString = `${displayH}:${minute.toString().padStart(2, "0")} ${period}`;
 
-    const newAssignment: CanvasAssignment = {
-      id: Date.now(), // unique numeric id
-      name: title.trim(),
-      dueDate,
-      courseId: course.id,
+    addCalendarEvent({
+      id: Date.now(),
+      type: "assignment",
+      title: title.trim(),
+      startTime: timeString,
+      endTime: timeString,
+      day: dueDate.getDay(),
+      date: dueDate,
       courseName: course.code,
-      courseFullName: course.name,
-      courseColor,
-      points: points ? Number(points) : undefined,
-      instructions: instructions.trim() || undefined,
-      submitted: false,
-    };
+      courseId: course.id,
+      dueTime: timeString,
+      color: courseColor,
+      completed: false,
+      isUserCreated: true,
+    });
 
-    addAssignment(newAssignment);
     setSubmitted(true);
-
-    // Dispatch so calendar syncs
-    window.dispatchEvent(new CustomEvent("assignmentCompleted"));
-
     setTimeout(() => {
       onClose();
     }, 650);
   };
 
-  // Time display helpers
   const formatTimeLabel = (t: string) => {
     const [h, m] = t.split(":").map(Number);
     const period = h >= 12 ? "PM" : "AM";
@@ -138,12 +149,10 @@ export function AddAssignmentModal({ open, onClose }: Props) {
               maxHeight: "92vh",
             }}
           >
-            {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
               <div className="w-10 h-1 rounded-full" style={{ backgroundColor: colors.borderPrimary }} />
             </div>
 
-            {/* Header */}
             <div
               className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b"
               style={{ borderColor: colors.borderPrimary }}
@@ -169,10 +178,7 @@ export function AddAssignmentModal({ open, onClose }: Props) {
               </motion.button>
             </div>
 
-            {/* Scrollable form body */}
             <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5 [&::-webkit-scrollbar]:hidden">
-
-              {/* ── Title ── */}
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: colors.textSecondary }}>
                   Assignment Title *
@@ -195,7 +201,6 @@ export function AddAssignmentModal({ open, onClose }: Props) {
                 )}
               </div>
 
-              {/* ── Course ── */}
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: colors.textSecondary }}>
                   Course *
@@ -243,7 +248,7 @@ export function AddAssignmentModal({ open, onClose }: Props) {
                         className="absolute left-0 right-0 top-full mt-2 rounded-2xl overflow-hidden z-20 shadow-xl"
                         style={{ backgroundColor: colors.bgCard, border: `1px solid ${colors.borderPrimary}` }}
                       >
-                        {courses.map((course) => {
+                        {courseOptions.map((course) => {
                           const color = courseColors[course.id] || course.color;
                           const isSelected = course.id === selectedCourseId;
                           return (
@@ -283,7 +288,6 @@ export function AddAssignmentModal({ open, onClose }: Props) {
                 )}
               </div>
 
-              {/* ── Due Date ── */}
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: colors.textSecondary }}>
                   Due Date *
@@ -309,12 +313,10 @@ export function AddAssignmentModal({ open, onClose }: Props) {
                 )}
               </div>
 
-              {/* ── Due Time ── */}
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: colors.textSecondary }}>
                   Due Time
                 </label>
-                {/* Quick-pick chips */}
                 <div className="flex gap-2 mb-3">
                   {quickTimes.map((t) => (
                     <motion.button
@@ -346,7 +348,6 @@ export function AddAssignmentModal({ open, onClose }: Props) {
                 </div>
               </div>
 
-              {/* ── Points ── */}
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: colors.textSecondary }}>
                   Points Possible
@@ -372,7 +373,6 @@ export function AddAssignmentModal({ open, onClose }: Props) {
                 </div>
               </div>
 
-              {/* ── Instructions ── */}
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: colors.textSecondary }}>
                   Instructions
@@ -400,11 +400,9 @@ export function AddAssignmentModal({ open, onClose }: Props) {
                 </div>
               </div>
 
-              {/* bottom spacer */}
               <div className="h-2" />
             </div>
 
-            {/* Footer */}
             <div
               className="px-6 py-4 flex gap-3 flex-shrink-0 border-t"
               style={{ borderColor: colors.borderPrimary, backgroundColor: colors.bgCard }}

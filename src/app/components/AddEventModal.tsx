@@ -3,11 +3,10 @@ import { DateTimeWheelPicker, DateWheelPicker, TimeWheelPicker } from "./Deadlin
 import { motion, AnimatePresence } from "motion/react";
 import { X, Flag, Repeat, ChevronRight, AlertCircle, Check, Palette, BookOpen } from "lucide-react";
 import { useTheme, accentColors } from "../contexts/ThemeContext";
-import { useCanvasAuth } from "../contexts/CanvasAuthContext";
-import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
 import { useAllCourseColors } from "../hooks/useCourseColor";
 import { useScrollLock } from "../hooks/useScrollLock";
 import { useCalendar } from "../contexts/CalendarContext";
+import { subjects } from "../data/courses";
 
 export interface SavedEventData {
   title: string;
@@ -115,8 +114,6 @@ const MIN_DATE = new Date(); // today
 
 export function AddEventModal({ date, onClose, onSave, defaultStartTime }: AddEventModalProps) {
   const { colors, accentColor } = useTheme();
-  const { isCanvasConnected }   = useCanvasAuth();
-  const { courses, isCourseIgnored } = useCanvasCourses();
   const courseColors  = useAllCourseColors();
   const { calendarEvents } = useCalendar();
   useScrollLock(true);
@@ -149,7 +146,9 @@ export function AddEventModal({ date, onClose, onSave, defaultStartTime }: AddEv
 
   const isDeadline = type === "deadline";
 
-  const availableCourses = courses.filter((c) => !isCourseIgnored(c.id));
+  const availableCourses = subjects
+    .filter((s) => s.courseId > 0)
+    .map((s) => ({ id: s.courseId, name: s.name, color: s.defaultColor }));
 
   const effectiveDeadlineColor = linkedCourseId
     ? (courseColors[linkedCourseId] || "#ef4444")
@@ -562,9 +561,9 @@ export function AddEventModal({ date, onClose, onSave, defaultStartTime }: AddEv
               </div>
             </div>
 
-            {/* ── Assign to Course (Canvas, optional) ── */}
+            {/* ── Assign to Course (optional) ── */}
             <AnimatePresence initial={false}>
-              {isCanvasConnected && availableCourses.length > 0 && (
+              {availableCourses.length > 0 && (
                 <motion.div
                   key="event-course"
                   initial={{ height: 0, opacity: 0 }}
@@ -585,7 +584,7 @@ export function AddEventModal({ date, onClose, onSave, defaultStartTime }: AddEv
                     </div>
                     <div className="flex flex-col gap-2">
                       {availableCourses.map((course) => {
-                        const courseColor = courseColors[course.id] || "#5b7ceb";
+                        const courseColor = courseColors[course.id] || course.color;
                         const isLinked    = linkedCourseId === course.id;
                         return (
                           <motion.button

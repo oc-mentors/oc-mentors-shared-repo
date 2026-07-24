@@ -45,12 +45,6 @@ const DEFAULT_GUIDES: Omit<GuideDoc, "id">[] = [
   },
 ];
 
-const SEED_FLASH: Omit<FlashDoc, "id">[] = [
-  { question: "What is the Pythagorean theorem?", answer: "a² + b² = c²" },
-  { question: "What does DNA stand for?", answer: "Deoxyribonucleic acid" },
-  { question: "What is molarity?", answer: "Moles of solute per liter of solution (mol/L)" },
-];
-
 function norm(s: string) {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -83,10 +77,7 @@ export default function NotesPage() {
     else if (id === "study-flashcards") setTab("flashcards");
   }, [demoMode?.isDemoMode, demoMode?.stepIndex, demoMode?.step.id]);
 
-  const displayFlashcards: FlashDoc[] = useMemo(() => {
-    if (flashcards.length > 0) return flashcards;
-    return SEED_FLASH.map((c, i) => ({ ...c, id: `demo-${i}` }));
-  }, [flashcards]);
+  const displayFlashcards: FlashDoc[] = flashcards;
 
   const loadSubs = useCallback(() => {
     if (!isFirebaseConfigured || !db || !uid) return () => {};

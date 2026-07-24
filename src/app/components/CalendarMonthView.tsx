@@ -504,10 +504,6 @@ export function CalendarMonthView({ onDateSelect, selectedDate }: CalendarMonthV
                     const { gradient, solid } = getEventColors(event, courseColors);
                     const { label, Icon } = getEventTypeLabel(event);
                     const isAssignment = event.type === "assignment";
-                    // Canvas-imported assignments always have courseId set by CanvasSyncManager.
-                    // User-created deadlines never have courseId — use this as the discriminator.
-                    const isCanvasAssignment = isAssignment && event.courseId !== undefined;
-                    const isUserDeadline = isAssignment && event.courseId === undefined;
 
                     return (
                       <motion.div
@@ -535,9 +531,7 @@ export function CalendarMonthView({ onDateSelect, selectedDate }: CalendarMonthV
                             </div>
                             {/* Type badge — top right */}
                             <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/20 text-white">
-                              {isCanvasAssignment
-                                ? "Canvas"
-                                : isUserDeadline
+                              {isAssignment
                                 ? "Deadline"
                                 : event.type === "tutor"
                                 ? "Tutor"

@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import type { CanvasAssignment } from './CanvasCoursesContext';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface Session {
   id: number;
@@ -31,7 +30,7 @@ interface CalendarEvent {
   dueTime?: string;
   location?: string;
   completed?: boolean;
-  /** True for events created by the user (not synced from Canvas). Prevents courseId from being mistaken as a Canvas import. */
+  /** True for events created by the user. */
   isUserCreated?: boolean;
 }
 
@@ -46,127 +45,170 @@ interface CalendarContextType {
   removeCalendarEvent: (id: number) => void;
   removedSessionIds: number[];
   addRemovedSessionId: (id: number) => void;
-  syncCanvasAssignments: (assignments: CanvasAssignment[]) => void;
 }
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
 
-export function CalendarProvider({ children }: { children: ReactNode }) {
-  const [sessions, setSessions] = useState<Session[]>(() => {
-    const stored = localStorage.getItem("sessions_v3");
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    return [];
-  });
+const SESSIONS_KEY = "sessions_v6";
+const EVENTS_KEY = "calendarEvents_v6";
+const REMOVED_KEY = "removedSessions_v6";
+/** Bump this to force-clear stale browser bookings once (Chemistry/Daniyal leftover). */
+const WIPE_FLAG = "oc_wipe_stale_bookings_v2";
 
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(() => {
-    const stored = localStorage.getItem("calendarEvents_v4");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed.map((event: any) => ({
+const LEGACY_KEYS = [
+  "sessions_v3",
+  "sessions_v4",
+  "sessions_v5",
+  "calendarEvents_v4",
+  "calendarEvents_v5",
+  "removedSessions_v3",
+  "removedSessions_v4",
+  "removedSessions_v5",
+];
+
+function wipeLegacyBookingStorage(): void {
+  if (typeof localStorage === "undefined") return;
+  if (localStorage.getItem(WIPE_FLAG) === "1") return;
+  for (const key of LEGACY_KEYS) {
+    localStorage.removeItem(key);
+  }
+  // Also clear current keys once so in-memory leftovers from a prior HMR can't stick
+  localStorage.removeItem(SESSIONS_KEY);
+  localStorage.removeItem(EVENTS_KEY);
+  localStorage.removeItem(REMOVED_KEY);
+  localStorage.setItem(WIPE_FLAG, "1");
+}
+
+/** Start of local calendar day for a session date string like "Jul 19, 2026". */
+function sessionDayStart(dateStr: string): Date | null {
+  const parsed = new Date(dateStr);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
+function startOfToday(): Date {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+}
+
+/** True if the session is still today or in the future. */
+export function isSessionUpcomingByDate(dateStr: string): boolean {
+  const day = sessionDayStart(dateStr);
+  if (!day) return false;
+  return day.getTime() >= startOfToday().getTime();
+}
+
+function loadSessions(): Session[] {
+  wipeLegacyBookingStorage();
+  try {
+    const raw = localStorage.getItem(SESSIONS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Session[];
+    if (!Array.isArray(parsed)) return [];
+    const today = startOfToday();
+    return parsed
+      .filter((s) => !/daniyal/i.test(s.tutor || "") && !/daniyal/i.test(s.subject || ""))
+      .map((s) => {
+        const day = sessionDayStart(s.date);
+        if (s.status === "upcoming" && day && day.getTime() < today.getTime()) {
+          return { ...s, status: "completed" as const };
+        }
+        return s;
+      });
+  } catch {
+    return [];
+  }
+}
+
+function loadEvents(): CalendarEvent[] {
+  wipeLegacyBookingStorage();
+  try {
+    const raw = localStorage.getItem(EVENTS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((event: any) => ({
         ...event,
-        date: new Date(event.date)
-      }));
-    }
+        date: new Date(event.date),
+      }))
+      .filter(
+        (e: CalendarEvent) =>
+          !/daniyal/i.test(e.tutor || "") && !/daniyal/i.test(e.title || "")
+      );
+  } catch {
     return [];
-  });
+  }
+}
 
+export function CalendarProvider({ children }: { children: ReactNode }) {
+  const [sessions, setSessions] = useState<Session[]>(() => loadSessions());
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(() => loadEvents());
   const [removedSessionIds, setRemovedSessionIds] = useState<number[]>(() => {
-    const stored = localStorage.getItem("removedSessions_v3");
-    return stored ? JSON.parse(stored) : [];
+    wipeLegacyBookingStorage();
+    try {
+      const stored = localStorage.getItem(REMOVED_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
   });
 
-  // Save to localStorage whenever state changes
+  // Strip known stale demo bookings even if React kept old state across HMR
   useEffect(() => {
-    localStorage.setItem("sessions_v3", JSON.stringify(sessions));
+    setSessions((prev) => {
+      const next = prev.filter(
+        (s) => !/daniyal/i.test(s.tutor || "") && !/daniyal/i.test(s.subject || "")
+      );
+      return next.length === prev.length ? prev : next;
+    });
+    setCalendarEvents((prev) => {
+      const next = prev.filter(
+        (e) => !/daniyal/i.test(e.tutor || "") && !/daniyal/i.test(e.title || "")
+      );
+      return next.length === prev.length ? prev : next;
+    });
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
   }, [sessions]);
 
   useEffect(() => {
-    localStorage.setItem("calendarEvents_v4", JSON.stringify(calendarEvents));
+    localStorage.setItem(EVENTS_KEY, JSON.stringify(calendarEvents));
   }, [calendarEvents]);
 
   useEffect(() => {
-    localStorage.setItem("removedSessions_v3", JSON.stringify(removedSessionIds));
+    localStorage.setItem(REMOVED_KEY, JSON.stringify(removedSessionIds));
   }, [removedSessionIds]);
 
   const addSession = (session: Session) => {
-    setSessions(prev => [...prev, session]);
+    setSessions((prev) => [...prev, session]);
   };
 
   const addCalendarEvent = (event: CalendarEvent) => {
-    setCalendarEvents(prev => [...prev, event]);
+    setCalendarEvents((prev) => [...prev, event]);
   };
 
   const updateSession = (id: number, updates: Partial<Session>) => {
-    setSessions(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
   };
 
   const updateCalendarEvent = (id: number, updates: Partial<CalendarEvent>) => {
-    setCalendarEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    setCalendarEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
   };
 
   const removeSession = (id: number) => {
-    setSessions(prev => prev.filter(s => s.id !== id));
+    setSessions((prev) => prev.filter((s) => s.id !== id));
   };
 
   const removeCalendarEvent = (id: number) => {
-    setCalendarEvents(prev => prev.filter(e => e.id !== id));
+    setCalendarEvents((prev) => prev.filter((e) => e.id !== id));
   };
 
   const addRemovedSessionId = (id: number) => {
-    setRemovedSessionIds(prev => [...prev, id]);
+    setRemovedSessionIds((prev) => [...prev, id]);
   };
-
-  const syncCanvasAssignments = useCallback((assignments: CanvasAssignment[]) => {
-    // Remove existing Canvas assignment events first
-    setCalendarEvents((prev) => {
-      const nonAssignmentEvents = prev.filter((event) => event.type !== "assignment");
-
-      // Preserve completed state from existing assignment events — keyed by event ID
-      const existingCompletedMap = new Map(
-        prev.filter(e => e.type === "assignment").map(e => [e.id, e.completed ?? false])
-      );
-
-      // Read ignored IDs from localStorage so re-sync doesn't re-add ignored assignments
-      const storedIgnored = localStorage.getItem('ignoredAssignmentIds');
-      const ignoredIds: Set<string> = storedIgnored ? new Set(JSON.parse(storedIgnored)) : new Set();
-      
-      // Convert Canvas assignments to calendar events
-      const assignmentEvents: CalendarEvent[] = assignments
-        .filter(a => !ignoredIds.has(String(10000 + a.id)))
-        .map((assignment) => {
-          // Create a new Date object to ensure we're working with the exact due date
-          const dueDate = new Date(assignment.dueDate);
-          const dayOfWeek = dueDate.getDay();
-          
-          // Format time from the assignment's due date
-          const hours = dueDate.getHours();
-          const minutes = dueDate.getMinutes();
-          const period = hours >= 12 ? 'PM' : 'AM';
-          const displayHours = hours % 12 || 12;
-          const timeString = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-          
-          return {
-            id: 10000 + assignment.id, // Use high IDs to avoid conflicts
-            type: "assignment" as const,
-            title: assignment.name,
-            startTime: timeString,
-            endTime: timeString,
-            day: dayOfWeek,
-            date: dueDate, // Use the exact due date from the assignment
-            courseName: assignment.courseName,
-            courseId: assignment.courseId,
-            dueTime: timeString,
-            color: `from-[${assignment.courseColor}] to-[${assignment.courseColor}]`,
-            completed: existingCompletedMap.get(10000 + assignment.id) ?? false,
-          };
-        });
-
-      // Add assignment events to calendar
-      return [...nonAssignmentEvents, ...assignmentEvents];
-    });
-  }, []);
 
   return (
     <CalendarContext.Provider
@@ -181,7 +223,6 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
         removeCalendarEvent,
         removedSessionIds,
         addRemovedSessionId,
-        syncCanvasAssignments,
       }}
     >
       {children}
@@ -192,9 +233,10 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
 export function useCalendar() {
   const context = useContext(CalendarContext);
   if (context === undefined) {
-    // More helpful error message for debugging
-    console.error('useCalendar hook was called outside of CalendarProvider. This may be due to hot module reload. Please refresh the page.');
-    throw new Error('useCalendar must be used within a CalendarProvider');
+    console.error(
+      "useCalendar hook was called outside of CalendarProvider. This may be due to hot module reload. Please refresh the page."
+    );
+    throw new Error("useCalendar must be used within a CalendarProvider");
   }
   return context;
 }

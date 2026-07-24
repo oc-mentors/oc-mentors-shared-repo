@@ -13,7 +13,7 @@ import { AddEventModal } from "../components/AddEventModal";
 import type { SavedEventData } from "../components/AddEventModal";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
-import { useCalendar } from "../contexts/CalendarContext";
+import { useCalendar, isSessionUpcomingByDate } from "../contexts/CalendarContext";
 
 const IGNORED_IDS_KEY   = 'ignoredAssignmentIds';
 const COMPLETED_IDS_KEY = 'completedAssignmentIds';
@@ -197,7 +197,9 @@ export default function SchedulePage() {
     }
   }, [location]);
 
-  const upcomingSessions = sessions.filter((s) => s.status === "upcoming");
+  const upcomingSessions = sessions.filter(
+    (s) => s.status === "upcoming" && isSessionUpcomingByDate(s.date)
+  );
   const pastSessions = sessions.filter((s) => s.status === "completed");
 
   // Week view helper functions

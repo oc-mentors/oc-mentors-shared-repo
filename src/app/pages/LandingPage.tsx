@@ -31,8 +31,8 @@ const FEATURES = [
     Icon: Palette,
   },
   {
-    title: "Canvas friendly",
-    desc: "Keep assignments and deadlines in view.",
+    title: "Schedule & deadlines",
+    desc: "Keep sessions and deadlines in one place.",
     Icon: LayoutGrid,
   },
   {
@@ -130,7 +130,7 @@ export default function LandingPage() {
               What you get
             </h2>
             <p className="text-sm text-center mb-6" style={{ color: colors.textSecondary }}>
-              Tools and people in one place: notes, community, scheduling, and Canvas aware workflows in the app.
+              Tools and people in one place: notes, community, scheduling, and mentor matching in the app.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {FEATURES.map(({ title, desc, Icon }) => (

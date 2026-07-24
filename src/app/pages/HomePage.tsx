@@ -1,21 +1,28 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router";
-import { Clock, Plus, BookOpen, Users } from "lucide-react";
+import { Clock, Plus, BookOpen, Users, Check, X, ListPlus, CalendarDays, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { SubjectIcon } from "../components/SubjectIcon";
-import { useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLearningComfort } from "../contexts/LearningComfortContext";
-import { useDemoModeOptional } from "../contexts/DemoModeContext";
 import { BionicText } from "../components/BionicText";
 import { useAllCourseColors } from "../hooks/useCourseColor";
-import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
-import { useCalendar } from "../contexts/CalendarContext";
+import { useCalendar, isSessionUpcomingByDate } from "../contexts/CalendarContext";
 import { subjects } from "../data/courses";
+import {
+  getTodayPlan,
+  saveTodayPlan,
+  createEmptyTodayPlan,
+  combinedPlanProgress,
+  getTodayScheduleItems,
+  newTaskId,
+  type DailyPlan,
+  type PlanTask,
+} from "../lib/learningPlan";
 import TutorHomePage from "./TutorHomePage";
 // Inline placeholder (no external request) to avoid ERR_NAME_NOT_RESOLVED
 const imgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect fill='%23e2e8f0' width='150' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
@@ -31,18 +38,95 @@ export default function HomePage() {
   const [customSubjects, setCustomSubjects] = useState<SubjectItem[]>([]);
   const [addSubjectOpen, setAddSubjectOpen] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState("");
-  const navigate = useNavigate();
+  const [plan, setPlan] = useState<DailyPlan | null>(null);
+  const [planEditorOpen, setPlanEditorOpen] = useState(false);
+  const [draftTasks, setDraftTasks] = useState<PlanTask[]>([]);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
   const { user } = useAuth();
   const { colors, accentColor } = useTheme();
   const { reduceDistractions } = useLearningComfort();
-  const demoMode = useDemoModeOptional();
-  const isExpoDemo = demoMode?.isDemoMode ?? false;
   const courseColors = useAllCourseColors();
-  const { isCourseIgnored } = useCanvasCourses();
-  const { sessions, removedSessionIds } = useCalendar();
+  const {
+    sessions,
+    removedSessionIds,
+    calendarEvents,
+    updateSession,
+    updateCalendarEvent,
+  } = useCalendar();
   const upcomingMeetings = sessions.filter(
-    (s) => s.status === "upcoming" && !removedSessionIds.includes(s.id)
+    (s) =>
+      s.status === "upcoming" &&
+      !removedSessionIds.includes(s.id) &&
+      isSessionUpcomingByDate(s.date)
   );
+
+  const scheduleItems = useMemo(
+    () => getTodayScheduleItems(sessions, calendarEvents, removedSessionIds),
+    [sessions, calendarEvents, removedSessionIds]
+  );
+
+  const reloadPlan = useCallback(() => {
+    setPlan(getTodayPlan(user?.id));
+  }, [user?.id]);
+
+  useEffect(() => {
+    reloadPlan();
+    const onChange = () => reloadPlan();
+    window.addEventListener("learningPlanChange", onChange);
+    return () => window.removeEventListener("learningPlanChange", onChange);
+  }, [reloadPlan]);
+
+  const { percent, nextLabel, total, done } = combinedPlanProgress(plan, scheduleItems);
+  const hasManualTasks = !!plan && plan.tasks.length > 0;
+  const hasPlan = hasManualTasks || scheduleItems.length > 0;
+
+  const openPlanEditor = (seedFromExisting = true) => {
+    const existing = seedFromExisting ? getTodayPlan(user?.id) : null;
+    setDraftTasks(existing?.tasks?.length ? existing.tasks.map((t) => ({ ...t })) : []);
+    setNewTaskTitle("");
+    setPlanEditorOpen(true);
+  };
+
+  const addDraftTask = () => {
+    const title = newTaskTitle.trim();
+    if (!title) return;
+    setDraftTasks((prev) => [...prev, { id: newTaskId(), title, done: false }]);
+    setNewTaskTitle("");
+  };
+
+  const removeDraftTask = (id: string) => {
+    setDraftTasks((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const savePlanFromEditor = () => {
+    if (!user?.id) return;
+    const next: DailyPlan = {
+      ...createEmptyTodayPlan(),
+      tasks: draftTasks.filter((t) => t.title.trim()),
+    };
+    // Persist even an empty task list so progress still reflects schedule items
+    saveTodayPlan(user.id, next);
+    setPlan(next);
+    setPlanEditorOpen(false);
+  };
+
+  const toggleTaskDone = (taskId: string) => {
+    if (!user?.id || !plan) return;
+    const next: DailyPlan = {
+      ...plan,
+      tasks: plan.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)),
+    };
+    saveTodayPlan(user.id, next);
+    setPlan(next);
+  };
+
+  const toggleScheduleItem = (item: ReturnType<typeof getTodayScheduleItems>[number]) => {
+    if (item.kind === "session") {
+      updateSession(item.sourceId, { status: item.done ? "upcoming" : "completed" });
+    } else {
+      updateCalendarEvent(item.sourceId, { completed: !item.done });
+    }
+  };
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showTopFade, setShowTopFade] = useState(false);
@@ -61,8 +145,7 @@ export default function HomePage() {
       "there";
     return n && n !== "User" && n !== "user" ? n : "there";
   })();
-  const visibleSubjects = subjects.filter((s) => !isCourseIgnored(s.courseId));
-  const allDisplaySubjects: SubjectItem[] = [...visibleSubjects, ...customSubjects];
+  const allDisplaySubjects: SubjectItem[] = [...subjects, ...customSubjects];
 
   const handleAddSubject = () => {
     const name = newSubjectName.trim();
@@ -82,31 +165,14 @@ export default function HomePage() {
   }
 
   return (
-    <div
-      className={
-        isExpoDemo
-          ? "w-full flex flex-col"
-          : "h-screen overflow-hidden flex flex-col"
-      }
-      style={{ backgroundColor: colors.bgPrimary }}
-    >
+    <div className="h-screen overflow-hidden flex flex-col" style={{ backgroundColor: colors.bgPrimary }}>
       <div className={`${reduceDistractions ? "max-w-lg" : "max-w-md"} mx-auto w-full h-full flex flex-col`}>
         {/* Fixed Header */}
         <div className="flex-shrink-0 px-6 pt-12 pb-3">
           <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-1 min-w-0">
-              <h2 className="text-sm font-bold tracking-[1.95px] uppercase" style={{ color: colors.textSecondary }}>
-                Socratic OC
-              </h2>
-              {isExpoDemo && (
-                <span
-                  className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit"
-                  style={{ backgroundColor: `${accentColor.primary}25`, color: accentColor.primary }}
-                >
-                  Expo demo · Maya
-                </span>
-              )}
-            </div>
+            <h2 className="text-sm font-bold tracking-[1.95px] uppercase" style={{ color: colors.textSecondary }}>
+              Socratic OC
+            </h2>
             <ProfileButton />
           </div>
         </div>
@@ -166,28 +232,31 @@ export default function HomePage() {
                 )}
               </div>
 
-              <Link to="/progress">
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`w-full mt-6 py-4 rounded-2xl font-bold text-white transition-shadow cursor-pointer ${reduceDistractions ? "text-[19px]" : "text-[17px]"}`}
-                  style={{
-                    backgroundColor: accentColor.primary,
-                    boxShadow: `0px 4px 24px 0px ${accentColor.primary}40`,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = `0px 6px 32px 0px ${accentColor.primary}60`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = `0px 4px 24px 0px ${accentColor.primary}40`;
-                  }}
-                >
-                  <BionicText text="Start Today's Learning Plan" className="text-white font-bold" />
-                </motion.button>
-              </Link>
+              <motion.button
+                type="button"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => openPlanEditor(true)}
+                className={`w-full mt-6 py-4 rounded-2xl font-bold text-white transition-shadow cursor-pointer ${reduceDistractions ? "text-[19px]" : "text-[17px]"}`}
+                style={{
+                  backgroundColor: accentColor.primary,
+                  boxShadow: `0px 4px 24px 0px ${accentColor.primary}40`,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = `0px 6px 32px 0px ${accentColor.primary}60`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = `0px 4px 24px 0px ${accentColor.primary}40`;
+                }}
+              >
+                <BionicText
+                  text={hasPlan ? "Continue Today's Learning Plan" : "Create Today's Learning Plan"}
+                  className="text-white font-bold"
+                />
+              </motion.button>
 
               <div className="grid grid-cols-2 gap-2 mt-5">
                 <Link to="/notes">
@@ -218,62 +287,209 @@ export default function HomePage() {
               transition={{ delay: 0.3 }}
               className="px-6 mb-8"
             >
-              <h3 className={`font-bold mb-4 ${reduceDistractions ? "text-xl" : "text-lg"}`} style={{ color: colors.textPrimary }}>
-                <BionicText text="Today's Plan" />
-              </h3>
-              <motion.div
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className="rounded-3xl p-6 border shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer"
-                style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
-              >
-                <div className="flex items-center gap-6">
-                  <div className="relative w-24 h-24">
-                    <svg className="transform -rotate-90 w-24 h-24">
-                      <circle cx="48" cy="48" r="44" stroke={`${accentColor.primary}30`} strokeWidth="8" fill="none" />
-                      <motion.circle
-                        cx="48" cy="48" r="44"
-                        stroke={accentColor.primary}
-                        strokeWidth="8"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeDasharray={2 * Math.PI * 44}
-                        initial={{ strokeDashoffset: 2 * Math.PI * 44 }}
-                        animate={{
-                          strokeDashoffset:
-                            2 * Math.PI * 44 -
-                            ((isExpoDemo ? 72 : 80) / 100) * 2 * Math.PI * 44,
-                        }}
-                        transition={{ duration: 1.5, ease: "easeOut" }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
-                        <BionicText text={isExpoDemo ? "72%" : "80%"} />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`font-bold ${reduceDistractions ? "text-xl" : "text-lg"}`} style={{ color: colors.textPrimary }}>
+                  <BionicText text="Today's Plan" />
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => openPlanEditor(true)}
+                  className="text-xs font-semibold"
+                  style={{ color: accentColor.primary }}
+                >
+                  {hasManualTasks ? "Edit" : "Add tasks"}
+                </button>
+              </div>
+
+              {!hasPlan ? (
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => openPlanEditor(false)}
+                  className="rounded-3xl p-6 border shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: `${accentColor.primary}20` }}
+                    >
+                      <ListPlus className="w-6 h-6" style={{ color: accentColor.primary }} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold mb-1" style={{ color: colors.textPrimary }}>
+                        <BionicText text="No plan yet" />
+                      </h4>
+                      <p className="text-sm mb-3" style={{ color: colors.textSecondary }}>
+                        <BionicText text="Add tasks, or book a session / add calendar events — they show up here automatically." />
+                      </p>
+                      <span
+                        className="inline-flex text-sm font-semibold"
+                        style={{ color: accentColor.primary }}
+                      >
+                        <BionicText text="Create your plan →" />
                       </span>
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-bold mb-1" style={{ color: colors.textPrimary }}>
-                      <BionicText text={isExpoDemo ? "72% Complete" : "80% Complete"} />
-                    </h4>
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-medium" style={{ color: colors.textSecondary }}>
-                        <BionicText text="Next task:" />
-                      </p>
-                      <p className="text-sm" style={{ color: colors.textSecondary }}>
-                        <BionicText
-                          text={
-                            isExpoDemo
-                              ? "Chem lab report due tomorrow · 25 pts"
-                              : "Finish Math Homework (2 min)"
-                          }
+                </motion.div>
+              ) : (
+                <motion.div
+                  className="rounded-3xl p-6 border shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
+                >
+                  <div className="flex items-center gap-6 mb-4">
+                    <div className="relative w-24 h-24 flex-shrink-0">
+                      <svg className="transform -rotate-90 w-24 h-24">
+                        <circle cx="48" cy="48" r="44" stroke={`${accentColor.primary}30`} strokeWidth="8" fill="none" />
+                        <motion.circle
+                          cx="48" cy="48" r="44"
+                          stroke={accentColor.primary}
+                          strokeWidth="8"
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeDasharray={2 * Math.PI * 44}
+                          initial={{ strokeDashoffset: 2 * Math.PI * 44 }}
+                          animate={{ strokeDashoffset: 2 * Math.PI * 44 - (percent / 100) * 2 * Math.PI * 44 }}
+                          transition={{ duration: 1, ease: "easeOut" }}
                         />
-                      </p>
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+                          <BionicText text={`${percent}%`} />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-lg font-bold mb-1" style={{ color: colors.textPrimary }}>
+                        <BionicText text={percent === 100 ? "All done for today!" : `${percent}% Complete`} />
+                      </h4>
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium" style={{ color: colors.textSecondary }}>
+                          <BionicText text={nextLabel ? "Up next:" : "Nice work — everything for today is done."} />
+                        </p>
+                        {nextLabel && (
+                          <p className="text-sm" style={{ color: colors.textSecondary }}>
+                            <BionicText text={nextLabel} />
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
+
+                  {scheduleItems.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold uppercase tracking-wide" style={{ color: colors.textTertiary }}>
+                          Sessions & calendar
+                        </p>
+                        <Link to="/schedule" className="text-xs font-semibold" style={{ color: accentColor.primary }}>
+                          Schedule
+                        </Link>
+                      </div>
+                      <ul className="space-y-2">
+                        {scheduleItems.map((item) => (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              onClick={() => toggleScheduleItem(item)}
+                              className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left border"
+                              style={{
+                                backgroundColor: item.done ? `${accentColor.primary}12` : colors.bgTertiary,
+                                borderColor: item.done ? accentColor.primary : colors.borderSecondary,
+                              }}
+                            >
+                              <span
+                                className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                                style={{
+                                  borderColor: item.done ? accentColor.primary : colors.borderSecondary,
+                                  backgroundColor: item.done ? accentColor.primary : "transparent",
+                                }}
+                              >
+                                {item.done && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                              </span>
+                              <span
+                                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                                style={{ backgroundColor: `${accentColor.primary}18` }}
+                              >
+                                {item.kind === "session" ? (
+                                  <GraduationCap className="w-4 h-4" style={{ color: accentColor.primary }} />
+                                ) : (
+                                  <CalendarDays className="w-4 h-4" style={{ color: accentColor.primary }} />
+                                )}
+                              </span>
+                              <span className="flex-1 min-w-0">
+                                <span
+                                  className={`text-sm block truncate ${item.done ? "line-through opacity-70" : ""}`}
+                                  style={{ color: colors.textPrimary }}
+                                >
+                                  {item.title}
+                                </span>
+                                <span className="text-[11px] block truncate" style={{ color: colors.textTertiary }}>
+                                  {item.timeLabel} · {item.meta}
+                                </span>
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {hasManualTasks && (
+                    <div className="mb-2">
+                      <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: colors.textTertiary }}>
+                        Your tasks
+                      </p>
+                      <ul className="space-y-2">
+                        {plan!.tasks.map((task) => (
+                          <li key={task.id}>
+                            <button
+                              type="button"
+                              onClick={() => toggleTaskDone(task.id)}
+                              className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left border"
+                              style={{
+                                backgroundColor: task.done ? `${accentColor.primary}12` : colors.bgTertiary,
+                                borderColor: task.done ? accentColor.primary : colors.borderSecondary,
+                              }}
+                            >
+                              <span
+                                className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                                style={{
+                                  borderColor: task.done ? accentColor.primary : colors.borderSecondary,
+                                  backgroundColor: task.done ? accentColor.primary : "transparent",
+                                }}
+                              >
+                                {task.done && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                              </span>
+                              <span
+                                className={`text-sm flex-1 ${task.done ? "line-through opacity-70" : ""}`}
+                                style={{ color: colors.textPrimary }}
+                              >
+                                {task.title}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {!hasManualTasks && scheduleItems.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => openPlanEditor(false)}
+                      className="w-full mt-1 py-2.5 rounded-xl text-sm font-semibold border border-dashed"
+                      style={{ color: accentColor.primary, borderColor: accentColor.primary }}
+                    >
+                      + Add personal tasks
+                    </button>
+                  )}
+
+                  <p className="text-xs mt-3" style={{ color: colors.textTertiary }}>
+                    {done} of {total} items done
+                  </p>
+                </motion.div>
+              )}
             </motion.div>
             )}
 
@@ -525,6 +741,156 @@ export default function HomePage() {
         </div>
       </div>
       <BottomNav />
+
+      <AnimatePresence>
+        {planEditorOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4"
+            style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
+            onClick={() => setPlanEditorOpen(false)}
+          >
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 24, opacity: 0 }}
+              transition={{ type: "spring", damping: 26, stiffness: 320 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-3xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto"
+              style={{ backgroundColor: colors.bgCard }}
+            >
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div>
+                  <h3 className="text-xl font-bold" style={{ color: colors.textPrimary }}>
+                    Today's Learning Plan
+                  </h3>
+                  <p className="text-sm mt-1" style={{ color: colors.textSecondary }}>
+                    Add personal tasks. Booked sessions and calendar events for today are included automatically.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPlanEditorOpen(false)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: colors.bgTertiary }}
+                >
+                  <X className="w-4 h-4" style={{ color: colors.textPrimary }} />
+                </button>
+              </div>
+
+              {scheduleItems.length > 0 && (
+                <div
+                  className="mt-4 mb-3 rounded-2xl p-3 border"
+                  style={{ backgroundColor: colors.bgTertiary, borderColor: colors.borderSecondary }}
+                >
+                  <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: colors.textTertiary }}>
+                    Already on today's plan
+                  </p>
+                  <ul className="space-y-1.5">
+                    {scheduleItems.map((item) => (
+                      <li key={item.id} className="flex items-center gap-2 text-sm" style={{ color: colors.textPrimary }}>
+                        {item.kind === "session" ? (
+                          <GraduationCap className="w-3.5 h-3.5 flex-shrink-0" style={{ color: accentColor.primary }} />
+                        ) : (
+                          <CalendarDays className="w-3.5 h-3.5 flex-shrink-0" style={{ color: accentColor.primary }} />
+                        )}
+                        <span className="truncate flex-1">{item.title}</span>
+                        <span className="text-[11px] flex-shrink-0" style={{ color: colors.textTertiary }}>{item.timeLabel}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex gap-3 mt-3">
+                    <Link to="/schedule" className="text-xs font-semibold" style={{ color: accentColor.primary }} onClick={() => setPlanEditorOpen(false)}>
+                      Open schedule
+                    </Link>
+                    <Link to="/book-session" className="text-xs font-semibold" style={{ color: accentColor.primary }} onClick={() => setPlanEditorOpen(false)}>
+                      Book a session
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 mt-4 mb-4">
+                <input
+                  type="text"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addDraftTask())}
+                  placeholder="e.g. Review chem notes"
+                  className="flex-1 rounded-xl px-4 py-3 outline-none border-2 text-sm"
+                  style={{
+                    backgroundColor: colors.bgPrimary,
+                    color: colors.textPrimary,
+                    borderColor: colors.borderSecondary,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={addDraftTask}
+                  disabled={!newTaskTitle.trim()}
+                  className="px-4 rounded-xl font-semibold text-white disabled:opacity-40"
+                  style={{ backgroundColor: accentColor.primary }}
+                >
+                  Add
+                </button>
+              </div>
+
+              {draftTasks.length === 0 ? (
+                <p className="text-sm py-4 text-center" style={{ color: colors.textTertiary }}>
+                  {scheduleItems.length > 0
+                    ? "No personal tasks yet — your sessions and events above still count toward today's plan."
+                    : "No tasks yet — add some, or book a session / add a calendar event."}
+                </p>
+              ) : (
+                <ul className="space-y-2 mb-5">
+                  {draftTasks.map((task) => (
+                    <li
+                      key={task.id}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 border"
+                      style={{ backgroundColor: colors.bgTertiary, borderColor: colors.borderSecondary }}
+                    >
+                      <span className="text-sm flex-1" style={{ color: colors.textPrimary }}>
+                        {task.title}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeDraftTask(task.id)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: colors.bgCard }}
+                        aria-label="Remove task"
+                      >
+                        <X className="w-3.5 h-3.5" style={{ color: colors.textSecondary }} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPlanEditorOpen(false)}
+                  className="flex-1 py-3 rounded-xl font-semibold"
+                  style={{ backgroundColor: colors.bgTertiary, color: colors.textSecondary }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={savePlanFromEditor}
+                  disabled={draftTasks.length === 0 && scheduleItems.length === 0}
+                  className="flex-1 py-3 rounded-xl font-semibold text-white disabled:opacity-40"
+                  style={{ backgroundColor: accentColor.primary }}
+                >
+                  {draftTasks.length === 0 && scheduleItems.length > 0 ? "Done" : "Save plan"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
