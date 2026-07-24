@@ -1,38 +1,12 @@
 import { useNavigate } from "react-router";
-import { ArrowLeft, Check, Moon, Sun, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, Moon, Sun } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme, accentColors } from "../contexts/ThemeContext";
 import { BottomNav } from "../components/BottomNav";
-import { useState, useEffect } from "react";
-import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
-
-const SYNC_KEY = "canvas_sync_accent_v1";
 
 export default function ThemeCustomizationPage() {
   const navigate = useNavigate();
   const { mode, accentColor, setMode, setAccentColor, colors } = useTheme();
-  const { syncCoursesToAccent, resetCourseColors } = useCanvasCourses();
-  const [syncToAccent, setSyncToAccent] = useState<boolean>(() => {
-    return localStorage.getItem(SYNC_KEY) === "true";
-  });
-
-  // When accent color changes while sync is ON, re-sync automatically
-  useEffect(() => {
-    if (syncToAccent) {
-      syncCoursesToAccent(accentColor.primary);
-    }
-  }, [accentColor.primary, syncToAccent]);
-
-  const handleToggleSync = () => {
-    const next = !syncToAccent;
-    setSyncToAccent(next);
-    localStorage.setItem(SYNC_KEY, String(next));
-    if (next) {
-      syncCoursesToAccent(accentColor.primary);
-    } else {
-      resetCourseColors();
-    }
-  };
 
   return (
     <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
@@ -186,44 +160,6 @@ export default function ThemeCustomizationPage() {
                 </motion.button>
               ))}
             </div>
-
-            {/* Sync Canvas Courses Toggle */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="mt-4 rounded-2xl p-4 border flex items-center justify-between gap-4"
-              style={{ backgroundColor: colors.bgCard, borderColor: syncToAccent ? `${accentColor.primary}50` : colors.borderPrimary }}
-            >
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: syncToAccent ? `${accentColor.primary}20` : colors.bgTertiary }}
-                >
-                  <RefreshCw className="w-5 h-5" style={{ color: syncToAccent ? accentColor.primary : colors.textSecondary }} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[14px] font-medium" style={{ color: colors.textPrimary }}>
-                    Sync Canvas Course Colors
-                  </p>
-                  <p className="text-[12px] mt-0.5" style={{ color: colors.textSecondary }}>
-                    {syncToAccent ? "All course colors match your accent" : "Use default course colors"}
-                  </p>
-                </div>
-              </div>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleToggleSync}
-                className="relative w-[51px] h-[31px] rounded-full transition-colors flex-shrink-0"
-                style={{ backgroundColor: syncToAccent ? accentColor.primary : colors.bgTertiary }}
-              >
-                <motion.div
-                  animate={{ x: syncToAccent ? 20 : 0 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  className="absolute left-[3px] top-[3px] w-[25px] h-[25px] bg-white rounded-full shadow-md"
-                />
-              </motion.button>
-            </motion.div>
           </div>
 
           {/* Preview Section */}

@@ -5,8 +5,7 @@ import { useTheme, accentColors, ThemeColors } from "../contexts/ThemeContext";
 import { useAllCourseColors } from "../hooks/useCourseColor";
 import { getEventColors } from "../utils/eventColors";
 import { DateTimeWheelPicker, DateWheelPicker, TimeWheelPicker } from "./DeadlinePickers";
-import { useCanvasAuth } from "../contexts/CanvasAuthContext";
-import { useCanvasCourses } from "../contexts/CanvasCoursesContext";
+import { subjects } from "../data/courses";
 import { useScrollLock } from "../hooks/useScrollLock";
 
 const COMPLETED_IDS_KEY = 'completedAssignmentIds';
@@ -39,7 +38,7 @@ interface CalendarEvent {
   dueTime?: string;
   location?: string;
   completed?: boolean;
-  /** True for events created by the user — prevents courseId being mistaken as a Canvas import. */
+  /** True for events created by the user. */
   isUserCreated?: boolean;
 }
 
@@ -53,8 +52,6 @@ interface EventDetailsModalProps {
 export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventDetailsModalProps) {
   const { colors, accentColor } = useTheme();
   const courseColors = useAllCourseColors();
-  const { isCanvasConnected } = useCanvasAuth();
-  const { courses, isCourseIgnored } = useCanvasCourses();
   // Lock background scroll while the modal is open
   useScrollLock(!!event);
 
@@ -80,7 +77,9 @@ export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventD
   const [editLinkedCourseId, setEditLinkedCourseId] = useState<number | null>(null);
   const [editLinkedCourseName, setEditLinkedCourseName] = useState<string>("");
 
-  const availableCourses = courses.filter((c) => !isCourseIgnored(c.id));
+  const availableCourses = subjects
+    .filter((s) => s.courseId > 0)
+    .map((s) => ({ id: s.courseId, name: s.name }));
 
   const effectiveEditColor = editLinkedCourseId
     ? (courseColors[editLinkedCourseId] || accentColor.primary)
@@ -236,8 +235,7 @@ export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventD
     onClose();
   };
 
-  const isCanvasAssignment = event.type === "assignment" && event.courseId !== undefined && !event.isUserCreated;
-  const isUserDeadline     = event.type === "assignment" && (event.courseId === undefined || !!event.isUserCreated);
+  const isUserDeadline = event.type === "assignment";
 
   const handleToggleComplete = () => {
     const nowCompleted = !event.completed;
@@ -293,7 +291,7 @@ export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventD
     </motion.button>
   );
 
-  const CanvasRemoveButton = () => (
+  const RemoveAssignmentButton = () => (
     <motion.button
       whileTap={{ scale: 0.96 }}
       onClick={() => setShowRemoveConfirm(true)}
@@ -334,7 +332,6 @@ export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventD
     effectiveEditColor,
     availableCourses,
     courseColors,
-    isCanvasConnected,
     toggleEditCourse,
     cardBg,
   }: {
@@ -346,7 +343,6 @@ export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventD
     effectiveEditColor: string;
     availableCourses: { id: number; name: string }[];
     courseColors: Record<number, string>;
-    isCanvasConnected: boolean;
     toggleEditCourse: (id: number, name: string) => void;
     cardBg: string;
   }) {
@@ -404,8 +400,8 @@ export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventD
           </div>
         </div>
 
-        {/* ── Course assignment (Canvas connected only) ── */}
-        {isCanvasConnected && availableCourses.length > 0 && (
+        {/* ── Course assignment (optional) ── */}
+        {availableCourses.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-3">
               <BookOpen className="w-4 h-4 flex-shrink-0" style={{ color: colors.textSecondary }} />
@@ -473,17 +469,15 @@ export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventD
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b flex-shrink-0" style={{ borderColor: colors.borderPrimary }}>
           <h2 className="text-[22px] font-bold" style={{ color: colors.textPrimary }}>
-            {isCanvasAssignment
-              ? "Assignment Details"
-              : isEditing
+            {isEditing
               ? (isUserDeadline ? "Edit Deadline" : "Edit Event")
               : isUserDeadline
               ? "Deadline Details"
               : "Event Details"}
           </h2>
           <div className="flex items-center gap-2">
-            {/* Trash: always visible for regular events (view + edit), and for user deadlines in view + edit mode */}
-            {!isCanvasAssignment && !isUserDeadline && (
+            {/* Trash: always visible for regular events and deadlines */}
+            {!isUserDeadline && (
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -528,58 +522,7 @@ export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventD
               transition={{ type: "spring", stiffness: 340, damping: 32, mass: 0.75 }}
               className="p-6 space-y-5 pb-8"
             >
-              {/* ── Canvas assignment view ── */}
-              {isCanvasAssignment ? (
-                <>
-                  <div className="rounded-xl p-4" style={{ background: gradient }}>
-                    <div className="flex items-start gap-3 mb-2">
-                      <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Flag className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-white text-[20px] font-bold mb-1">{event.title}</h3>
-                        {event.courseName && (
-                          <div className="flex items-center gap-2 text-white/90 text-[14px]">
-                            <BookOpen className="w-4 h-4" />
-                            <span>{event.courseName}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-white/90 text-[14px] space-y-1 mt-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>Due: {formatDate(event.date)}</span>
-                      </div>
-                      {event.dueTime && (
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          <span>{event.dueTime}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <span
-                      className="inline-block px-4 py-2 rounded-full text-[13px] font-semibold"
-                      style={{ backgroundColor: solid + "22", color: solid }}
-                    >
-                      Canvas Assignment
-                    </span>
-                  </div>
-
-                  <div className="rounded-xl p-4" style={{ backgroundColor: colors.bgSecondary }}>
-                    <p className="text-[14px]" style={{ color: colors.textSecondary }}>
-                      This assignment was imported from Canvas. View it in Canvas to submit or see more details.
-                    </p>
-                  </div>
-
-                  <MarkCompleteButton />
-                  <CanvasRemoveButton />
-                </>
-
-              ) : isEditing && isUserDeadline ? (
+              {isEditing && isUserDeadline ? (
                 /* ── Deadline edit form ── */
                 <>
                   <div ref={editTitleRef}>
@@ -623,7 +566,6 @@ export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventD
                     effectiveEditColor={effectiveEditColor}
                     availableCourses={availableCourses}
                     courseColors={courseColors}
-                    isCanvasConnected={isCanvasConnected}
                     toggleEditCourse={toggleEditCourse}
                     cardBg={colors.bgCard}
                   />
@@ -758,7 +700,6 @@ export function EventDetailsModal({ event, onClose, onDelete, onUpdate }: EventD
                     effectiveEditColor={effectiveEditColor}
                     availableCourses={availableCourses}
                     courseColors={courseColors}
-                    isCanvasConnected={isCanvasConnected}
                     toggleEditCourse={toggleEditCourse}
                     cardBg={colors.bgCard}
                   />

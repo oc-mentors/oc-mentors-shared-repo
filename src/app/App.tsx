@@ -7,13 +7,10 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LearningComfortProvider } from "./contexts/LearningComfortContext";
 import { CalendarProvider } from "./contexts/CalendarContext";
-import { CanvasAuthProvider } from "./contexts/CanvasAuthContext";
-import { CanvasCoursesProvider } from "./contexts/CanvasCoursesContext";
 import { ConversationsProvider } from "./contexts/ConversationsContext";
 import { ConnectionsProvider } from "./contexts/ConnectionsContext";
 import { TutorRequestsProvider } from "./contexts/TutorRequestsContext";
 import { TutorsProvider } from "./contexts/TutorsContext";
-import { CanvasSyncManager } from "./components/CanvasSyncManager";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import SplashPage from "./pages/SplashPage";
@@ -27,6 +24,7 @@ import TutorAvailabilityPage from "./pages/TutorAvailabilityPage";
 import TutorAnalyticsPage from "./pages/TutorAnalyticsPage";
 import TutorOnboardingQuizPage from "./pages/TutorOnboardingQuizPage";
 import ProgressPage from "./pages/ProgressPage";
+import ZotPlannerPage from "./pages/ZotPlannerPage";
 import LearningStyleQuizPage from "./pages/LearningStyleQuizPage";
 import SettingsPage from "./pages/SettingsPage";
 import MessagesPage from "./pages/MessagesPage";
@@ -38,8 +36,6 @@ import TutorDetailPage from "./pages/TutorDetailPage";
 import SchedulePage from "./pages/SchedulePage";
 import VideoSessionPage from "./pages/VideoSessionPage";
 import RateSessionPage from "./pages/RateSessionPage";
-import CanvasClassesPage from "./pages/CanvasClassesPage";
-import CanvasLoginPage from "./pages/CanvasLoginPage";
 import AnnouncementsPage from "./pages/AnnouncementsPage";
 import AssignmentsPage from "./pages/AssignmentsPage";
 import PastLessonsPage from "./pages/PastLessonsPage";
@@ -74,14 +70,9 @@ export default function App() {
             <ThemeProvider>
               <LearningComfortProvider>
               <CalendarProvider>
-                <CanvasAuthProvider>
-                  <CanvasCoursesProvider>
-                    <CanvasSyncManager />
                     <ScrollToTop />
                     <ThemedToaster />
                     <SafeAppRoutes />
-                  </CanvasCoursesProvider>
-                </CanvasAuthProvider>
               </CalendarProvider>
               </LearningComfortProvider>
             </ThemeProvider>
@@ -135,7 +126,8 @@ function AppRoutes() {
     if (needsTutorOnboarding && location.pathname !== "/tutor-onboarding") {
       return <Navigate to="/tutor-onboarding" replace />;
     }
-    if (needsQuiz && location.pathname !== "/learning-quiz") {
+    // Allow /profile during the quiz so users can open the top avatar and log out
+    if (needsQuiz && location.pathname !== "/learning-quiz" && location.pathname !== "/profile") {
       return <Navigate to="/learning-quiz" replace />;
     }
     return element;
@@ -145,7 +137,14 @@ function AppRoutes() {
   useEffect(() => {
     if (!needsQuiz) return;
     const pathname = location.pathname || "/";
-    if (pathname === "/learning-quiz" || pathname === "/login" || pathname === "/splash") return;
+    if (
+      pathname === "/learning-quiz" ||
+      pathname === "/profile" ||
+      pathname === "/login" ||
+      pathname === "/splash"
+    ) {
+      return;
+    }
     navigate("/learning-quiz", { replace: true });
   }, [needsQuiz, location.pathname, navigate]);
 
@@ -157,12 +156,12 @@ function AppRoutes() {
     navigate("/tutor-onboarding", { replace: true });
   }, [needsTutorOnboarding, location.pathname, navigate]);
 
-  // Auto-dismiss the login animation after 1.3 s, then AnimatePresence fades it out over 0.55 s
+  // Hold welcome until auth+profile are ready, then show it for 1.3s before revealing the quiz
   useEffect(() => {
-    if (!showLoginAnimation) return;
+    if (!showLoginAnimation || !isAuthenticated) return;
     const t = setTimeout(clearLoginAnimation, 1300);
     return () => clearTimeout(t);
-  }, [showLoginAnimation, clearLoginAnimation]);
+  }, [showLoginAnimation, isAuthenticated, clearLoginAnimation]);
 
   // Auto-dismiss the logout animation after 1.3 s, then AnimatePresence fades it out over 0.55 s
   useEffect(() => {
@@ -254,19 +253,27 @@ function AppRoutes() {
         {/* Protected Routes */}
         <Route path="/home" element={guardProtected(<HomePage />)} />
         <Route path="/progress" element={guardProtected(<ProgressPage />)} />
+        <Route path="/zot-planner" element={guardProtected(<ZotPlannerPage />)} />
         <Route
           path="/learning-quiz"
           element={
             isAuthenticated
-              ? showLoginAnimation
-                ? null
-                : <LearningStyleQuizPage />
+              ? // Blank under welcome so the quiz never flashes before / after the animation
+                showLoginAnimation
+                  ? <div className="min-h-screen" style={{ backgroundColor: "#FFFFFF" }} aria-hidden />
+                  : <LearningStyleQuizPage />
               : <Navigate to="/login" replace />
           }
         />
         <Route
           path="/tutor-onboarding"
-          element={isAuthenticated ? <TutorOnboardingQuizPage /> : <Navigate to="/login" replace />}
+          element={
+            isAuthenticated
+              ? showLoginAnimation
+                ? <div className="min-h-screen" style={{ backgroundColor: "#FFFFFF" }} aria-hidden />
+                : <TutorOnboardingQuizPage />
+              : <Navigate to="/login" replace />
+          }
         />
         <Route path="/settings" element={guardProtected(<SettingsPage />)} />
         <Route path="/chat" element={guardProtected(<MessagesPage />)} />
@@ -279,8 +286,6 @@ function AppRoutes() {
         <Route path="/past-lessons" element={guardProtected(<PastLessonsPage />)} />
         <Route path="/video-session" element={guardProtected(<VideoSessionPage />)} />
         <Route path="/rate-session" element={guardProtected(<RateSessionPage />)} />
-        <Route path="/canvas-login" element={guardProtected(<CanvasLoginPage />)} />
-        <Route path="/canvas-classes" element={guardProtected(<CanvasClassesPage />)} />
         <Route path="/announcements" element={guardProtected(<AnnouncementsPage />)} />
         <Route path="/assignments" element={guardProtected(<AssignmentsPage />)} />
         <Route path="/book-session" element={guardProtected(<BookSessionPage />)} />

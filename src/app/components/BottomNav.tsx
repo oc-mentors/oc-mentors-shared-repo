@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Home, Users, Calendar, MessageCircle, BarChart3 } from "lucide-react";
+import { Home, Users, Calendar, MessageCircle, BarChart3, PawPrint } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -11,20 +11,9 @@ interface BottomNavProps {
 // Persists the last active main tab across renders/navigations
 let lastActiveMainTab = "home";
 
-// Canvas Logo Component
-function CanvasLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M21 2H3C1.9 2 1 2.9 1 4V20C1 21.1 1.9 22 3 22H21C22.1 22 23 21.1 23 20V4C23 2.9 22.1 2 21 2ZM21 20H3V4H21V20Z" />
-      <path d="M7 17H9V7H7V17ZM11 17H13V7H11V17ZM15 17H17V7H15V17Z" />
-    </svg>
-  );
-}
-
 // Paths that are "overlay" pages — should not change the highlighted tab
 const OVERLAY_PATHS = [
   "/profile",
-  "/progress",
   "/settings",
   "/learning-quiz",
   "/notes",
@@ -41,15 +30,14 @@ function pathToTab(p: string): string {
   if (p === "/tutors" || p.startsWith("/tutor/") || p === "/booking" || p === "/tutor-students") return "tutors";
   if (p === "/schedule" || p === "/video-session" || p === "/rate-session" || p === "/tutor-availability") return "schedule";
   if (p === "/chat" || p.startsWith("/chat/")) return "chat";
-  if (p === "/canvas-classes" || p === "/canvas-login" || p === "/announcements" || p === "/assignments") return "canvas";
+  if (p === "/zot-planner") return "zot";
+  if (p === "/progress" || p === "/announcements" || p === "/assignments" || p === "/academic-info") return "progress";
   if (p === "/tutor-analytics") return "analytics";
   return "home";
 }
 
 export function BottomNav({ currentPage }: BottomNavProps) {
   const location = useLocation();
-  // Read synchronously — no useState/useEffect so there's no render-delay flicker
-  const isCanvasConnected = localStorage.getItem("canvasConnected") === "true";
   const { user } = useAuth();
   const { colors, accentColor } = useTheme();
 
@@ -83,14 +71,7 @@ export function BottomNav({ currentPage }: BottomNavProps) {
 
   const studentNavItems = [
     { id: "home", label: "Home", icon: Home, path: "/home" },
-    { 
-      id: "canvas", 
-      label: "Courses", 
-      icon: CanvasLogo, 
-      path: isCanvasConnected ? "/canvas-classes" : "/canvas-login",
-      isCanvas: true,
-      muted: !isCanvasConnected
-    },
+    { id: "zot", label: "Zot Zot!", icon: PawPrint, path: "/zot-planner" },
     { id: "schedule", label: "Schedule", icon: Calendar, path: "/schedule" },
     { id: "tutors", label: "Tutors", icon: Users, path: "/tutors" },
     { id: "chat", label: "Chat", icon: MessageCircle, path: "/chat" },
@@ -113,7 +94,6 @@ export function BottomNav({ currentPage }: BottomNavProps) {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = current === item.id;
-            const isMuted = item.muted;
 
             const content = (
               <motion.div
@@ -122,13 +102,13 @@ export function BottomNav({ currentPage }: BottomNavProps) {
               >
                 <div
                   className="transition-colors"
-                  style={{ color: isActive ? accentColor.primary : isMuted ? colors.textTertiary : colors.textSecondary }}
+                  style={{ color: isActive ? accentColor.primary : colors.textSecondary }}
                 >
                   <Icon className="w-5 h-5 oc-bottom-nav-icon" />
                 </div>
                 <span
                   className="text-[10px] font-medium transition-colors oc-bottom-nav-label"
-                  style={{ color: isActive ? accentColor.primary : isMuted ? colors.textTertiary : colors.textSecondary }}
+                  style={{ color: isActive ? accentColor.primary : colors.textSecondary }}
                 >
                   {item.label}
                 </span>

@@ -1,10 +1,26 @@
 /**
  * Shared learning style quiz content for the quiz page and profile Q&A view.
+ *
+ * Option order in LEARNING_STYLE_QUIZ_QUESTIONS is always:
+ *   0 = Visual, 1 = Auditory, 2 = Reading/Writing, 3 = Kinesthetic
+ * The quiz UI shuffles display order so answers aren't always in the same slots.
  */
 export interface QuizQuestionItem {
   id: number;
   question: string;
   options: string[];
+}
+
+export interface ShuffledQuizOption {
+  text: string;
+  /** Original VARK index (0–3) used for scoring */
+  styleIndex: number;
+}
+
+export interface ShuffledQuizQuestion {
+  id: number;
+  question: string;
+  options: ShuffledQuizOption[];
 }
 
 export const LEARNING_STYLE_QUIZ_QUESTIONS: QuizQuestionItem[] = [
@@ -49,6 +65,28 @@ export const LEARNING_STYLE_QUIZ_QUESTIONS: QuizQuestionItem[] = [
     ],
   },
 ];
+
+/** Fisher–Yates shuffle (mutates a copy). */
+function shuffleInPlace<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/** Build a per-session shuffled copy of the quiz so option order varies each attempt. */
+export function buildShuffledQuizQuestions(
+  questions: QuizQuestionItem[] = LEARNING_STYLE_QUIZ_QUESTIONS
+): ShuffledQuizQuestion[] {
+  return questions.map((q) => ({
+    id: q.id,
+    question: q.question,
+    options: shuffleInPlace(
+      q.options.map((text, styleIndex) => ({ text, styleIndex }))
+    ),
+  }));
+}
 
 /** Get the selected option text for a question (0-based question index, 0-based option index). */
 export function getQuizAnswerText(questionIndex: number, optionIndex: number): string {

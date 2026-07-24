@@ -151,11 +151,12 @@ export default function TutorOnboardingQuizPage() {
   }
 
   const toggleMulti = (value: string, list: string[], setList: (v: string[]) => void, max?: number) => {
-    setList((prev) => {
-      if (prev.includes(value)) return prev.filter((v) => v !== value);
-      if (max && prev.length >= max) return prev;
-      return [...prev, value];
-    });
+    if (list.includes(value)) {
+      setList(list.filter((v) => v !== value));
+      return;
+    }
+    if (max && list.length >= max) return;
+    setList([...list, value]);
   };
 
   const parseCourses = (raw: string): string[] => {
@@ -165,16 +166,55 @@ export default function TutorOnboardingQuizPage() {
       .filter(Boolean);
   };
 
+  const canProceed = (() => {
+    switch (step) {
+      case 0:
+        return subjects.length >= 1;
+      case 1:
+        return parseCourses(coursesText).length >= 1;
+      case 2:
+        return teachingStyles.length >= 1;
+      case 3:
+        return sessionPace != null;
+      case 4:
+        return teachingTools.length >= 1;
+      case 5:
+        return accessibilityExperience != null;
+      case 6:
+        return supportedLearningDifferences.length >= 1;
+      case 7:
+        return teachingAdjustments.length >= 1;
+      case 8:
+        return sessionFormat != null;
+      default:
+        return false;
+    }
+  })();
+
+  useEffect(() => {
+    if (canProceed) setError(null);
+  }, [canProceed]);
+
   const handleNext = () => {
+    if (!canProceed) {
+      setError("Select at least one option to continue.");
+      return;
+    }
+    setError(null);
     if (step < totalSteps - 1) setStep(step + 1);
   };
 
   const handleBack = () => {
+    setError(null);
     if (step > 0) setStep(step - 1);
     else navigate(-1);
   };
 
   const handleSubmit = async () => {
+    if (!canProceed) {
+      setError("Select at least one option to finish.");
+      return;
+    }
     if (!db || !user?.id) return;
     setIsSubmitting(true);
     setError(null);
@@ -556,15 +596,15 @@ export default function TutorOnboardingQuizPage() {
               {step === 0 ? "Back" : "Previous"}
             </button>
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={canProceed && !isSubmitting ? { scale: 1.02 } : undefined}
+              whileTap={canProceed && !isSubmitting ? { scale: 0.98 } : undefined}
               onClick={step === totalSteps - 1 ? handleSubmit : handleNext}
-              disabled={isSubmitting}
-              className="px-5 py-3 rounded-xl font-semibold flex items-center gap-2 cursor-pointer"
+              disabled={isSubmitting || !canProceed}
+              className="px-5 py-3 rounded-xl font-semibold flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
               style={{
                 backgroundColor: accentColor.primary,
                 color: "#ffffff",
-                opacity: isSubmitting ? 0.7 : 1,
+                opacity: isSubmitting || !canProceed ? 0.45 : 1,
               }}
             >
               <span className="text-sm">{step === totalSteps - 1 ? "Finish" : "Next"}</span>

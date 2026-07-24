@@ -1,6 +1,6 @@
 import { FlaskConical, Calculator, Atom, PenTool, Microscope } from "lucide-react";
 
-export const canvasCourses = [
+export const courses = [
   { id: 1, name: "CHEM 1A: General Chemistry", code: "CHEM 1A", color: "rgb(139, 92, 246)", icon: FlaskConical },
   { id: 2, name: "MATH 2A: Calculus I", code: "MATH 2A", color: "rgb(59, 130, 246)", icon: Calculator },
   { id: 3, name: "PHYS 7C: Classical Mechanics", code: "PHYS 7C", color: "rgb(20, 184, 166)", icon: Atom },

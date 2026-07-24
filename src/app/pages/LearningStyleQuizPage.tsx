@@ -1,12 +1,17 @@
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import svgPaths from "../../imports/svg-in824s3fr2";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Check, ChevronLeft, Eye, Layers } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import type { LearningStyle, LearningSupport } from "../contexts/AuthContext";
-import { LEARNING_STYLE_QUIZ_QUESTIONS as quizQuestions, getQuizAnswerText } from "../lib/learningStyleQuiz";
+import { ProfileButton } from "../components/ProfileButton";
+import {
+  LEARNING_STYLE_QUIZ_QUESTIONS as quizQuestions,
+  buildShuffledQuizQuestions,
+  getQuizAnswerText,
+} from "../lib/learningStyleQuiz";
 
 const learningStyles: LearningStyle[] = ["Visual", "Auditory", "Reading/Writing", "Kinesthetic"];
 
@@ -17,8 +22,12 @@ export default function LearningStyleQuizPage() {
   const isRetake = searchParams.get("retake") === "true";
   // For logged-in users, only use profile — never localStorage (so new accounts always see the quiz)
   const savedResult = (user?.learningStyle ?? null) as LearningStyle | null;
+  // Shuffle option order once per mount so Visual/Auditory/etc. aren't always in the same slots
+  const shuffledQuestions = useMemo(() => buildShuffledQuizQuestions(quizQuestions), []);
   const [currentQuestion, setCurrentQuestion] = useState(0);
+  /** Selected answers as original VARK style indices (0–3), not display order */
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
+  /** Currently highlighted option as display index within the shuffled list */
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showResults, setShowResults] = useState(!isRetake && !!savedResult);
   const { colors, accentColor } = useTheme();
@@ -42,41 +51,45 @@ export default function LearningStyleQuizPage() {
   // When retaking the quiz, pre-fill with previous answers so options are selected
   useEffect(() => {
     if (!isRetake || !user) return;
-    // Prefer legacy numeric indices if present
-    let indices: number[] | null = null;
+    // Prefer legacy numeric indices if present (these are VARK style indices)
+    let styleIndices: number[] | null = null;
     if (Array.isArray((user as any).learningStyleAnswers) && (user as any).learningStyleAnswers.length === quizQuestions.length) {
-      indices = [...((user as any).learningStyleAnswers as number[])];
+      styleIndices = [...((user as any).learningStyleAnswers as number[])];
     } else if (Array.isArray(user.learningStyleQuestionAnswers) && user.learningStyleQuestionAnswers.length === quizQuestions.length) {
-      indices = user.learningStyleQuestionAnswers.map((qa, i) => {
+      styleIndices = user.learningStyleQuestionAnswers.map((qa, i) => {
         const optIndex = quizQuestions[i].options.indexOf(qa.answer);
         return optIndex >= 0 ? optIndex : -1;
       });
     }
-    if (!indices || indices.length === 0) return;
-    setSelectedAnswers(indices);
+    if (!styleIndices || styleIndices.length === 0) return;
+    setSelectedAnswers(styleIndices);
     currentQuestionRef.current = 0;
     setCurrentQuestion(0);
-    setSelectedOption(indices[0] ?? null);
+    const displayIndex = shuffledQuestions[0]?.options.findIndex(
+      (o) => o.styleIndex === styleIndices![0]
+    );
+    setSelectedOption(displayIndex != null && displayIndex >= 0 ? displayIndex : null);
     setBarProgress(0 / quizQuestions.length);
-  }, [isRetake, user?.id, user?.learningStyle, user?.learningStyleQuestionAnswers]);
+  }, [isRetake, user?.id, user?.learningStyle, user?.learningStyleQuestionAnswers, shuffledQuestions]);
 
-  const handleOptionSelect = (optionIndex: number) => {
-    setSelectedOption(optionIndex);
-    
+  const handleOptionSelect = (displayIndex: number) => {
+    setSelectedOption(displayIndex);
+    const styleIndex = shuffledQuestions[currentQuestionRef.current].options[displayIndex].styleIndex;
+
     // Auto-advance after a short delay
     setTimeout(() => {
       const cq = currentQuestionRef.current;
-      setSelectedAnswers(prev => {
+      setSelectedAnswers((prev) => {
         const newAnswers = [...prev];
-        newAnswers[cq] = optionIndex;
+        newAnswers[cq] = styleIndex;
         return newAnswers;
       });
 
-      if (cq < quizQuestions.length - 1) {
+      if (cq < shuffledQuestions.length - 1) {
         const next = cq + 1;
         currentQuestionRef.current = next;
         setCurrentQuestion(next);
-        setBarProgress(next / quizQuestions.length);
+        setBarProgress(next / shuffledQuestions.length);
         setSelectedOption(null);
       } else {
         // Last question: slide bar to 100%, then transition to DSC / Learning Support extension
@@ -392,8 +405,8 @@ export default function LearningStyleQuizPage() {
     <div className="min-h-screen flex items-center justify-center p-6" style={{ background: `linear-gradient(to bottom right, ${colors.bgPrimary}, ${colors.bgSecondary})` }}>
       <div className="w-full max-w-md">
 
-        {/* Back Arrow */}
-        <div className="px-6 mb-4" style={{ marginTop: "-1rem" }}>
+        {/* Top bar: back + profile (tap profile → Logout) */}
+        <div className="px-6 mb-4 flex items-center justify-between" style={{ marginTop: "-1rem" }}>
           <motion.button
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -405,6 +418,7 @@ export default function LearningStyleQuizPage() {
           >
             <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
           </motion.button>
+          <ProfileButton />
         </div>
 
         {/* Transitioning overlay (between learning style quiz and DSC section) */}
@@ -503,13 +517,13 @@ export default function LearningStyleQuizPage() {
                 className="px-6 mb-8"
               >
                 <h2 className="text-[22px] font-semibold mb-8 leading-[30px]" style={{ color: colors.textPrimary }}>
-                  {quizQuestions[currentQuestion].question}
+                  {shuffledQuestions[currentQuestion].question}
                 </h2>
 
                 <div className="space-y-3">
-                  {quizQuestions[currentQuestion].options.map((option, index) => (
+                  {shuffledQuestions[currentQuestion].options.map((option, index) => (
                     <motion.button
-                      key={index}
+                      key={`${shuffledQuestions[currentQuestion].id}-${option.styleIndex}`}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 + index * 0.05 }}
@@ -538,7 +552,7 @@ export default function LearningStyleQuizPage() {
                             />
                           )}
                         </div>
-                        <span className="text-[15px]" style={{ color: colors.textPrimary }}>{option}</span>
+                        <span className="text-[15px]" style={{ color: colors.textPrimary }}>{option.text}</span>
                       </div>
                     </motion.button>
                   ))}

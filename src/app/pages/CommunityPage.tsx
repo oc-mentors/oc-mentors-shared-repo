@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   collection,
   query,
@@ -13,14 +13,15 @@ import {
   increment,
 } from "firebase/firestore";
 import { motion } from "motion/react";
-import { ArrowLeft, Heart, Send } from "lucide-react";
+import { ArrowLeft, Heart, Send, Users } from "lucide-react";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
+import { SubjectIcon } from "../components/SubjectIcon";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { subjects } from "../data/courses";
 import { db, firestoreReady, isFirebaseConfigured } from "../lib/firebase";
 import { toast } from "sonner";
-import { useNavigate } from "react-router";
 
 type Post = {
   id: string;
@@ -28,54 +29,70 @@ type Post = {
   authorName: string;
   authorRole: string;
   content: string;
+  subject: string;
   likes: number;
   createdAt: { seconds: number } | null;
 };
 
 export default function CommunityPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedSubject = searchParams.get("subject");
   const { user } = useAuth();
   const { colors, accentColor } = useTheme();
   const [posts, setPosts] = useState<Post[]>([]);
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const activeSubject = useMemo(
+    () => subjects.find((s) => s.name === selectedSubject) ?? null,
+    [selectedSubject]
+  );
+
   useEffect(() => {
-    if (!isFirebaseConfigured || !db) return;
+    if (!isFirebaseConfigured || !db || !selectedSubject) {
+      setPosts([]);
+      return;
+    }
     let unsub: (() => void) | undefined;
     (async () => {
       await firestoreReady;
       if (!db) return;
-      const q = query(collection(db, "communityPosts"), orderBy("createdAt", "desc"), limit(50));
+      // Client-side subject filter avoids requiring a composite Firestore index
+      const q = query(collection(db, "communityPosts"), orderBy("createdAt", "desc"), limit(80));
       unsub = onSnapshot(
         q,
         (snap) => {
           setPosts(
-            snap.docs.map((d) => {
-              const data = d.data();
-              const ts = data.createdAt;
-              return {
-                id: d.id,
-                authorUid: String(data.authorUid ?? ""),
-                authorName: String(data.authorName ?? "Member"),
-                authorRole: String(data.authorRole ?? "student"),
-                content: String(data.content ?? ""),
-                likes: typeof data.likes === "number" ? data.likes : 0,
-                createdAt:
-                  ts && typeof ts.seconds === "number" ? { seconds: ts.seconds } : null,
-              };
-            })
+            snap.docs
+              .map((d) => {
+                const data = d.data();
+                const ts = data.createdAt;
+                return {
+                  id: d.id,
+                  authorUid: String(data.authorUid ?? ""),
+                  authorName: String(data.authorName ?? "Member"),
+                  authorRole: String(data.authorRole ?? "student"),
+                  content: String(data.content ?? ""),
+                  subject: String(data.subject ?? ""),
+                  likes: typeof data.likes === "number" ? data.likes : 0,
+                  createdAt:
+                    ts && typeof ts.seconds === "number" ? { seconds: ts.seconds } : null,
+                };
+              })
+              .filter((p) => p.subject === selectedSubject)
           );
         },
         (err) => console.warn("[Community] snapshot:", err)
       );
     })();
     return () => unsub?.();
-  }, []);
+  }, [selectedSubject]);
 
   const handlePost = async (e: React.FormEvent) => {
     e.preventDefault();
     const text = draft.trim();
+    if (!selectedSubject) return;
     if (!text || !user || !db) {
       toast.message("Sign in and connect to Firebase to post.");
       return;
@@ -88,11 +105,12 @@ export default function CommunityPage() {
         authorName: user.name || user.firstName || "Member",
         authorRole: user.role,
         content: text,
+        subject: selectedSubject,
         likes: 0,
         createdAt: serverTimestamp(),
       });
       setDraft("");
-      toast.success("Posted to the community.");
+      toast.success(`Posted in ${selectedSubject}.`);
     } catch (err) {
       console.error(err);
       toast.error("Could not post. Try again.");
@@ -110,6 +128,91 @@ export default function CommunityPage() {
     }
   };
 
+  const openSubject = (name: string) => {
+    setSearchParams({ subject: name });
+  };
+
+  const backToSubjects = () => {
+    setSearchParams({});
+    setDraft("");
+  };
+
+  // ── Subject communities hub ──────────────────────────────────────────────
+  if (!selectedSubject || !activeSubject) {
+    return (
+      <div className="min-h-screen pb-24" style={{ backgroundColor: colors.bgPrimary }}>
+        <div className="max-w-md mx-auto">
+          <div className="px-6 pt-12 pb-3 flex items-center justify-between">
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/home")}
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: colors.bgTertiary }}
+            >
+              <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
+            </motion.button>
+            <div className="flex-1 text-center mr-10">
+              <h1 className="text-xl font-bold" style={{ color: colors.textPrimary }}>
+                Communities
+              </h1>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5" style={{ color: colors.textTertiary }}>
+                Socratic OC
+              </p>
+            </div>
+            <ProfileButton />
+          </div>
+
+          <div className="px-6 space-y-4">
+            <p className="text-sm" style={{ color: colors.textSecondary }}>
+              Pick a subject community to ask questions, share tips, and connect with other learners.
+            </p>
+
+            <div className="space-y-3">
+              {subjects.map((subject, index) => (
+                <motion.button
+                  key={subject.name}
+                  type="button"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.04 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => openSubject(subject.name)}
+                  className="w-full rounded-2xl p-4 border flex items-center gap-4 text-left shadow-[0px_4px_16px_0px_rgba(0,0,0,0.25)]"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
+                >
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: subject.defaultColor }}
+                  >
+                    <SubjectIcon type={subject.icon} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[16px] font-bold" style={{ color: colors.textPrimary }}>
+                      {subject.name}
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: colors.textTertiary }}>
+                      Subject community
+                    </p>
+                  </div>
+                  <Users className="w-4 h-4 flex-shrink-0" style={{ color: colors.textTertiary }} />
+                </motion.button>
+              ))}
+            </div>
+
+            <p className="text-xs pb-4" style={{ color: colors.textTertiary }}>
+              <Link to="/privacy" className="underline">
+                Privacy policy
+              </Link>
+            </p>
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // ── Single subject feed ──────────────────────────────────────────────────
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: colors.bgPrimary }}>
       <div className="max-w-md mx-auto">
@@ -117,7 +220,7 @@ export default function CommunityPage() {
           <motion.button
             type="button"
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate("/home")}
+            onClick={backToSubjects}
             className="w-10 h-10 rounded-full flex items-center justify-center"
             style={{ backgroundColor: colors.bgTertiary }}
           >
@@ -125,19 +228,27 @@ export default function CommunityPage() {
           </motion.button>
           <div className="flex-1 text-center mr-10">
             <h1 className="text-xl font-bold" style={{ color: colors.textPrimary }}>
-              Community
+              {activeSubject.name}
             </h1>
             <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5" style={{ color: colors.textTertiary }}>
-              Socratic OC
+              Community
             </p>
           </div>
           <ProfileButton />
         </div>
 
         <div className="px-6 space-y-6">
-          <p className="text-sm" style={{ color: colors.textSecondary }}>
-            Share wins and questions on Socratic OC. Posts are visible to signed-in members.
-          </p>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: activeSubject.defaultColor }}
+            >
+              <SubjectIcon type={activeSubject.icon} />
+            </div>
+            <p className="text-sm" style={{ color: colors.textSecondary }}>
+              Share wins and questions with the {activeSubject.name} community.
+            </p>
+          </div>
 
           <form
             onSubmit={handlePost}
@@ -148,7 +259,7 @@ export default function CommunityPage() {
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               rows={3}
-              placeholder="Share something with the community…"
+              placeholder={`Share something in ${activeSubject.name}…`}
               className="w-full rounded-xl px-3 py-2 text-sm mb-3 outline-none resize-none border"
               style={{
                 backgroundColor: colors.bgTertiary,
@@ -172,7 +283,7 @@ export default function CommunityPage() {
           <div className="space-y-4">
             {posts.length === 0 && (
               <p className="text-sm text-center py-8" style={{ color: colors.textTertiary }}>
-                No posts yet. Be the first to share!
+                No posts in {activeSubject.name} yet. Be the first!
               </p>
             )}
             {posts.map((p) => (
@@ -215,12 +326,6 @@ export default function CommunityPage() {
               </article>
             ))}
           </div>
-
-          <p className="text-xs pb-4" style={{ color: colors.textTertiary }}>
-            <Link to="/privacy" className="underline">
-              Privacy policy
-            </Link>
-          </p>
         </div>
       </div>
       <BottomNav />

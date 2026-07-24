@@ -10,13 +10,13 @@ export default function TutorAvailabilityPage() {
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   
   const [availability, setAvailability] = useState({
-    Monday: [{ start: "09:00", end: "12:00" }, { start: "14:00", end: "17:00" }],
-    Tuesday: [{ start: "09:00", end: "12:00" }, { start: "14:00", end: "17:00" }],
-    Wednesday: [{ start: "09:00", end: "12:00" }],
-    Thursday: [{ start: "09:00", end: "12:00" }, { start: "14:00", end: "17:00" }],
-    Friday: [{ start: "09:00", end: "12:00" }],
-    Saturday: [],
-    Sunday: [],
+    Monday: [] as { start: string; end: string }[],
+    Tuesday: [] as { start: string; end: string }[],
+    Wednesday: [] as { start: string; end: string }[],
+    Thursday: [] as { start: string; end: string }[],
+    Friday: [] as { start: string; end: string }[],
+    Saturday: [] as { start: string; end: string }[],
+    Sunday: [] as { start: string; end: string }[],
   });
 
   const removeTimeSlot = (day: string, index: number) => {

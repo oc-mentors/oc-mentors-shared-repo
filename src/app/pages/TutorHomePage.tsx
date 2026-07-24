@@ -1,18 +1,24 @@
 import { Link } from "react-router";
 import { motion } from "motion/react";
-import { Calendar, Users, DollarSign, MessageSquare, TrendingUp, Video } from "lucide-react";
+import { Calendar, Users, DollarSign, MessageSquare, TrendingUp, Video, Clock } from "lucide-react";
 import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
+import { AvatarWithInitials } from "../components/AvatarWithInitials";
 import { useAuth } from "../contexts/AuthContext";
 import { useConnections } from "../contexts/ConnectionsContext";
 import { useTutorRequests } from "../contexts/TutorRequestsContext";
+import { useCalendar, isSessionUpcomingByDate } from "../contexts/CalendarContext";
+import { isSessionDateToday } from "../lib/learningPlan";
 
 export default function TutorHomePage() {
   const { user } = useAuth();
   const { connections } = useConnections();
   const { incomingRequests } = useTutorRequests();
+  const { sessions, removedSessionIds } = useCalendar();
 
   const tutorUid = user?.id ?? "";
+  const tutorName = (user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "").trim();
+
   const activeStudentUids = new Set(
     connections
       .filter((c) => c.tutorUid === tutorUid && c.status === "active")
@@ -20,19 +26,16 @@ export default function TutorHomePage() {
   );
   const studentCount = activeStudentUids.size;
 
-  const today = new Date();
-  const fmt = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  const d0 = new Date(today);
-  const d1 = new Date(today);
-  d1.setDate(d1.getDate() + 1);
-  const seededUpcomingSessions = [
-    { id: 1, studentName: "Emily Johnson", subject: "Chemistry", time: "10:00 AM", date: fmt(d0), avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400" },
-    { id: 2, studentName: "Marcus Chen", subject: "Math", time: "2:30 PM", date: fmt(d0), avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" },
-    { id: 3, studentName: "Sarah Williams", subject: "Physics", time: "4:00 PM", date: fmt(d1), avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400" },
-  ];
-  const seededStudentCount = 24;
-  const sessionsToday = seededUpcomingSessions.filter((s) => s.date === fmt(d0)).length;
-  const earningsThisWeek = 480;
+  const mySessions = sessions.filter((s) => {
+    if (removedSessionIds.includes(s.id)) return false;
+    if (s.status !== "upcoming") return false;
+    if (!isSessionUpcomingByDate(s.date)) return false;
+    if (!tutorName) return true;
+    return s.tutor.toLowerCase() === tutorName.toLowerCase() || s.tutor.toLowerCase().includes((user?.firstName || "").toLowerCase());
+  });
+
+  const sessionsToday = mySessions.filter((s) => isSessionDateToday(s.date)).length;
+  const upcomingSessions = mySessions.slice(0, 5);
 
   return (
     <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-20">
@@ -56,7 +59,7 @@ export default function TutorHomePage() {
             <ProfileButton />
           </div>
 
-          {/* Stats Overview */}
+          {/* Stats Overview — real counts only */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             <motion.div
               whileHover={{ scale: 1.05, y: -4 }}
@@ -81,9 +84,7 @@ export default function TutorHomePage() {
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8b5cf6] to-[#a78bfa] flex items-center justify-center mb-2">
                   <Users className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-2xl font-bold text-[#e8edf5]">
-                  {studentCount > 0 ? studentCount : seededStudentCount}
-                </span>
+                <span className="text-2xl font-bold text-[#e8edf5]">{studentCount}</span>
                 <span className="text-xs text-[#a8b3cf] text-center">Students</span>
               </div>
             </motion.div>
@@ -97,16 +98,14 @@ export default function TutorHomePage() {
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#22c55e] to-[#4ade80] flex items-center justify-center mb-2">
                   <DollarSign className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-2xl font-bold text-[#e8edf5]">
-                  ${earningsThisWeek}
-                </span>
+                <span className="text-2xl font-bold text-[#e8edf5]">$0</span>
                 <span className="text-xs text-[#a8b3cf] text-center">This Week</span>
               </div>
             </motion.div>
           </div>
         </div>
 
-        {/* Pending Tutor Requests (real data) */}
+        {/* Pending Tutor Requests */}
         <div className="px-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-[#e8edf5]">Requests from students</h2>
@@ -155,50 +154,59 @@ export default function TutorHomePage() {
               View All
             </Link>
           </div>
-          <div className="space-y-3">
-            {seededUpcomingSessions.map((session, index) => (
-              <motion.div
-                key={session.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="bg-[#1e2139] rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
-              >
-                <div className="flex items-center gap-4">
-                  <img
-                    src={session.avatar}
-                    alt={session.studentName}
-                    className="w-14 h-14 rounded-xl object-cover"
-                  />
-                  <div className="flex-1">
-                    <h3 className="text-base font-semibold text-[#e8edf5]">
-                      {session.studentName}
-                    </h3>
-                    <p className="text-sm text-[#a8b3cf]">{session.subject}</p>
-                    <div className="flex items-center gap-4 mt-1">
-                      <div className="flex items-center gap-1 text-xs text-[#a8b3cf]">
-                        <Calendar className="w-3 h-3" />
-                        <span>{session.date}</span>
+          {upcomingSessions.length === 0 ? (
+            <div className="bg-[#1e2139] rounded-2xl p-5 border border-dashed border-[#2a2f45] text-center">
+              <p className="text-sm text-[#a8b3cf] mb-1">No upcoming sessions yet</p>
+              <p className="text-xs text-[#a8b3cf]">
+                When students book with you, they’ll show up here.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {upcomingSessions.map((session, index) => (
+                <Link key={session.id} to="/schedule">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-[#1e2139] rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
+                  >
+                    <div className="flex items-center gap-4">
+                      <AvatarWithInitials
+                        src={session.studentAvatar}
+                        name={session.student || session.subject}
+                        className="w-14 h-14 rounded-xl object-cover text-base"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-[#e8edf5] truncate">
+                          {session.student || session.subject}
+                        </h3>
+                        <p className="text-sm text-[#a8b3cf] truncate">{session.subject}</p>
+                        <div className="flex items-center gap-4 mt-1">
+                          <div className="flex items-center gap-1 text-xs text-[#a8b3cf]">
+                            <Calendar className="w-3 h-3" />
+                            <span>{session.date}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-[#a8b3cf]">
+                            <Clock className="w-3 h-3" />
+                            <span>{session.time}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-[#a8b3cf]">
-                        <Calendar className="w-3 h-3" />
-                        <span>{session.time}</span>
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style={{ backgroundColor: "rgba(67, 97, 217, 0.5)" }}
+                      >
+                        <Video className="w-5 h-5 text-white" />
                       </div>
                     </div>
-                  </div>
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center cursor-not-allowed opacity-60"
-                    style={{ backgroundColor: "rgba(67, 97, 217, 0.5)" }}
-                    title="Demo"
-                  >
-                    <Video className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}

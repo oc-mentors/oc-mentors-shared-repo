@@ -828,7 +828,7 @@ export default function ProfilePage() {
         iconBg={`${accentColor.primary}20`}
         fields={[
           { id: "title", label: "Title", placeholder: "e.g. Dark mode scheduling view", required: true },
-          { id: "category", label: "Category", placeholder: "e.g. Calendar, Tutors, Canvas…" },
+          { id: "category", label: "Category", placeholder: "e.g. Calendar, Tutors, Schedule…" },
           { id: "description", label: "Description", placeholder: "Describe your idea or suggestion in detail…", multiline: true, required: true },
         ]}
         submitLabel="Send Feedback"
