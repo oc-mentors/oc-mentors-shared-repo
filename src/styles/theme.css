@@ -195,35 +195,3 @@ html.dyslexia-font body {
 *::-webkit-scrollbar {
   display: none;               /* Chrome / Safari / WebKit */
 }
-
-/* Expo demo: single scroll — page content flows, guide is appended at the end */
-html[data-demo-guide="true"],
-html[data-demo-guide="true"] body,
-html[data-demo-guide="true"] #root {
-  background-color: var(--demo-page-bg, #1a1d29);
-}
-
-html[data-demo-guide="true"] [data-demo-scroll-root] .h-screen.overflow-hidden,
-html[data-demo-guide="true"] [data-demo-scroll-root] .h-screen.overflow-hidden.flex.flex-col {
-  height: auto !important;
-  min-height: 0 !important;
-  overflow: visible !important;
-}
-
-html[data-demo-guide="true"] [data-demo-scroll-root] .flex-1.overflow-hidden {
-  flex: none !important;
-  overflow: visible !important;
-}
-
-html[data-demo-guide="true"] [data-demo-scroll-root] .h-full.overflow-auto,
-html[data-demo-guide="true"] [data-demo-scroll-root] .h-full.overflow-y-auto {
-  height: auto !important;
-  max-height: none !important;
-  overflow: visible !important;
-}
-
-html[data-demo-guide="true"] [data-demo-scroll-root] .min-h-screen.overflow-auto,
-html[data-demo-guide="true"] [data-demo-scroll-root] .min-h-screen.overflow-y-auto {
-  min-height: 0 !important;
-  overflow: visible !important;
-}

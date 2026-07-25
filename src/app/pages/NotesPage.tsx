@@ -17,7 +17,6 @@ import { BottomNav } from "../components/BottomNav";
 import { ProfileButton } from "../components/ProfileButton";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
-import { useDemoModeOptional } from "../contexts/DemoModeContext";
 import { db, firestoreReady, isFirebaseConfigured } from "../lib/firebase";
 import { toast } from "sonner";
 
@@ -67,15 +66,6 @@ export default function NotesPage() {
   const [showGuideForm, setShowGuideForm] = useState(false);
 
   const uid = user?.id;
-  const demoMode = useDemoModeOptional();
-
-  useEffect(() => {
-    if (!demoMode?.isDemoMode) return;
-    const id = demoMode.step.id;
-    if (id === "study-tutor") setTab("tutor");
-    else if (id === "study-notes") setTab("notes");
-    else if (id === "study-flashcards") setTab("flashcards");
-  }, [demoMode?.isDemoMode, demoMode?.stepIndex, demoMode?.step.id]);
 
   const displayFlashcards: FlashDoc[] = flashcards;
 
