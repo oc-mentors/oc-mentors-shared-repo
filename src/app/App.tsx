@@ -7,11 +7,13 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LearningComfortProvider } from "./contexts/LearningComfortContext";
 import { CalendarProvider } from "./contexts/CalendarContext";
+import { DemoModeProvider } from "./contexts/DemoModeContext";
 import { ConversationsProvider } from "./contexts/ConversationsContext";
 import { ConnectionsProvider } from "./contexts/ConnectionsContext";
 import { TutorRequestsProvider } from "./contexts/TutorRequestsContext";
 import { TutorsProvider } from "./contexts/TutorsContext";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { DemoAppScrollShell } from "./components/DemoAppScrollShell";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import SplashPage from "./pages/SplashPage";
 import LoginPage from "./pages/LoginPage";
@@ -70,9 +72,13 @@ export default function App() {
             <ThemeProvider>
               <LearningComfortProvider>
               <CalendarProvider>
+                <DemoModeProvider>
+                  <DemoAppScrollShell>
                     <ScrollToTop />
                     <ThemedToaster />
                     <SafeAppRoutes />
+                  </DemoAppScrollShell>
+                </DemoModeProvider>
               </CalendarProvider>
               </LearningComfortProvider>
             </ThemeProvider>

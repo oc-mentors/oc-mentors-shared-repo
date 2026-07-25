@@ -81,10 +81,10 @@ export const DEMO_EXPO_STEPS: DemoExpoStep[] = [
   },
   {
     id: "canvas",
-    path: "/canvas-classes",
-    title: "Canvas classes",
-    pitch: "Her UCI classes show up here instead of digging through Canvas.",
-    hint: "Open a class or mention Chem / Math on the list.",
+    path: "/zot-planner",
+    title: "Course planner",
+    pitch: "Her UCI classes and schedule live here in Zot Zot! instead of digging through Canvas.",
+    hint: "Browse a term or open My Plan.",
   },
   {
     id: "assignments",
@@ -146,7 +146,7 @@ export const DEMO_EXPO_STEPS: DemoExpoStep[] = [
     id: "done",
     path: "/home",
     title: "That's the tour",
-    pitch: "You just walked through onboarding, accessibility, Canvas, matching, study tools, schedule, and chat.",
+    pitch: "You just walked through onboarding, accessibility, course planning, matching, study tools, schedule, and chat.",
     hint: "Tap Finish to leave demo mode.",
   },
 ];

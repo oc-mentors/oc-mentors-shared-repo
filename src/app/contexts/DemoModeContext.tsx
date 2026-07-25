@@ -13,10 +13,7 @@ import { collection, doc, getDocs, query, setDoc, where, serverTimestamp } from 
 import { toast } from "sonner";
 import { useAuth } from "./AuthContext";
 import { useLearningComfort } from "./LearningComfortContext";
-import { useCanvasAuth } from "./CanvasAuthContext";
-import { useCanvasCourses } from "./CanvasCoursesContext";
 import { auth, db, firestoreReady, isFirebaseConfigured } from "../lib/firebase";
-import { resetAssignmentVisibilityFilters } from "../lib/canvasStorage";
 import {
   DEMO_EXPO_STEPS,
   DEMO_NOTES_TAB_KEY,
@@ -83,8 +80,6 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
     setReadingAssistEnabled,
     setReduceDistractions,
   } = useLearningComfort();
-  const { connectCanvas } = useCanvasAuth();
-  const { loadMockCanvasCatalog } = useCanvasCourses();
 
   const [isDemoMode, setIsDemoMode] = useState(
     () => typeof sessionStorage !== "undefined" && sessionStorage.getItem(DEMO_STORAGE_KEY) === "1"
@@ -183,17 +178,12 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
     setDyslexiaFriendlyFont(false);
     setReadingAssistEnabled(false);
     setReduceDistractions(false);
-    connectCanvas();
-    resetAssignmentVisibilityFilters();
-    await loadMockCanvasCatalog();
     seedDemoCalendar();
   }, [
     updateUser,
     setDyslexiaFriendlyFont,
     setReadingAssistEnabled,
     setReduceDistractions,
-    connectCanvas,
-    loadMockCanvasCatalog,
   ]);
 
   const waitForAuthUid = async (maxMs = 12000): Promise<string> => {
