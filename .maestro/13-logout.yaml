@@ -1,0 +1,51 @@
+appId: com.ocmentorscorp.app
+name: "13 — Logout (cancel then confirm)"
+tags:
+  - auth
+  - journey-13
+---
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Login|Student|Choose your role"
+    timeout: 30000
+- runFlow: subflows/login-student-home.yaml
+- tapOn:
+    text: "Profile"
+- assertVisible:
+    text: "Profile"
+- scrollUntilVisible:
+    element:
+      text: "Logout"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: "Logout"
+- assertVisible:
+    text: "Logout confirmation"
+- tapOn:
+    text: "Cancel"
+- assertVisible:
+    text: "Profile"
+- assertNotVisible:
+    text: "Logout confirmation"
+- scrollUntilVisible:
+    element:
+      text: "Logout"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: "Logout"
+- assertVisible:
+    text: "Logout confirmation"
+- tapOn:
+    text: "Yes, Logout"
+- extendedWaitUntil:
+    visible:
+      text: "Login"
+    timeout: 15000
+- assertVisible:
+    text: "Login"
+- assertNotVisible:
+    text: "Home"

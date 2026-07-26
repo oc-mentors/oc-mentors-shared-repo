@@ -25,7 +25,12 @@ export default function TutorStudentsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-20">
+    <div
+      className="min-h-screen bg-[#1a1d29] overflow-auto pb-20"
+      data-testid="tutor-students-screen"
+      id="tutor-students-screen"
+      aria-label="My Students"
+    >
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="px-6 pt-12 pb-3">
@@ -33,6 +38,9 @@ export default function TutorStudentsPage() {
             <button
               onClick={() => navigate(-1)}
               className="text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
+              data-testid="tutor-students-back"
+              id="tutor-students-back"
+              aria-label="Back"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
@@ -48,6 +56,9 @@ export default function TutorStudentsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search students..."
               className="w-full bg-[#1e2139] rounded-2xl py-3 pl-12 pr-4 text-[#e8edf5] placeholder:text-[#a8b3cf] outline-none border-2 border-transparent focus:border-[#5b7ceb] transition-colors"
+              data-testid="tutor-students-search"
+              id="tutor-students-search"
+              aria-label="Search students"
             />
           </div>
         </div>

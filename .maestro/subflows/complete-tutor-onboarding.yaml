@@ -1,0 +1,166 @@
+appId: com.ocmentorscorp.app
+---
+# Complete tutor onboarding (9 steps).
+# Next/Finish scroll with content and sit below long option lists — they are
+# NOT in the accessibility tree until scrolled into view. Swipe along the LEFT
+# edge so the drag does not toggle multi-select chips in the center.
+- extendedWaitUntil:
+    visible:
+      text: "Tutor onboarding|Next|Calculus"
+    timeout: 20000
+
+# Step 0 — subjects
+- tapOn:
+    text: "Calculus"
+- repeat:
+    while:
+      notVisible:
+        text: "Next"
+    commands:
+      - swipe:
+          start: "4%,78%"
+          end: "4%,32%"
+- tapOn:
+    text: "Next"
+- waitForAnimationToEnd
+
+# Step 1 — courses
+- extendedWaitUntil:
+    visible:
+      text: "Courses"
+    timeout: 10000
+- tapOn:
+    text: "Courses"
+- inputText: "MATH 2A"
+- repeat:
+    while:
+      notVisible:
+        text: "Next"
+    commands:
+      - swipe:
+          start: "4%,78%"
+          end: "4%,32%"
+- tapOn:
+    text: "Next"
+- waitForAnimationToEnd
+
+# Step 2 — teaching styles
+- tapOn:
+    text: "Step-by-step explanations"
+- repeat:
+    while:
+      notVisible:
+        text: "Next"
+    commands:
+      - swipe:
+          start: "4%,78%"
+          end: "4%,32%"
+- tapOn:
+    text: "Next"
+- waitForAnimationToEnd
+
+# Step 3 — session pace
+- tapOn:
+    text: "Moderate pace explanation + practice"
+- repeat:
+    while:
+      notVisible:
+        text: "Next"
+    commands:
+      - swipe:
+          start: "4%,78%"
+          end: "4%,32%"
+- tapOn:
+    text: "Next"
+- waitForAnimationToEnd
+
+# Step 4 — teaching tools
+- tapOn:
+    text: "Whiteboard explanations"
+- repeat:
+    while:
+      notVisible:
+        text: "Next"
+    commands:
+      - swipe:
+          start: "4%,78%"
+          end: "4%,32%"
+- tapOn:
+    text: "Next"
+- waitForAnimationToEnd
+
+# Step 5 — accessibility experience
+- tapOn:
+    text: "Some experience"
+- repeat:
+    while:
+      notVisible:
+        text: "Next"
+    commands:
+      - swipe:
+          start: "4%,78%"
+          end: "4%,32%"
+- tapOn:
+    text: "Next"
+- waitForAnimationToEnd
+
+# Step 6 — supported differences (first option is on-screen)
+- tapOn:
+    text: "ADHD / Attention challenges"
+- repeat:
+    while:
+      notVisible:
+        text: "Next"
+    commands:
+      - swipe:
+          start: "4%,78%"
+          end: "4%,32%"
+- tapOn:
+    text: "Next"
+- waitForAnimationToEnd
+
+# Step 7 — teaching adjustments (after prior swipe, viewport may be at list bottom)
+- extendedWaitUntil:
+    visible:
+      text: "Flexible pacing during sessions|Slower paced explanations|Providing written summaries"
+    timeout: 10000
+- tapOn:
+    text: "Flexible pacing during sessions|Slower paced explanations|Providing written summaries"
+- repeat:
+    while:
+      notVisible:
+        text: "Next"
+    commands:
+      - swipe:
+          start: "4%,78%"
+          end: "4%,32%"
+- tapOn:
+    text: "Next"
+- waitForAnimationToEnd
+
+# Step 8 — session format → Finish
+- swipe:
+    start: "4%,32%"
+    end: "4%,78%"
+- extendedWaitUntil:
+    visible:
+      text: "Both|In-person|Remote"
+    timeout: 10000
+- tapOn:
+    text: "Both"
+- repeat:
+    while:
+      notVisible:
+        text: "Finish"
+    commands:
+      - swipe:
+          start: "4%,78%"
+          end: "4%,32%"
+- tapOn:
+    text: "Finish"
+- extendedWaitUntil:
+    visible:
+      text: "Home|Tutor home"
+    timeout: 30000
+- assertVisible:
+    text: "Home|Tutor home"

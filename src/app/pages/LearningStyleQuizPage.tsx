@@ -269,6 +269,9 @@ export default function LearningStyleQuizPage() {
               whileTap={{ scale: 0.95 }}
               className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer"
               style={{ backgroundColor: colors.bgTertiary }}
+              data-testid="quiz-results-back"
+              id="quiz-results-back"
+              aria-label="Back"
             >
               <ChevronLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
             </motion.button>
@@ -352,6 +355,9 @@ export default function LearningStyleQuizPage() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className="w-full bg-[rgba(255,255,255,0.2)] rounded-[12px] py-3 shadow-[0px_10px_15px_0px_rgba(0,0,0,0.1),0px_4px_6px_0px_rgba(0,0,0,0.1)]"
+                      data-testid="quiz-continue-home"
+                      id="quiz-continue-home"
+                      aria-label="Continue to Profile"
                     >
                       <span className="text-[15px] font-semibold text-white">Continue to Profile</span>
                     </motion.button>
@@ -402,7 +408,13 @@ export default function LearningStyleQuizPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: `linear-gradient(to bottom right, ${colors.bgPrimary}, ${colors.bgSecondary})` }}>
+    <div
+      className="min-h-screen flex items-center justify-center p-6"
+      style={{ background: `linear-gradient(to bottom right, ${colors.bgPrimary}, ${colors.bgSecondary})` }}
+      data-testid="learning-quiz-screen"
+      id="learning-quiz-screen"
+      aria-label="Learning style quiz"
+    >
       <div className="w-full max-w-md">
 
         {/* Top bar: back + profile (tap profile → Logout) */}
@@ -415,6 +427,9 @@ export default function LearningStyleQuizPage() {
             onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer"
             style={{ backgroundColor: colors.bgTertiary }}
+            data-testid="quiz-back"
+            id="quiz-back"
+            aria-label="Back"
           >
             <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
           </motion.button>
@@ -535,6 +550,9 @@ export default function LearningStyleQuizPage() {
                         backgroundColor: selectedOption === index ? `${accentColor.primary}15` : colors.bgCard,
                         borderColor: selectedOption === index ? accentColor.primary : colors.borderSecondary,
                       }}
+                      data-testid={`quiz-option-${index + 1}`}
+                      id={`quiz-option-${index + 1}`}
+                      aria-label={`Answer option ${index + 1}`}
                     >
                       <div className="flex items-center gap-3">
                         <div
@@ -600,6 +618,9 @@ export default function LearningStyleQuizPage() {
                         backgroundColor: colors.bgCard,
                         borderColor: colors.borderSecondary,
                       }}
+                      data-testid={`quiz-dsc-${opt.value}`}
+                      id={`quiz-dsc-${opt.value}`}
+                      aria-label={opt.label}
                     >
                       <span className="text-[15px]" style={{ color: colors.textPrimary }}>
                         {opt.label}
@@ -812,6 +833,7 @@ export default function LearningStyleQuizPage() {
                         setDscStep((s) => Math.max(1, s - 1));
                       }
                     }}
+                    aria-label="Back"
                   >
                     Back
                   </button>
@@ -827,6 +849,7 @@ export default function LearningStyleQuizPage() {
                         setQuizPhase("results");
                       }
                     }}
+                    aria-label={dscStep < 4 ? "Next" : "Submit"}
                   >
                     {dscStep < 4 ? "Next" : "Submit"}
                   </button>
@@ -988,6 +1011,7 @@ export default function LearningStyleQuizPage() {
                         setDscStep((s) => Math.max(1, s - 1));
                       }
                     }}
+                    aria-label="Back"
                   >
                     Back
                   </button>
@@ -1003,6 +1027,7 @@ export default function LearningStyleQuizPage() {
                         setQuizPhase("results");
                       }
                     }}
+                    aria-label={dscStep < 4 ? "Next" : "Submit"}
                   >
                     {dscStep < 4 ? "Next" : "Submit"}
                   </button>

@@ -1,0 +1,47 @@
+appId: com.ocmentorscorp.app
+name: "2 — Student signup"
+tags:
+  - auth
+  - journey-2
+---
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Login|Student|Choose your role"
+    timeout: 30000
+- evalScript: ${output.signupEmail = "maestro.signup." + Date.now() + "@ocmentors.test"}
+- tapOn:
+    text: "Student"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Email"
+    timeout: 15000
+- assertVisible:
+    text: "Sign in form"
+- tapOn:
+    text: "Sign Up"
+- assertVisible:
+    text: "Create your account to begin"
+- assertVisible:
+    text: "Full Name"
+- tapOn:
+    text: "Full Name"
+- inputText: "Maestro Test Student"
+- tapOn:
+    text: "Email"
+- inputText: ${output.signupEmail}
+- tapOn:
+    text: "Password"
+- inputText: ${TEST_PASSWORD}
+- tapOn:
+    text: "Create Account"
+- extendedWaitUntil:
+    visible:
+      text: "Home|Learning style quiz"
+    timeout: 25000
+- assertVisible:
+    text: "Home|Learning style quiz"
+- assertNotVisible:
+    text: "Sign in error"

@@ -12,6 +12,7 @@
     "android:prep": "npm run cap:sync",
     "ios:prep": "npm run cap:sync",
     "dev": "vite",
+    "test:e2e": "maestro test .maestro/",
     "seed-users": "node scripts/seed-users.js",
     "seed-tutors": "node scripts/seed-tutors.js",
     "seed-tutor-profiles": "node scripts/seed-tutor-profiles.js",

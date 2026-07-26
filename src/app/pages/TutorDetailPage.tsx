@@ -15,7 +15,7 @@ export default function TutorDetailPage() {
   const params = useParams();
   const tutorId = params.id ?? "";
   const { addConversation, getConversation } = useConversations();
-  const { getOrCreateConnectionWithTutor, getConnectionWithTutor } = useConnections();
+  const { getConnectionWithTutor } = useConnections();
   const { createRequest, hasPendingRequestToTutor } = useTutorRequests();
   const { user } = useAuth();
   const { colors, accentColor } = useTheme();
@@ -63,7 +63,11 @@ export default function TutorDetailPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className="min-h-screen overflow-auto pb-20"
+      style={{ backgroundColor: colors.bgPrimary }}
+      data-testid="tutor-detail-screen" id="tutor-detail-screen" aria-label="Tutor profile"
+    >
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="px-6 pt-3 pb-4">
@@ -71,6 +75,7 @@ export default function TutorDetailPage() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleBack}
+            data-testid="tutor-detail-back" id="tutor-detail-back" aria-label="Back"
             className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer"
             style={{ backgroundColor: colors.borderPrimary }}
           >
@@ -148,6 +153,9 @@ export default function TutorDetailPage() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    data-testid="tutor-detail-message"
+                    id="tutor-detail-message"
+                    aria-label="Message tutor"
                     onClick={async () => {
                       try {
                         const conversationId = connection!.conversationId;
@@ -185,6 +193,9 @@ export default function TutorDetailPage() {
                   <motion.div
                     className="py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] opacity-80"
                     style={{ backgroundColor: colors.bgTertiary, color: colors.textSecondary }}
+                    data-testid="tutor-detail-request-sent"
+                    id="tutor-detail-request-sent"
+                    aria-label="Request sent"
                   >
                     <MessageCircle className="w-5 h-5" />
                     Request sent
@@ -193,10 +204,12 @@ export default function TutorDetailPage() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    data-testid="tutor-detail-request"
+                    id="tutor-detail-request"
+                    aria-label="Request tutor"
                     onClick={async () => {
                       try {
                         await createRequest(tutor.id, undefined, tutor.subjects?.[0]);
-                        // UI will re-render and show "Request sent" via pendingRequest
                       } catch (e) {
                         console.error("[TutorDetail] Request failed:", e);
                       }
@@ -214,6 +227,9 @@ export default function TutorDetailPage() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                data-testid="tutor-detail-message-tutor"
+                id="tutor-detail-message-tutor"
+                aria-label="Message tutor"
                 onClick={async () => {
                   try {
                     const conversationId = connection!.conversationId;
@@ -249,6 +265,7 @@ export default function TutorDetailPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate("/booking")}
+              data-testid="tutor-detail-book" id="tutor-detail-book" aria-label="Book Lesson"
               className={`bg-gradient-to-br ${accentColor.gradient} text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] cursor-pointer`}
             >
               <Calendar className="w-5 h-5" />

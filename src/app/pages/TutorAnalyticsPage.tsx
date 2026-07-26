@@ -36,7 +36,12 @@ export default function TutorAnalyticsPage() {
   const avgRating = ratingValue != null ? ratingValue.toFixed(1) : "—";
 
   return (
-    <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-20">
+    <div
+      className="min-h-screen bg-[#1a1d29] overflow-auto pb-20"
+      data-testid="tutor-analytics-screen"
+      id="tutor-analytics-screen"
+      aria-label="Analytics"
+    >
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="px-6 pt-12 pb-3">
@@ -45,6 +50,9 @@ export default function TutorAnalyticsPage() {
               type="button"
               onClick={() => navigate(-1)}
               className="text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
+              data-testid="tutor-analytics-back"
+              id="tutor-analytics-back"
+              aria-label="Back"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>

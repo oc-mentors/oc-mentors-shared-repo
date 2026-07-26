@@ -1,0 +1,37 @@
+appId: com.ocmentorscorp.app
+---
+# Complete the learning-style quiz (any answers) and land on Home.
+# Assumes the Learning style quiz screen is already visible.
+# Option order is shuffled in the UI; "Answer option 1" is always the first displayed choice.
+- extendedWaitUntil:
+    visible:
+      text: "Learning style quiz|Answer option 1"
+    timeout: 20000
+- repeat:
+    times: 4
+    commands:
+      - extendedWaitUntil:
+          visible:
+            text: "Answer option 1"
+          timeout: 15000
+      - tapOn:
+          text: "Answer option 1"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "No"
+    timeout: 25000
+- tapOn:
+    text: "No"
+- extendedWaitUntil:
+    visible:
+      text: "Continue to Profile"
+    timeout: 20000
+- tapOn:
+    text: "Continue to Profile"
+- extendedWaitUntil:
+    visible:
+      text: "Home"
+    timeout: 20000
+- assertVisible:
+    text: "Home"

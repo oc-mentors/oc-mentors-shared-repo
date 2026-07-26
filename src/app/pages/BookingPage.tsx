@@ -146,7 +146,11 @@ export default function BookingPage() {
   };
 
   return (
-    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className="min-h-screen overflow-auto pb-20"
+      style={{ backgroundColor: colors.bgPrimary }}
+      data-testid="booking-screen" id="booking-screen" aria-label="Book a lesson"
+    >
       <div className="max-w-md mx-auto">
         {/* Header with Back */}
         <div className="px-6 pt-3 pb-2">
@@ -154,6 +158,7 @@ export default function BookingPage() {
             onClick={() => navigate(-1)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            data-testid="booking-back" id="booking-back" aria-label="Back"
             className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer"
             style={{ backgroundColor: colors.bgTertiary }}
           >
@@ -230,6 +235,13 @@ export default function BookingPage() {
                   whileTap={dayObj.isCurrentMonth ? { scale: 0.95 } : {}}
                   onClick={() => dayObj.isCurrentMonth && setSelectedDate(dayObj.day)}
                   disabled={!dayObj.isCurrentMonth}
+                  data-testid={
+                    dayObj.isCurrentMonth ? `booking-day-${dayObj.day}` : `booking-day-disabled-${index}`
+                  }
+                  id={
+                    dayObj.isCurrentMonth ? `booking-day-${dayObj.day}` : `booking-day-disabled-${index}`
+                  }
+                  aria-label={dayObj.isCurrentMonth ? `Day ${dayObj.day}` : "Unavailable day"}
                   className="aspect-square rounded-lg flex items-center justify-center text-[14px] transition-all"
                   style={{
                     backgroundColor: dayObj.isCurrentMonth && selectedDate === dayObj.day ? accentColor.primary : "transparent",
@@ -263,6 +275,7 @@ export default function BookingPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setSelectedTime(time)}
+                data-testid={`booking-time-${time.replace(/\s+/g, "-").toLowerCase()}`} id={`booking-time-${time.replace(/\s+/g, "-").toLowerCase()}`} aria-label={time}
                 className="py-4 rounded-xl text-[15px] font-medium transition-all"
                 style={{
                   backgroundColor: selectedTime === time ? accentColor.primary : colors.bgCard,
@@ -288,6 +301,7 @@ export default function BookingPage() {
             whileTap={{ scale: selectedDate && selectedTime ? 0.98 : 1 }}
             onClick={handleBookLesson}
             disabled={!selectedDate || !selectedTime}
+            data-testid="booking-confirm-button" id="booking-confirm-button" aria-label="Confirm booking"
             className="w-full py-4 rounded-xl text-[16px] font-semibold transition-all"
             style={{
               background: selectedDate && selectedTime

@@ -165,7 +165,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className="h-screen overflow-hidden flex flex-col"
+      style={{ backgroundColor: colors.bgPrimary }}
+      data-testid="home-screen" id="home-screen" aria-label="Home"
+    >
       <div className={`${reduceDistractions ? "max-w-lg" : "max-w-md"} mx-auto w-full h-full flex flex-col`}>
         {/* Fixed Header */}
         <div className="flex-shrink-0 px-6 pt-12 pb-3">
@@ -259,7 +263,7 @@ export default function HomePage() {
               </motion.button>
 
               <div className="grid grid-cols-2 gap-2 mt-5">
-                <Link to="/notes">
+                <Link to="/notes" aria-label="Study hub">
                   <div
                     className="rounded-xl py-3 px-2 text-center text-xs font-semibold border"
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary, color: colors.textPrimary }}

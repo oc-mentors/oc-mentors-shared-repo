@@ -149,7 +149,7 @@ export default function TutorsPage() {
           {renderTutorCardInner(tutor, match)}
         </motion.div>
       ) : (
-        <Link to={`/tutor/${tutor.id}`}>
+        <Link to={`/tutor/${tutor.id}`} data-testid={`tutor-row-${tutor.id}`} id={`tutor-row-${tutor.id}`} aria-label={`Tutor ${tutor.name}`}>
           <motion.div
             whileHover={{ scale: 1.01, y: -2 }}
             whileTap={{ scale: 0.99 }}
@@ -256,7 +256,11 @@ export default function TutorsPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className="h-screen overflow-hidden flex flex-col"
+      style={{ backgroundColor: colors.bgPrimary }}
+      data-testid="tutors-screen" id="tutors-screen" aria-label="Find Tutors"
+    >
       <div className="max-w-md mx-auto w-full h-full flex flex-col relative">
         {/* Fixed Header Section */}
         <div className="flex-shrink-0 relative z-10" style={{ backgroundColor: colors.bgPrimary }}>
@@ -289,6 +293,7 @@ export default function TutorsPage() {
                 placeholder="Search by name or subject..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                data-testid="tutors-search-input" id="tutors-search-input" aria-label="Search tutors"
                 className="w-full rounded-xl pl-12 pr-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
                 style={{
                   backgroundColor: colors.bgTertiary,

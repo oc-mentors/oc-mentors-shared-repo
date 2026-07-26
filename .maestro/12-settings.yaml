@@ -1,0 +1,55 @@
+appId: com.ocmentorscorp.app
+name: "12 — Settings accessibility toggle"
+tags:
+  - settings
+  - journey-12
+---
+- clearState
+- launchApp
+- runFlow: subflows/login-student-home.yaml
+- tapOn:
+    text: "Profile"
+- assertVisible:
+    text: "Profile"
+- scrollUntilVisible:
+    element:
+      text: "Settings"
+    direction: DOWN
+    centerElement: true
+    timeout: 15000
+- assertVisible:
+    text: "Profile"
+- tapOn:
+    text: "Settings"
+- extendedWaitUntil:
+    visible:
+      text: "Settings"
+    timeout: 10000
+- assertVisible:
+    text: "Settings"
+- scrollUntilVisible:
+    element:
+      text: "High contrast on|High contrast off"
+    direction: DOWN
+    centerElement: true
+    timeout: 15000
+# Normalize to off if already on, then turn on and assert the label flips.
+- runFlow:
+    when:
+      visible:
+        text: "High contrast on"
+    commands:
+      - tapOn:
+          text: "High contrast on"
+      - extendedWaitUntil:
+          visible:
+            text: "High contrast off"
+          timeout: 5000
+- tapOn:
+    text: "High contrast off"
+- extendedWaitUntil:
+    visible:
+      text: "High contrast on"
+    timeout: 5000
+- assertVisible:
+    text: "High contrast on"

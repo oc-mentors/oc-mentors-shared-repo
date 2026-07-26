@@ -237,7 +237,13 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="min-h-screen pb-24" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className="min-h-screen pb-24"
+      style={{ backgroundColor: colors.bgPrimary }}
+      data-testid="notes-screen"
+      id="notes-screen"
+      aria-label="Notes"
+    >
       <div className="max-w-md mx-auto">
         <div className="px-6 pt-12 pb-3 flex items-center justify-between">
           <motion.button
@@ -246,6 +252,9 @@ export default function NotesPage() {
             onClick={() => navigate("/home")}
             className="w-10 h-10 rounded-full flex items-center justify-center"
             style={{ backgroundColor: colors.bgTertiary }}
+            data-testid="notes-back"
+            id="notes-back"
+            aria-label="Back"
           >
             <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
           </motion.button>
@@ -273,6 +282,7 @@ export default function NotesPage() {
               key={id}
               type="button"
               onClick={() => setTab(id)}
+              aria-label={label}
               className="flex-1 min-w-[88px] rounded-xl py-2.5 text-xs font-semibold border flex items-center justify-center gap-1"
               style={{
                 backgroundColor: tab === id ? accentColor.primary : colors.bgCard,
@@ -298,7 +308,7 @@ export default function NotesPage() {
                   style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
                 >
                   <div className="flex justify-between gap-2">
-                    <h3 className="font-semibold text-sm" style={{ color: colors.textPrimary }}>
+                    <h3 className="font-semibold text-sm" style={{ color: colors.textPrimary }} aria-label={n.title}>
                       {n.title}
                     </h3>
                     <button type="button" onClick={() => delNote(n.id)} aria-label="Delete note">
@@ -314,6 +324,7 @@ export default function NotesPage() {
                 onSubmit={addNote}
                 className="rounded-2xl p-4 border space-y-2"
                 style={{ backgroundColor: colors.bgCard, borderColor: colors.borderPrimary }}
+                aria-label="Add note"
               >
                 <h3 className="font-semibold text-sm" style={{ color: colors.textPrimary }}>
                   Add note
@@ -322,6 +333,9 @@ export default function NotesPage() {
                   value={noteTitle}
                   onChange={(e) => setNoteTitle(e.target.value)}
                   placeholder="Title"
+                  aria-label="Note title"
+                  data-testid="notes-title-input"
+                  id="notes-title-input"
                   className="w-full rounded-xl px-3 py-2 text-sm border outline-none"
                   style={{
                     backgroundColor: colors.bgTertiary,
@@ -334,6 +348,9 @@ export default function NotesPage() {
                   value={noteBody}
                   onChange={(e) => setNoteBody(e.target.value)}
                   placeholder="Content"
+                  aria-label="Note content"
+                  data-testid="notes-content-input"
+                  id="notes-content-input"
                   rows={3}
                   className="w-full rounded-xl px-3 py-2 text-sm border outline-none resize-none"
                   style={{
@@ -348,6 +365,9 @@ export default function NotesPage() {
                   whileTap={{ scale: 0.98 }}
                   className="inline-flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-semibold text-white"
                   style={{ backgroundColor: accentColor.primary }}
+                  data-testid="notes-save"
+                  id="notes-save"
+                  aria-label="Save note"
                 >
                   <Plus className="w-4 h-4" />
                   Save

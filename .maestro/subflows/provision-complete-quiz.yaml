@@ -1,0 +1,21 @@
+appId: com.ocmentorscorp.app
+name: "Provision — complete learning quiz"
+tags:
+  - provision
+---
+# One-shot: log in and finish the quiz so the account can run journeys 6–8 / 13.
+# Requires --env TEST_EMAIL=... --env TEST_PASSWORD=...
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Login|Student|Choose your role"
+    timeout: 30000
+- runFlow: login-student.yaml
+- runFlow:
+    when:
+      visible:
+        text: "Learning style quiz|Answer option 1"
+    file: complete-quiz.yaml
+- assertVisible:
+    text: "Home"

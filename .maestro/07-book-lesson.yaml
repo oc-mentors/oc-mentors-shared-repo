@@ -1,0 +1,49 @@
+appId: com.ocmentorscorp.app
+name: "7 — Book lesson (stop at confirmation)"
+tags:
+  - booking
+  - journey-7
+---
+# Stops at booking success banner. No payment step in this app.
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Login|Student|Choose your role"
+    timeout: 30000
+- runFlow: subflows/login-student-home.yaml
+- tapOn:
+    text: "Tutors"
+- assertVisible:
+    text: "Find Tutors"
+- tapOn:
+    text: "Tutor .*"
+    index: 0
+- assertVisible:
+    text: "Tutor profile"
+- tapOn:
+    text: "Book Lesson"
+- assertVisible:
+    text: "Book a lesson"
+- evalScript: ${output.day = new Date().getDate()}
+- tapOn:
+    text: "Day ${output.day}"
+- assertVisible:
+    text: "10:00 AM"
+- tapOn:
+    text: "10:00 AM"
+- scrollUntilVisible:
+    element:
+      text: "Confirm booking|Confirm Booking.*"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: "Confirm booking|Confirm Booking.*"
+- extendedWaitUntil:
+    visible:
+      text: "Booking successful"
+    timeout: 15000
+- assertVisible:
+    text: "Booking successful"
+- assertVisible:
+    text: "Schedule"

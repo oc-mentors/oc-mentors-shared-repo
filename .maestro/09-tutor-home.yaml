@@ -1,0 +1,18 @@
+appId: com.ocmentorscorp.app
+name: "9 — Tutor login and home"
+tags:
+  - tutor
+  - journey-9
+---
+- clearState
+- launchApp
+- runFlow: subflows/login-tutor.yaml
+- runFlow:
+    when:
+      visible:
+        text: "Tutor onboarding|Next"
+    file: subflows/complete-tutor-onboarding.yaml
+- assertVisible:
+    text: "Home|Tutor home"
+- assertVisible:
+    text: "Students|Analytics|Schedule"

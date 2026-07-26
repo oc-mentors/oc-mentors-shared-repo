@@ -1,0 +1,17 @@
+appId: com.ocmentorscorp.app
+name: "1 — Student login"
+tags:
+  - auth
+  - journey-1
+---
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Login|Student|Choose your role"
+    timeout: 30000
+- runFlow: subflows/login-student.yaml
+- assertVisible:
+    text: "Home|Learning style quiz|Continue to Profile"
+- assertNotVisible:
+    text: "Sign in error"

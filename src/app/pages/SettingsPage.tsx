@@ -70,7 +70,13 @@ export default function SettingsPage() {
   }, [user?.id, user?.role]);
 
   return (
-    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className="min-h-screen overflow-auto pb-20"
+      style={{ backgroundColor: colors.bgPrimary }}
+      data-testid="settings-screen"
+      id="settings-screen"
+      aria-label="Settings"
+    >
       <div className="max-w-md mx-auto">
         {/* Header with back arrow */}
         <div className="px-6 pt-12 pb-3">
@@ -81,6 +87,9 @@ export default function SettingsPage() {
               whileTap={{ scale: 0.95 }}
               className="w-10 h-10 rounded-full flex items-center justify-center"
               style={{ backgroundColor: colors.bgTertiary }}
+              data-testid="settings-back"
+              id="settings-back"
+              aria-label="Back"
             >
               <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
             </motion.button>
@@ -371,7 +380,7 @@ export default function SettingsPage() {
                   className="relative w-[51px] h-[31px] rounded-full transition-colors"
                   style={{ backgroundColor: highContrast ? accentColor.primary : colors.bgTertiary }}
                   aria-pressed={highContrast}
-                  aria-label="Toggle high contrast"
+                  aria-label={highContrast ? "High contrast on" : "High contrast off"}
                 >
                   <motion.div
                     animate={{ x: highContrast ? 20 : 0 }}

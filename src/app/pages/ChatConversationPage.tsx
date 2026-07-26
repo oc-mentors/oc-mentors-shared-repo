@@ -68,8 +68,8 @@ export default function ChatConversationPage() {
 
   // Scroll to the bottom instantly on first load
   useEffect(() => {
-    if (currentConversation && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "instant" });
+    if (currentConversation && messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, [currentConversation?.id]);
 
@@ -79,7 +79,9 @@ export default function ChatConversationPage() {
   }
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   const handleSendMessage = async () => {
@@ -118,22 +120,30 @@ export default function ChatConversationPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className="h-screen flex flex-col overflow-hidden"
+      style={{ backgroundColor: colors.bgPrimary }}
+      data-testid="chat-conversation-screen" id="chat-conversation-screen" aria-label="Conversation"
+    >
       <div className="max-w-md mx-auto flex flex-col h-full w-full overflow-hidden">
         {/* Header */}
-        <div className="px-6 pt-3 pb-4 relative flex-shrink-0">
-          {/* Back Button - Left Side */}
+        <div className="px-6 pt-3 pb-4 flex-shrink-0 flex items-start gap-3">
+          {/* Back Button */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/chat')}
-            className="absolute left-6 top-3 w-10 h-10 rounded-xl flex items-center justify-center"
+            data-testid="chat-back"
+            id="chat-back"
+            aria-label="Back to messages"
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: colors.bgTertiary }}
           >
             <ArrowLeft className="w-6 h-6" style={{ color: colors.textPrimary }} />
           </motion.button>
           
           {/* Profile Photo and Name - Centered */}
-          <div className="flex flex-col items-center gap-2 pt-2">
+          <div className="flex flex-col items-center gap-2 pt-2 flex-1 min-w-0">
             <motion.button
               whileHover={currentConversation.role === 'tutor' ? { scale: 1.05 } : {}}
               whileTap={currentConversation.role === 'tutor' ? { scale: 0.95 } : {}}
@@ -165,7 +175,7 @@ export default function ChatConversationPage() {
         </div>
 
         {/* Messages */}
-        <div className="relative flex-1 overflow-hidden">
+        <div className="relative flex-1 min-h-0 overflow-hidden">
           {/* Top fade overlay */}
           <AnimatePresence>
             {showTopFade && (
@@ -323,6 +333,7 @@ export default function ChatConversationPage() {
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                 placeholder="Type a message..."
+                data-testid="chat-message-input" id="chat-message-input" aria-label="Type a message"
                 className="w-full bg-transparent text-[14px] outline-none"
                 style={{ color: colors.textPrimary }}
               />
@@ -333,6 +344,7 @@ export default function ChatConversationPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleSendMessage}
+              data-testid="chat-send-button" id="chat-send-button" aria-label="Send message"
               className={`w-11 h-11 bg-gradient-to-br ${accentColor.gradient} rounded-full shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-center`}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 20 20">

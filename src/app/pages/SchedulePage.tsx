@@ -414,7 +414,11 @@ export default function SchedulePage() {
   };
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className="h-screen overflow-hidden flex flex-col"
+      style={{ backgroundColor: colors.bgPrimary }}
+      data-testid="schedule-screen" id="schedule-screen" aria-label="Schedule"
+    >
       <div className="max-w-md mx-auto w-full h-full flex flex-col">
         {/* Header with Profile Button */}
         <div className="flex-shrink-0 px-6 pt-12 pb-3">
@@ -1001,6 +1005,7 @@ export default function SchedulePage() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           className="fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-md mx-4"
+          data-testid="booking-success-banner" id="booking-success-banner" aria-label="Booking successful"
         >
           <div className="bg-[#4ade80] text-white px-6 py-4 rounded-xl shadow-[0px_8px_24px_0px_rgba(74,222,128,0.4)] flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
@@ -1012,6 +1017,7 @@ export default function SchedulePage() {
             </div>
             <button
               onClick={() => setShowBookingSuccess(false)}
+              data-testid="booking-success-dismiss" id="booking-success-dismiss" aria-label="Dismiss"
               className="text-white/80 hover:text-white"
             >
               <X className="w-5 h-5" />

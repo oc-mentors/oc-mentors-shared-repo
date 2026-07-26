@@ -265,6 +265,9 @@ export default function TutorOnboardingQuizPage() {
     <div
       className="min-h-screen flex justify-center p-6"
       style={{ background: `linear-gradient(to bottom right, ${colors.bgPrimary}, ${colors.bgSecondary})` }}
+      data-testid="tutor-onboarding-screen"
+      id="tutor-onboarding-screen"
+      aria-label="Tutor onboarding"
     >
       <div className="w-full max-w-md">
         {/* Back Arrow */}
@@ -277,6 +280,9 @@ export default function TutorOnboardingQuizPage() {
             onClick={handleBack}
             className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer"
             style={{ backgroundColor: colors.bgTertiary }}
+            data-testid="tutor-onboarding-back"
+            id="tutor-onboarding-back"
+            aria-label="Back"
           >
             <ArrowLeft className="w-5 h-5" style={{ color: colors.textPrimary }} />
           </motion.button>
@@ -333,6 +339,7 @@ export default function TutorOnboardingQuizPage() {
                         backgroundColor: active ? `${accentColor.primary}20` : colors.bgCard,
                         borderColor: active ? accentColor.primary : colors.borderSecondary,
                       }}
+                      aria-label={label}
                     >
                       <span className="text-[15px]" style={{ color: colors.textPrimary }}>
                         {label}
@@ -363,6 +370,9 @@ export default function TutorOnboardingQuizPage() {
                   color: colors.textPrimary,
                 }}
                 placeholder={"Math 2A\nICS 31\nPhysics 7C"}
+                data-testid="tutor-onboarding-courses"
+                id="tutor-onboarding-courses"
+                aria-label="Courses"
               />
             </>
           )}
@@ -387,6 +397,7 @@ export default function TutorOnboardingQuizPage() {
                         backgroundColor: active ? `${accentColor.primary}20` : colors.bgCard,
                         borderColor: active ? accentColor.primary : colors.borderSecondary,
                       }}
+                      aria-label={label}
                     >
                       <span className="text-[15px]" style={{ color: colors.textPrimary }}>
                         {label}
@@ -415,6 +426,7 @@ export default function TutorOnboardingQuizPage() {
                         backgroundColor: active ? `${accentColor.primary}20` : colors.bgCard,
                         borderColor: active ? accentColor.primary : colors.borderSecondary,
                       }}
+                      aria-label={label}
                     >
                       <span className="text-[15px]" style={{ color: colors.textPrimary }}>
                         {label}
@@ -446,6 +458,7 @@ export default function TutorOnboardingQuizPage() {
                         backgroundColor: active ? `${accentColor.primary}20` : colors.bgCard,
                         borderColor: active ? accentColor.primary : colors.borderSecondary,
                       }}
+                      aria-label={label}
                     >
                       <span className="text-[15px]" style={{ color: colors.textPrimary }}>
                         {label}
@@ -474,6 +487,7 @@ export default function TutorOnboardingQuizPage() {
                         backgroundColor: active ? `${accentColor.primary}20` : colors.bgCard,
                         borderColor: active ? accentColor.primary : colors.borderSecondary,
                       }}
+                      aria-label={label}
                     >
                       <span className="text-[15px]" style={{ color: colors.textPrimary }}>
                         {label}
@@ -507,6 +521,7 @@ export default function TutorOnboardingQuizPage() {
                         backgroundColor: active ? `${accentColor.primary}20` : colors.bgCard,
                         borderColor: active ? accentColor.primary : colors.borderSecondary,
                       }}
+                      aria-label={label}
                     >
                       <span className="text-[15px]" style={{ color: colors.textPrimary }}>
                         {label}
@@ -538,6 +553,7 @@ export default function TutorOnboardingQuizPage() {
                         backgroundColor: active ? `${accentColor.primary}20` : colors.bgCard,
                         borderColor: active ? accentColor.primary : colors.borderSecondary,
                       }}
+                      aria-label={label}
                     >
                       <span className="text-[15px]" style={{ color: colors.textPrimary }}>
                         {label}
@@ -566,6 +582,7 @@ export default function TutorOnboardingQuizPage() {
                         backgroundColor: active ? `${accentColor.primary}20` : colors.bgCard,
                         borderColor: active ? accentColor.primary : colors.borderSecondary,
                       }}
+                      aria-label={label}
                     >
                       <span className="text-[15px]" style={{ color: colors.textPrimary }}>
                         {label}
@@ -592,6 +609,9 @@ export default function TutorOnboardingQuizPage() {
               style={{ color: colors.textSecondary }}
               onClick={handleBack}
               disabled={isSubmitting}
+              data-testid="tutor-onboarding-previous"
+              id="tutor-onboarding-previous"
+              aria-label={step === 0 ? "Back" : "Previous"}
             >
               {step === 0 ? "Back" : "Previous"}
             </button>
@@ -606,6 +626,9 @@ export default function TutorOnboardingQuizPage() {
                 color: "#ffffff",
                 opacity: isSubmitting || !canProceed ? 0.45 : 1,
               }}
+              data-testid="tutor-onboarding-next"
+              id="tutor-onboarding-next"
+              aria-label={step === totalSteps - 1 ? "Finish" : "Next"}
             >
               <span className="text-sm">{step === totalSteps - 1 ? "Finish" : "Next"}</span>
               <ChevronRight className="w-4 h-4" />

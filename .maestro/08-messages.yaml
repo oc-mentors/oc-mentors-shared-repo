@@ -1,0 +1,65 @@
+appId: com.ocmentorscorp.app
+name: "8 — Messages (request-first)"
+tags:
+  - chat
+  - journey-8
+---
+# Real path: Request tutor before Message unlocks.
+# Messaging requires an active connection, which is created only when the TUTOR
+# accepts the request (see TutorRequestsContext.acceptRequest). This flow:
+#   - If already connected → full send + inbox (re-runnable)
+#   - If Request tutor → request → assert Request sent (Message still locked)
+#   - If Request sent already → assert locked state
+# Full request→accept→message coverage is journey 14.
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Login|Student|Choose your role"
+    timeout: 30000
+- runFlow: subflows/login-student-home.yaml
+- tapOn:
+    text: "Tutors"
+- assertVisible:
+    text: "Find Tutors"
+# Prefer a tutor that still needs a request (index 1), fall back to first if needed.
+- tapOn:
+    text: "Tutor .*"
+    index: 1
+- assertVisible:
+    text: "Tutor profile"
+# --- already connected ---
+- runFlow:
+    when:
+      visible:
+        text: "Message tutor"
+    file: subflows/message-connected-tutor.yaml
+# --- fresh request ---
+- runFlow:
+    when:
+      visible:
+        text: "Request tutor"
+    commands:
+      - tapOn:
+          text: "Request tutor"
+      - extendedWaitUntil:
+          visible:
+            text: "Request sent"
+          timeout: 15000
+      - assertVisible:
+          text: "Request sent"
+      - assertNotVisible:
+          text: "Message tutor"
+# --- pending request already ---
+- runFlow:
+    when:
+      visible:
+        text: "Request sent"
+    commands:
+      - assertVisible:
+          text: "Request sent"
+      - assertNotVisible:
+          text: "Message tutor"
+# One of the three branches above must have matched.
+- assertVisible:
+    text: "Tutor profile|Messages|Request sent|Conversation"

@@ -1,0 +1,77 @@
+appId: com.ocmentorscorp.app
+---
+# Send a message in an already-unlocked tutor conversation (Message tutor visible).
+- tapOn:
+    text: "Message tutor"
+- extendedWaitUntil:
+    visible:
+      text: "Conversation"
+    timeout: 20000
+- assertVisible:
+    text: "Conversation"
+- scrollUntilVisible:
+    element:
+      text: "Type a message|Send message"
+    direction: DOWN
+    timeout: 10000
+- assertVisible:
+    text: "Type a message"
+- tapOn:
+    text: "Type a message"
+- inputText: "maestro-e2e-ping"
+- tapOn:
+    text: "Send message"
+- extendedWaitUntil:
+    visible:
+      text: "maestro-e2e-ping"
+    timeout: 15000
+- assertVisible:
+    text: "maestro-e2e-ping"
+- scrollUntilVisible:
+    element:
+      text: "Back to messages"
+    direction: UP
+    timeout: 10000
+- tapOn:
+    text: "Back to messages"
+- extendedWaitUntil:
+    visible:
+      text: "Messages"
+    timeout: 15000
+- assertVisible:
+    text: "Messages"
+- assertVisible:
+    text: "Search conversations"
+- extendedWaitUntil:
+    visible:
+      text: "Conversation with .*"
+    timeout: 15000
+- assertVisible:
+    text: "Conversation with .*"
+- tapOn:
+    text: "Conversation with .*"
+    index: 0
+- assertVisible:
+    text: "Conversation"
+- assertVisible:
+    text: "maestro-e2e-ping|Type a message"
+- scrollUntilVisible:
+    element:
+      text: "Back to messages"
+    direction: UP
+    timeout: 10000
+- tapOn:
+    text: "Back to messages"
+- assertVisible:
+    text: "Messages"
+- tapOn:
+    text: "Conversation options"
+    index: 0
+- assertVisible:
+    text: "Conversation menu"
+- assertVisible:
+    text: "Delete conversation"
+- tapOn:
+    text: "Search conversations"
+- assertVisible:
+    text: "Messages"

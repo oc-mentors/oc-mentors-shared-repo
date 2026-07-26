@@ -1,0 +1,43 @@
+appId: com.ocmentorscorp.app
+---
+# Sign up as tutor. Sets output.tutorEmail. Requires --env TUTOR_PASSWORD=...
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Login|Tutor/Admin|Choose your role"
+    timeout: 30000
+- evalScript: ${output.tutorEmail = "maestro.tutor." + Date.now() + "@ocmentors.test"}
+- tapOn:
+    text: "Tutor/Admin"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Email"
+    timeout: 15000
+- tapOn:
+    text: "Sign Up"
+- assertVisible:
+    text: "Full Name"
+- tapOn:
+    text: "Full Name"
+- inputText: "Maestro E2E Tutor"
+- tapOn:
+    text: "Email"
+- inputText: ${output.tutorEmail}
+- tapOn:
+    text: "Password"
+- inputText: ${TUTOR_PASSWORD}
+- tapOn:
+    text: "Create Account"
+- extendedWaitUntil:
+    visible:
+      text: "Tutor onboarding|Tutor Onboarding|Home|Tutor home"
+    timeout: 30000
+- runFlow:
+    when:
+      visible:
+        text: "Tutor onboarding|Tutor Onboarding|Next"
+    file: complete-tutor-onboarding.yaml
+- assertVisible:
+    text: "Home|Tutor home"

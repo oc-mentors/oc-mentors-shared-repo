@@ -1,0 +1,179 @@
+appId: com.ocmentorscorp.app
+name: "14 — Student request → tutor accept"
+tags:
+  - tutor
+  - journey-14
+---
+# Requires:
+#   TEST_EMAIL / TEST_PASSWORD — quiz-completed student
+#   TUTOR_EMAIL / TUTOR_PASSWORD — onboarded tutor (display name contains "Maestro E2E Tutor")
+# Student requests that tutor by search, logs out, tutor accepts.
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Login|Student|Choose your role"
+    timeout: 30000
+- runFlow: subflows/login-student-home.yaml
+- tapOn:
+    text: "Tutors"
+- assertVisible:
+    text: "Find Tutors"
+- assertVisible:
+    text: "Search tutors"
+- tapOn:
+    text: "Search tutors"
+- inputText: "Maestro E2E Tutor"
+- extendedWaitUntil:
+    visible:
+      text: "Tutor Maestro E2E Tutor|Tutor .*"
+    timeout: 15000
+- tapOn:
+    text: "Tutor Maestro E2E Tutor|Tutor .*"
+    index: 0
+- assertVisible:
+    text: "Tutor profile"
+# Request if needed; if already Message tutor, connection exists — still OK for accept flow skip
+- runFlow:
+    when:
+      visible:
+        text: "Request tutor"
+    commands:
+      - tapOn:
+          text: "Request tutor"
+      - extendedWaitUntil:
+          visible:
+            text: "Request sent"
+          timeout: 15000
+      - assertVisible:
+          text: "Request sent"
+- runFlow:
+    when:
+      visible:
+        text: "Request sent"
+    commands:
+      - assertVisible:
+          text: "Request sent"
+- runFlow:
+    when:
+      visible:
+        text: "Message tutor"
+    commands:
+      - assertVisible:
+          text: "Message tutor"
+# Leave tutor detail (no Profile button here) then logout
+- tapOn:
+    text: "Back"
+- extendedWaitUntil:
+    visible:
+      text: "Find Tutors|Home|Profile"
+    timeout: 10000
+- tapOn:
+    text: "Profile"
+- scrollUntilVisible:
+    element:
+      text: "Logout"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: "Logout"
+- assertVisible:
+    text: "Logout confirmation"
+- tapOn:
+    text: "Yes, Logout"
+- extendedWaitUntil:
+    visible:
+      text: "Login"
+    timeout: 15000
+# Tutor accepts
+- runFlow: subflows/login-tutor.yaml
+- assertVisible:
+    text: "Home|Tutor home"
+- tapOn:
+    text: "View all requests"
+- assertVisible:
+    text: "Requests from students"
+- extendedWaitUntil:
+    visible:
+      text: "Accept request|Accept|No pending requests"
+    timeout: 15000
+- runFlow:
+    when:
+      visible:
+        text: "Accept request|Accept"
+    commands:
+      - tapOn:
+          text: "Accept request|Accept"
+      - extendedWaitUntil:
+          visible:
+            text: "Conversation|Messages|Back to messages"
+          timeout: 20000
+      - assertVisible:
+          text: "Conversation|Messages|Back to messages"
+      - runFlow:
+          when:
+            visible:
+              text: "Back to messages"
+          commands:
+            - tapOn:
+                text: "Back to messages"
+            - extendedWaitUntil:
+                visible:
+                  text: "Messages|Home|Tutor home"
+                timeout: 10000
+- runFlow:
+    when:
+      visible:
+        text: "No pending requests"
+    commands:
+      - assertVisible:
+          text: "No pending requests"
+# Leave chat/requests → Home → Profile → logout
+- runFlow:
+    when:
+      visible:
+        text: "Home"
+    commands:
+      - tapOn:
+          text: "Home"
+- extendedWaitUntil:
+    visible:
+      text: "Home|Tutor home|Profile"
+    timeout: 10000
+- tapOn:
+    text: "Profile"
+- scrollUntilVisible:
+    element:
+      text: "Logout"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: "Logout"
+- assertVisible:
+    text: "Logout confirmation"
+- tapOn:
+    text: "Yes, Logout"
+- extendedWaitUntil:
+    visible:
+      text: "Login"
+    timeout: 15000
+- runFlow: subflows/login-student-home.yaml
+- tapOn:
+    text: "Tutors"
+- tapOn:
+    text: "Search tutors"
+- inputText: "Maestro E2E Tutor"
+- extendedWaitUntil:
+    visible:
+      text: "Tutor Maestro E2E Tutor|Tutor .*"
+    timeout: 15000
+- tapOn:
+    text: "Tutor Maestro E2E Tutor|Tutor .*"
+    index: 0
+- assertVisible:
+    text: "Tutor profile"
+- extendedWaitUntil:
+    visible:
+      text: "Message tutor"
+    timeout: 15000
+- runFlow: subflows/message-connected-tutor.yaml

@@ -7,7 +7,7 @@ import {
   Check,
   ChevronDown,
   Loader2,
-  PawPrint,
+  GraduationCap,
   Plus,
   RefreshCw,
   Search,
@@ -46,6 +46,11 @@ import {
 import { resolveCourseSearch } from "../lib/zotCourseQuery";
 
 type TabId = "browse" | "plan" | "grades";
+type SchoolId = "uci";
+
+const SCHOOLS: { id: SchoolId; label: string; short: string }[] = [
+  { id: "uci", label: "UC Irvine", short: "UCI" },
+];
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -77,6 +82,7 @@ export default function ZotPlannerPage() {
   const uid = user?.id || "anon";
 
   const [tab, setTab] = useState<TabId>("browse");
+  const [school, setSchool] = useState<SchoolId>("uci");
   const [week, setWeek] = useState<WeekInfo | null>(null);
   const [terms, setTerms] = useState<WebsocTerm[]>([]);
   const [departments, setDepartments] = useState<WebsocDepartment[]>([]);
@@ -438,7 +444,13 @@ export default function ZotPlannerPage() {
   const onFgMuted = mode === "dark" ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.55)";
 
   return (
-    <div className="min-h-screen overflow-auto pb-24" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className="min-h-screen overflow-auto pb-24"
+      style={{ backgroundColor: colors.bgPrimary }}
+      data-testid="course-planner-screen"
+      id="course-planner-screen"
+      aria-label="Course Planner"
+    >
       <div className="max-w-md mx-auto">
         {/* Header */}
         <motion.div
@@ -446,22 +458,56 @@ export default function ZotPlannerPage() {
           animate={{ opacity: 1, y: 0 }}
           className="px-6 pt-12 pb-3"
         >
-          <div className="flex items-center gap-3 mb-1">
+          <div className="flex items-center gap-3 mb-4">
             <div
               className="w-11 h-11 rounded-2xl flex items-center justify-center"
               style={{ background: `linear-gradient(135deg, ${accentColor.primary}, ${accentColor.icon})` }}
             >
-              <PawPrint className="w-5 h-5" style={{ color: onFg }} />
+              <GraduationCap className="w-5 h-5" style={{ color: onFg }} />
             </div>
             <div>
               <h1 className="text-[28px] font-bold leading-tight" style={{ color: colors.textPrimary }}>
-                Zot Zot!
+                Course Planner
               </h1>
               <p className="text-[10px] font-bold tracking-[0.18em] uppercase" style={{ color: colors.textTertiary }}>
-                UCI course planner
+                Plan your schedule
               </p>
             </div>
           </div>
+
+          <label className="block">
+            <span
+              className="text-[11px] font-semibold uppercase tracking-wide"
+              style={{ color: colors.textTertiary }}
+            >
+              School
+            </span>
+            <div className="relative mt-1">
+              <select
+                value={school}
+                onChange={(e) => setSchool(e.target.value as SchoolId)}
+                aria-label="School"
+                data-testid="zot-school-select"
+                id="zot-school-select"
+                className="w-full appearance-none rounded-xl px-3 py-2.5 text-sm pr-9"
+                style={{
+                  backgroundColor: colors.bgSecondary,
+                  color: colors.textPrimary,
+                  border: `1px solid ${colors.borderPrimary}`,
+                }}
+              >
+                {SCHOOLS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label} ({s.short})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                style={{ color: colors.textTertiary }}
+              />
+            </div>
+          </label>
         </motion.div>
 
         {/* Week banner */}
@@ -492,16 +538,17 @@ export default function ZotPlannerPage() {
           {tabs.map((t) => {
             const active = tab === t.id;
             return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTab(t.id)}
-                className="flex-1 rounded-xl py-2 text-xs font-semibold transition-colors"
-                style={{
-                  backgroundColor: active ? accentColor.primary : colors.bgTertiary,
-                  color: active ? onFg : colors.textSecondary,
-                }}
-              >
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              aria-label={t.id === "browse" ? "Browse" : "My Plan"}
+              className="flex-1 rounded-xl py-2 text-xs font-semibold transition-colors"
+              style={{
+                backgroundColor: active ? accentColor.primary : colors.bgTertiary,
+                color: active ? onFg : colors.textSecondary,
+              }}
+            >
                 {t.label}
               </button>
             );
@@ -604,6 +651,7 @@ export default function ZotPlannerPage() {
                           }
                         }}
                         placeholder="ics 31, cs 161, bio 93…"
+                        aria-label="Course number"
                         className="mt-1 w-full rounded-xl px-3 py-2.5 text-sm"
                         style={{
                           backgroundColor: colors.bgSecondary,
@@ -642,6 +690,7 @@ export default function ZotPlannerPage() {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="ics 31, writing 39C…"
+                        aria-label="Course search"
                         className="flex-1 rounded-xl px-3 py-2.5 text-sm"
                         style={{
                           backgroundColor: colors.bgSecondary,
@@ -664,6 +713,7 @@ export default function ZotPlannerPage() {
                       whileTap={{ scale: 0.97 }}
                       onClick={runWebsocSearch}
                       disabled={loadingCourses}
+                      aria-label="Search courses"
                       className="flex-1 rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2"
                       style={{ backgroundColor: accentColor.primary, color: onFg }}
                     >
@@ -786,6 +836,7 @@ export default function ZotPlannerPage() {
                         <button
                           type="button"
                           className="w-full text-left px-4 py-3 flex items-center justify-between gap-2"
+                          aria-label={`Course ${course.deptCode} ${course.courseNumber}`}
                           onClick={() => {
                             setExpandedCourse(open ? null : key);
                             if (!open) loadCourseDetail(course.deptCode, course.courseNumber);
@@ -869,6 +920,7 @@ export default function ZotPlannerPage() {
                                           whileTap={{ scale: 0.9 }}
                                           disabled={saved}
                                           onClick={() => saveSection(course, sec)}
+                                          aria-label={saved ? "Already in plan" : "Add to plan"}
                                           className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                                           style={{
                                             backgroundColor: saved ? colors.bgSecondary : accentColor.primary,
@@ -1089,7 +1141,7 @@ export default function ZotPlannerPage() {
         )}
       </AnimatePresence>
 
-      <BottomNav currentPage="zot" />
+      <BottomNav currentPage="planner" />
     </div>
   );
 }

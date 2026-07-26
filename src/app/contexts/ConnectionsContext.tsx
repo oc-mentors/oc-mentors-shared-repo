@@ -215,12 +215,12 @@ export function ConnectionsProvider({ children }: { children: ReactNode }) {
         participantSummary: {
           [uid]: {
             firstName: studentFirst,
-            photoURL: studentPhoto ?? undefined,
+            ...(studentPhoto ? { photoURL: studentPhoto } : {}),
             role: "student",
           },
           [tutorUid]: {
             firstName: tutorFirstName,
-            photoURL: tutorPhotoURL ?? undefined,
+            ...(tutorPhotoURL ? { photoURL: tutorPhotoURL } : {}),
             role: "tutor",
           },
         },

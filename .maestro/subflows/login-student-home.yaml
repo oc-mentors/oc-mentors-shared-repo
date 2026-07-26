@@ -1,0 +1,24 @@
+appId: com.ocmentorscorp.app
+---
+# Login as student and require Home (quiz already completed).
+# If results are shown again, continue through to Home.
+# If an unfinished quiz appears, complete it via complete-quiz.yaml.
+- runFlow: login-student.yaml
+- runFlow:
+    when:
+      visible:
+        text: "Continue to Profile"
+    commands:
+      - tapOn:
+          text: "Continue to Profile"
+      - extendedWaitUntil:
+          visible:
+            text: "Home"
+          timeout: 15000
+- runFlow:
+    when:
+      visible:
+        text: "Answer option 1"
+    file: complete-quiz.yaml
+- assertVisible:
+    text: "Home"

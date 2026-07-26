@@ -15,6 +15,8 @@ export function ProfileButton() {
     <div
       onClick={handleClick}
       className="cursor-pointer"
+      data-testid="profile-button" id="profile-button" aria-label="Profile"
+      role="button"
     >
       <AvatarWithInitials
         src={user?.avatar}

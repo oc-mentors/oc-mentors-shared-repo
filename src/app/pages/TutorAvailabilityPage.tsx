@@ -34,7 +34,12 @@ export default function TutorAvailabilityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-20">
+    <div
+      className="min-h-screen bg-[#1a1d29] overflow-auto pb-20"
+      data-testid="tutor-availability-screen"
+      id="tutor-availability-screen"
+      aria-label="Availability"
+    >
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="px-6 pt-12 pb-3">
@@ -43,6 +48,9 @@ export default function TutorAvailabilityPage() {
               <button
                 onClick={() => navigate(-1)}
                 className="text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
+                data-testid="tutor-availability-back"
+                id="tutor-availability-back"
+                aria-label="Back"
               >
                 <ArrowLeft className="w-6 h-6" />
               </button>
@@ -52,6 +60,9 @@ export default function TutorAvailabilityPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="bg-gradient-to-r from-[#4361d9] to-[#5b7ceb] text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2"
+              data-testid="tutor-availability-save"
+              id="tutor-availability-save"
+              aria-label="Save availability"
             >
               <Check className="w-4 h-4" />
               Save
@@ -79,6 +90,7 @@ export default function TutorAvailabilityPage() {
                   whileTap={{ scale: 0.9 }}
                   onClick={() => addTimeSlot(day)}
                   className="w-8 h-8 bg-[#2a2f45] rounded-lg flex items-center justify-center"
+                  aria-label={`Add time slot for ${day}`}
                 >
                   <Plus className="w-4 h-4 text-[#5b7ceb]" />
                 </motion.button>
@@ -104,6 +116,7 @@ export default function TutorAvailabilityPage() {
                             setAvailability(newAvail);
                           }}
                           className="bg-transparent text-[#e8edf5] text-sm outline-none"
+                          aria-label={`${day} start time`}
                         />
                         <span className="text-[#a8b3cf]">-</span>
                         <input
@@ -115,6 +128,7 @@ export default function TutorAvailabilityPage() {
                             setAvailability(newAvail);
                           }}
                           className="bg-transparent text-[#e8edf5] text-sm outline-none"
+                          aria-label={`${day} end time`}
                         />
                       </div>
                       <motion.button
@@ -122,6 +136,7 @@ export default function TutorAvailabilityPage() {
                         whileTap={{ scale: 0.9 }}
                         onClick={() => removeTimeSlot(day, index)}
                         className="w-8 h-8 bg-[#1e2139] rounded-lg flex items-center justify-center"
+                        aria-label={`Remove time slot for ${day}`}
                       >
                         <X className="w-4 h-4 text-[#a8b3cf]" />
                       </motion.button>
@@ -139,6 +154,9 @@ export default function TutorAvailabilityPage() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="w-full bg-[#2a2f45] text-[#e8edf5] font-semibold py-3 rounded-xl"
+            data-testid="tutor-availability-copy-week"
+            id="tutor-availability-copy-week"
+            aria-label="Copy Previous Week"
           >
             Copy Previous Week
           </motion.button>
@@ -146,6 +164,9 @@ export default function TutorAvailabilityPage() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="w-full bg-[#2a2f45] text-[#e8edf5] font-semibold py-3 rounded-xl"
+            data-testid="tutor-availability-clear-all"
+            id="tutor-availability-clear-all"
+            aria-label="Clear All"
           >
             Clear All
           </motion.button>

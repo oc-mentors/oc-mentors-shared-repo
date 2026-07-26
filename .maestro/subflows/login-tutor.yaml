@@ -1,0 +1,30 @@
+appId: com.ocmentorscorp.app
+---
+# Tutor login. Requires --env TUTOR_EMAIL=... --env TUTOR_PASSWORD=...
+- extendedWaitUntil:
+    visible:
+      text: "Login|Tutor/Admin|Choose your role"
+    timeout: 30000
+- tapOn:
+    text: "Tutor/Admin"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Email"
+    timeout: 15000
+- tapOn:
+    text: "Email"
+- inputText: ${TUTOR_EMAIL}
+- tapOn:
+    text: "Password"
+- inputText: ${TUTOR_PASSWORD}
+- tapOn:
+    text: "Sign in to continue your learning"
+- tapOn:
+    text: "Sign In"
+- extendedWaitUntil:
+    visible:
+      text: "Home|Tutor home|Tutor onboarding"
+    timeout: 35000
+- assertVisible:
+    text: "Home|Tutor home|Tutor onboarding"

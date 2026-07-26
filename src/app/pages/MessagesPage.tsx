@@ -109,7 +109,11 @@ export default function MessagesPage() {
   );
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className="h-screen overflow-hidden flex flex-col"
+      style={{ backgroundColor: colors.bgPrimary }}
+      data-testid="messages-screen" id="messages-screen" aria-label="Messages"
+    >
       <div className="max-w-md mx-auto w-full h-full flex flex-col relative">
         {/* Fixed Header Section */}
         <div className="flex-shrink-0 relative z-10" style={{ backgroundColor: colors.bgPrimary }}>
@@ -142,6 +146,7 @@ export default function MessagesPage() {
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                data-testid="messages-search-input" id="messages-search-input" aria-label="Search conversations"
                 className="w-full rounded-xl pl-12 pr-4 py-3 text-[14px] border border-transparent focus:outline-none transition-colors"
                 style={{
                   backgroundColor: colors.bgTertiary,
@@ -253,7 +258,12 @@ export default function MessagesPage() {
                       </motion.div>
                     )}
 
-                    <Link to={`/chat/${conversation.id}`} state={{ conversation }} className="block">
+                    <Link
+                      to={`/chat/${conversation.id}`}
+                      state={{ conversation }}
+                      className="block"
+                      data-testid={`chat-row-${conversation.id}`} id={`chat-row-${conversation.id}`} aria-label={`Conversation with ${conversation.name}`}
+                    >
                       <div className="flex items-start gap-4">
                         {/* Avatar with Unread Badge */}
                         <div className="relative flex-shrink-0">
@@ -312,6 +322,7 @@ export default function MessagesPage() {
                       <motion.button
                         whileTap={{ scale: 0.9 }}
                         onClick={(e) => handleMenuClick(conversation.id, e)}
+                        data-testid={`chat-row-menu-${conversation.id}`} id={`chat-row-menu-${conversation.id}`} aria-label="Conversation options"
                         className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors z-30"
                         style={{ backgroundColor: 'transparent' }}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bgTertiary}
@@ -368,11 +379,13 @@ export default function MessagesPage() {
                 top: `${menuPosition.top}px`,
                 right: `${menuPosition.right}px`
               }}
+              data-testid="messages-row-menu" id="messages-row-menu" aria-label="Conversation menu"
             >
               <motion.button
                 whileHover={{ backgroundColor: `${accentColor.primary}20` }}
                 whileTap={{ scale: 0.98 }}
                 onClick={(e) => togglePin(activeMenu, e)}
+                data-testid="messages-menu-pin" id="messages-menu-pin" aria-label="Pin conversation"
                 className="w-full px-4 py-3 flex items-center gap-3 text-left transition-colors"
               >
                 {conversations.find(c => c.id === activeMenu)?.pinned ? (
@@ -389,6 +402,7 @@ export default function MessagesPage() {
                 whileHover={{ backgroundColor: `${accentColor.primary}20` }}
                 whileTap={{ scale: 0.98 }}
                 onClick={(e) => toggleUnread(activeMenu, e)}
+                data-testid="messages-menu-unread" id="messages-menu-unread" aria-label="Mark unread"
                 className="w-full px-4 py-3 flex items-center gap-3 text-left transition-colors"
               >
                 {conversations.find(c => c.id === activeMenu)?.unread ? (
@@ -405,6 +419,7 @@ export default function MessagesPage() {
                 whileHover={{ backgroundColor: "rgba(255, 0, 0, 0.1)" }}
                 whileTap={{ scale: 0.98 }}
                 onClick={(e) => handleDelete(activeMenu, e)}
+                data-testid="messages-menu-delete" id="messages-menu-delete" aria-label="Delete conversation"
                 className="w-full px-4 py-3 flex items-center gap-3 text-left transition-colors"
               >
                 <Trash2 className="w-4 h-4 text-[#ff0000]" />

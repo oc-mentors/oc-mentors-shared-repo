@@ -68,6 +68,9 @@ export function SwipeableMessage({ message, index, onReply }: SwipeableMessagePr
               : ""
           }`}
           style={!message.isSent ? { backgroundColor: colors.bgCard } : undefined}
+          data-testid={message.isSent ? "chat-sent-message" : "chat-received-message"}
+          id={message.isSent ? `chat-sent-${index}` : `chat-received-${index}`}
+          aria-label={message.text}
         >
           {/* Reply preview */}
           {message.replyTo && (

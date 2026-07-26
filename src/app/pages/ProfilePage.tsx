@@ -368,7 +368,11 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen overflow-auto pb-20" style={{ backgroundColor: colors.bgPrimary }}>
+    <div
+      className="min-h-screen overflow-auto pb-20"
+      style={{ backgroundColor: colors.bgPrimary }}
+      data-testid="profile-screen" id="profile-screen" aria-label="Profile"
+    >
       <div className="max-w-md mx-auto">
         {/* Header with Back Button */}
         <div className="px-6 pt-3 pb-2">
@@ -376,6 +380,7 @@ export default function ProfilePage() {
             onClick={handleBack}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            data-testid="profile-back" id="profile-back" aria-label="Back"
             className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
             style={{ backgroundColor: colors.bgCard }}
           >
@@ -468,7 +473,7 @@ export default function ProfilePage() {
           >
             {user?.role === "tutor" || user?.role === "admin"
               ? "Chemistry • Math • Physics"
-              : [user?.year, user?.major?.length ? user.major.join(" • ") : null].filter(Boolean).join(" • ") || "Add year & major in Settings"}
+              : [user?.year, user?.major?.length ? user.major.join(" • ") : null].filter(Boolean).join(" • ") || "Add year & major"}
           </motion.p>
 
           {/* Member Since Badge */}
@@ -654,7 +659,7 @@ export default function ProfilePage() {
           )}
 
           {/* Settings */}
-          <Link to="/settings">
+          <Link to="/settings" aria-label="Settings">
             <motion.div
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
@@ -793,6 +798,7 @@ export default function ProfilePage() {
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleLogoutClick}
+            data-testid="profile-logout-button" id="profile-logout-button" aria-label="Logout"
             className="rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)] flex items-center justify-between cursor-pointer"
             style={{ backgroundColor: colors.bgCard }}
           >

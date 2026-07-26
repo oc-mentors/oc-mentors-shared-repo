@@ -128,7 +128,10 @@ export default function LoginPage() {
   const isFormValid = selectedRole && email && password && (mode === "login" || name);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1d29] via-[#2a2f45] to-[#1a1d29] flex flex-col">
+    <div
+      className="min-h-screen bg-gradient-to-br from-[#1a1d29] via-[#2a2f45] to-[#1a1d29] flex flex-col"
+      data-testid="login-screen" id="login-screen" aria-label="Login"
+    >
       <div className="flex-1 flex flex-col justify-center items-center p-6 w-full min-h-0">
         <div className="max-w-md w-full">
         {/* Tagline */}
@@ -138,7 +141,10 @@ export default function LoginPage() {
           className="text-center mb-8"
         >
           <p className="text-xs font-bold tracking-[0.25em] uppercase text-[#a8b3cf] mb-3">Socratic OC</p>
-          <p className="text-xl sm:text-2xl font-bold text-[#e8edf5] leading-snug px-2">
+          <p
+            className="text-xl sm:text-2xl font-bold text-[#e8edf5] leading-snug px-2"
+            data-testid={mode === "login" ? "login-heading" : "signup-heading"} id={mode === "login" ? "login-heading" : "signup-heading"} aria-label={mode === "login" ? "Sign in to continue your learning" : "Create your account to begin"}
+          >
             {mode === "login" ? "Sign in to continue your learning" : "Create your account to begin"}
           </p>
         </motion.div>
@@ -154,6 +160,7 @@ export default function LoginPage() {
               animate="center"
               exit="exit"
               className="mb-6"
+              data-testid="login-role-picker" id="login-role-picker" aria-label="Choose your role"
             >
               <h2 className="text-lg font-semibold text-[#e8edf5] mb-4 text-center">
                 I am a...
@@ -164,6 +171,9 @@ export default function LoginPage() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleRoleSelect("student")}
+                  data-testid="login-role-student"
+                  id="login-role-student"
+                  aria-label="Student"
                   className="bg-[#1e2139] rounded-2xl p-6 border-2 border-transparent hover:border-[#5b7ceb] transition-all shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
                 >
                   <div className="flex flex-col items-center gap-3">
@@ -179,6 +189,7 @@ export default function LoginPage() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleRoleSelect("tutor")}
+                  data-testid="login-role-tutor" id="login-role-tutor" aria-label="Tutor/Admin"
                   className="bg-[#1e2139] rounded-2xl p-6 border-2 border-transparent hover:border-[#8b5cf6] transition-all shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
                 >
                   <div className="flex flex-col items-center gap-3">
@@ -198,14 +209,18 @@ export default function LoginPage() {
               initial="enter"
               animate="center"
               exit="exit"
+              data-testid="login-auth-form" id="login-auth-form" aria-label="Sign in form"
             >
               {/* Selected Role Badge */}
               <div className="mb-6 flex items-center justify-center gap-3">
-                <div className={`px-4 py-2 rounded-xl flex items-center gap-2 ${
+                <div
+                  className={`px-4 py-2 rounded-xl flex items-center gap-2 ${
                   selectedRole === "student" 
                     ? "bg-[#4361d9]/20 border border-[#4361d9]/40" 
                     : "bg-[#8b5cf6]/20 border border-[#8b5cf6]/40"
-                }`}>
+                }`}
+                  data-testid="login-role-badge" id="login-role-badge" aria-label="Selected role"
+                >
                   {selectedRole === "student" ? (
                     <GraduationCap className="w-4 h-4 text-[#5b7ceb]" />
                   ) : (
@@ -220,6 +235,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={handleChangeRole}
+                  data-testid="login-change-role" id="login-change-role" aria-label="Change role"
                   className="text-sm text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
                 >
                   Change
@@ -227,7 +243,7 @@ export default function LoginPage() {
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form" id="login-form" aria-label="Account form">
                 {/* Name Field (Signup only) */}
                 <AnimatePresence>
                   {mode === "signup" && (
@@ -243,6 +259,7 @@ export default function LoginPage() {
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="Full Name"
+                          data-testid="signup-name-input" id="signup-name-input" aria-label="Full Name"
                           className="flex-1 bg-transparent text-[#e8edf5] placeholder:text-[#a8b3cf] outline-none"
                         />
                       </div>
@@ -258,6 +275,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email"
+                    data-testid="login-email-input" id="login-email-input" aria-label="Email"
                     className="flex-1 bg-transparent text-[#e8edf5] placeholder:text-[#a8b3cf] outline-none"
                   />
                 </div>
@@ -270,11 +288,13 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
+                    data-testid="login-password-input" id="login-password-input" aria-label="Password"
                     className="flex-1 bg-transparent text-[#e8edf5] placeholder:text-[#a8b3cf] outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    data-testid="login-password-toggle" id="login-password-toggle" aria-label="Show or hide password"
                     className="text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
                   >
                     {showPassword ? (
@@ -286,7 +306,10 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <p className="text-sm text-red-400 bg-red-500/10 rounded-xl px-4 py-2">
+                  <p
+                    className="text-sm text-red-400 bg-red-500/10 rounded-xl px-4 py-2"
+                    data-testid="login-error" id="login-error" aria-label="Sign in error"
+                  >
                     {error}
                   </p>
                 )}
@@ -295,7 +318,9 @@ export default function LoginPage() {
                 {mode === "login" && (
                   <div className="mt-4 text-center">
                     <button
+                      type="button"
                       onClick={() => setShowForgotPasswordModal(true)}
+                      data-testid="login-forgot-password" id="login-forgot-password" aria-label="Forgot Password?"
                       className="text-sm text-[#a8b3cf] hover:text-[#5b7ceb] transition-colors"
                     >
                       Forgot Password?
@@ -309,6 +334,7 @@ export default function LoginPage() {
                   whileTap={{ scale: isFormValid && !isGoogleLoading ? 0.98 : 1 }}
                   type="submit"
                   disabled={!isFormValid || isLoading || isGoogleLoading}
+                  data-testid="login-submit-button" id="login-submit-button" aria-label={mode === "login" ? "Sign In" : "Create Account"}
                   className={`w-full rounded-2xl py-4 font-semibold text-white shadow-lg transition-all ${
                     isFormValid && !isGoogleLoading
                       ? "bg-gradient-to-r from-[#4361d9] to-[#5b7ceb] hover:shadow-[0px_8px_24px_0px_rgba(67,97,217,0.4)]"
@@ -334,6 +360,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleGoogleSignIn}
                     disabled={isGoogleLoading || isLoading}
+                    data-testid="login-google-button" id="login-google-button" aria-label={mode === "login" ? "Sign in with Google" : "Sign up with Google"}
                     className="w-full rounded-2xl py-3.5 flex items-center justify-center gap-3 font-semibold transition-all shadow-[0px_4px_16px_0px_rgba(0,0,0,0.4)]"
                     style={{
                       backgroundColor: "#ffffff",
@@ -367,7 +394,9 @@ export default function LoginPage() {
                 <p className="text-[#a8b3cf]">
                   {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
                   <button
+                    type="button"
                     onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                    data-testid="login-toggle-mode" id="login-toggle-mode" aria-label={mode === "login" ? "Sign Up" : "Sign In"}
                     className="text-[#5b7ceb] font-semibold hover:text-[#7c9ef5] transition-colors"
                   >
                     {mode === "login" ? "Sign Up" : "Sign In"}

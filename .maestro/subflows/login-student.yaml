@@ -1,0 +1,36 @@
+appId: com.ocmentorscorp.app
+---
+# Shared student login. Requires --env TEST_EMAIL=... --env TEST_PASSWORD=...
+# Selectors match human aria-labels (VoiceOver-friendly). See TESTING.md.
+# After quiz completion, the app may open the results screen ("Continue to Profile")
+# instead of Home — that is a successful login.
+- extendedWaitUntil:
+    visible:
+      text: "Login|Student|Choose your role"
+    timeout: 30000
+- tapOn:
+    text: "Student"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Email"
+    timeout: 15000
+- assertVisible:
+    text: "Email"
+- tapOn:
+    text: "Email"
+- inputText: ${TEST_EMAIL}
+- tapOn:
+    text: "Password"
+- inputText: ${TEST_PASSWORD}
+# Dismiss keyboard without focusing Email (that can wipe/truncate the address)
+- tapOn:
+    text: "Sign in to continue your learning"
+- tapOn:
+    text: "Sign In"
+- extendedWaitUntil:
+    visible:
+      text: "Home|Learning style quiz|Continue to Profile"
+    timeout: 35000
+- assertVisible:
+    text: "Home|Learning style quiz|Continue to Profile"

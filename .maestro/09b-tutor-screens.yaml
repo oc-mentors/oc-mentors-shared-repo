@@ -1,0 +1,51 @@
+appId: com.ocmentorscorp.app
+name: "9b — Tutor Students / Requests / Availability / Analytics"
+tags:
+  - tutor
+---
+- clearState
+- launchApp
+- runFlow: subflows/login-tutor.yaml
+- runFlow:
+    when:
+      visible:
+        text: "Tutor onboarding|Next"
+    file: subflows/complete-tutor-onboarding.yaml
+- assertVisible:
+    text: "Home|Tutor home"
+# Students via quick action (unique) then confirm search field
+- tapOn:
+    text: "My Students"
+- extendedWaitUntil:
+    visible:
+      text: "Search students"
+    timeout: 10000
+- assertVisible:
+    text: "My Students"
+- assertVisible:
+    text: "Search students"
+# Requests via home
+- tapOn:
+    text: "Home"
+- assertVisible:
+    text: "Home|Tutor home"
+- tapOn:
+    text: "View all requests"
+- assertVisible:
+    text: "Requests from students"
+- tapOn:
+    text: "Back"
+# Availability
+- tapOn:
+    text: "Availability"
+- assertVisible:
+    text: "Availability"
+- assertVisible:
+    text: "Save availability|Save"
+- tapOn:
+    text: "Back"
+# Analytics tab
+- tapOn:
+    text: "Analytics"
+- assertVisible:
+    text: "Analytics"

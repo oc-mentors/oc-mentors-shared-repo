@@ -95,13 +95,21 @@ export default function TutorRequestsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-20">
+    <div
+      className="min-h-screen bg-[#1a1d29] overflow-auto pb-20"
+      data-testid="tutor-requests-screen"
+      id="tutor-requests-screen"
+      aria-label="Requests from students"
+    >
       <div className="max-w-md mx-auto">
         <div className="px-6 pt-12 pb-3">
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={() => navigate(-1)}
               className="text-[#a8b3cf] hover:text-[#e8edf5] transition-colors"
+              data-testid="tutor-requests-back"
+              id="tutor-requests-back"
+              aria-label="Back"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
@@ -122,15 +130,20 @@ export default function TutorRequestsPage() {
           </div>
         ) : (
           <div className="px-6 space-y-3">
-            {incomingRequests.map((req) => (
+            {incomingRequests.map((req) => {
+              const name = studentNames[req.studentUid] ?? "Student";
+              return (
               <motion.div
                 key={req.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-[#1e2139] rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.5)]"
+                data-testid={`tutor-request-card-${req.id}`}
+                id={`tutor-request-card-${req.id}`}
+                aria-label={`Request from ${name}`}
               >
                 <p className="text-[#e8edf5] font-medium mb-1">
-                  {studentNames[req.studentUid] ?? "Student"}
+                  {name}
                 </p>
                 {req.subject && (
                   <p className="text-sm text-[#a8b3cf] mb-1">Subject: {req.subject}</p>
@@ -143,6 +156,9 @@ export default function TutorRequestsPage() {
                     onClick={() => handleAccept(req.id)}
                     disabled={acceptingId !== null}
                     className="flex-1 py-2 rounded-xl bg-[#4361d9] text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                    data-testid={`tutor-request-accept-${req.id}`}
+                    id={`tutor-request-accept-${req.id}`}
+                    aria-label="Accept request"
                   >
                     {acceptingId === req.id ? "…" : <><Check className="w-4 h-4" /> Accept</>}
                   </button>
@@ -150,12 +166,16 @@ export default function TutorRequestsPage() {
                     onClick={() => handleReject(req.id)}
                     disabled={rejectingId !== null}
                     className="py-2 px-4 rounded-xl border border-[rgba(255,255,255,0.2)] text-[#e8edf5] text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+                    data-testid={`tutor-request-reject-${req.id}`}
+                    id={`tutor-request-reject-${req.id}`}
+                    aria-label="Reject request"
                   >
                     {rejectingId === req.id ? "…" : <><X className="w-4 h-4" /> Reject</>}
                   </button>
                 </div>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

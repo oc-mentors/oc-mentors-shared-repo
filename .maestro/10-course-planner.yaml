@@ -1,0 +1,64 @@
+appId: com.ocmentorscorp.app
+name: "10 — Course Planner"
+tags:
+  - planner
+  - journey-10
+---
+# Pick UCI (default school), search ICS 31 via course # + Enter, add a section.
+- clearState
+- launchApp
+- runFlow: subflows/login-student-home.yaml
+- tapOn:
+    text: "Planner"
+- assertVisible:
+    text: "Course Planner"
+- assertVisible:
+    text: "School"
+- assertVisible:
+    text: "Course number|Course search|Search courses"
+- scrollUntilVisible:
+    element:
+      text: "Course number"
+    direction: DOWN
+    centerElement: true
+    timeout: 10000
+- tapOn:
+    text: "Course number"
+- inputText: "ics 31"
+# Enter submits WebSoc search from the course # field (avoids bottom-tab mis-taps)
+- pressKey: Enter
+- extendedWaitUntil:
+    visible:
+      text: "Course I&C SCI.*"
+    timeout: 30000
+# Dismiss iOS keyboard so the course row / Add buttons are tappable
+- runFlow:
+    when:
+      visible:
+        text: "Done"
+    commands:
+      - tapOn:
+          text: "Done"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Course I&C SCI.*"
+- scrollUntilVisible:
+    element:
+      text: "Add to plan|Already in plan"
+    direction: DOWN
+    centerElement: true
+    timeout: 20000
+- runFlow:
+    when:
+      visible:
+        text: "Add to plan"
+    commands:
+      - tapOn:
+          text: "Add to plan"
+          index: 0
+      - extendedWaitUntil:
+          visible:
+            text: "Already in plan"
+          timeout: 10000
+- assertVisible:
+    text: "Already in plan"

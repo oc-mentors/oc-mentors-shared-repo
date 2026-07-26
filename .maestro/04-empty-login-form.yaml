@@ -1,0 +1,37 @@
+appId: com.ocmentorscorp.app
+name: "4 — Empty login form"
+tags:
+  - auth
+  - unhappy
+  - journey-4
+---
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Login|Student|Choose your role"
+    timeout: 30000
+- assertVisible:
+    text: "Login"
+- tapOn:
+    text: "Student"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Email"
+    timeout: 15000
+- assertVisible:
+    text: "Sign in form"
+- assertVisible:
+    text: "Email"
+- assertVisible:
+    text: "Password"
+- assertVisible:
+    text: "Sign In"
+    enabled: false
+- assertVisible:
+    text: "Login"
+- assertNotVisible:
+    text: "Home"
+- assertNotVisible:
+    text: "Learning style quiz"

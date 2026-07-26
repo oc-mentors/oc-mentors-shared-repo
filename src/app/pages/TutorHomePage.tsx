@@ -38,7 +38,12 @@ export default function TutorHomePage() {
   const upcomingSessions = mySessions.slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-[#1a1d29] overflow-auto pb-20">
+    <div
+      className="min-h-screen bg-[#1a1d29] overflow-auto pb-20"
+      data-testid="tutor-home-screen"
+      id="tutor-home-screen"
+      aria-label="Tutor home"
+    >
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="px-6 pt-12 pb-3">
@@ -85,7 +90,9 @@ export default function TutorHomePage() {
                   <Users className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-2xl font-bold text-[#e8edf5]">{studentCount}</span>
-                <span className="text-xs text-[#a8b3cf] text-center">Students</span>
+                <span className="text-xs text-[#a8b3cf] text-center" aria-hidden="true">
+                  Students
+                </span>
               </div>
             </motion.div>
 
@@ -112,6 +119,9 @@ export default function TutorHomePage() {
             <Link
               to="/tutor-requests"
               className="text-sm text-[#5b7ceb] font-semibold flex items-center gap-1"
+              data-testid="tutor-home-view-all-requests"
+              id="tutor-home-view-all-requests"
+              aria-label="View all requests"
             >
               View all
               {incomingRequests.length > 0 && (
@@ -213,7 +223,12 @@ export default function TutorHomePage() {
         <div className="px-6 mb-6">
           <h2 className="text-lg font-bold text-[#e8edf5] mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Link to="/tutor-students">
+            <Link
+              to="/tutor-students"
+              data-testid="tutor-home-my-students"
+              id="tutor-home-my-students"
+              aria-label="My Students"
+            >
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
@@ -224,7 +239,12 @@ export default function TutorHomePage() {
               </motion.div>
             </Link>
 
-            <Link to="/tutor-availability">
+            <Link
+              to="/tutor-availability"
+              data-testid="tutor-home-availability"
+              id="tutor-home-availability"
+              aria-label="Availability"
+            >
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
@@ -235,7 +255,12 @@ export default function TutorHomePage() {
               </motion.div>
             </Link>
 
-            <Link to="/tutor-analytics">
+            <Link
+              to="/tutor-analytics"
+              data-testid="tutor-home-analytics"
+              id="tutor-home-analytics"
+              aria-label="Analytics"
+            >
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
@@ -246,7 +271,12 @@ export default function TutorHomePage() {
               </motion.div>
             </Link>
 
-            <Link to="/chat">
+            <Link
+              to="/chat"
+              data-testid="tutor-home-messages"
+              id="tutor-home-messages"
+              aria-label="Messages"
+            >
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}

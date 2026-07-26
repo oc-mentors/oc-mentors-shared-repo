@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Home, Users, Calendar, MessageCircle, BarChart3, PawPrint } from "lucide-react";
+import { Home, Users, Calendar, MessageCircle, BarChart3, GraduationCap } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -30,7 +30,7 @@ function pathToTab(p: string): string {
   if (p === "/tutors" || p.startsWith("/tutor/") || p === "/booking" || p === "/tutor-students") return "tutors";
   if (p === "/schedule" || p === "/video-session" || p === "/rate-session" || p === "/tutor-availability") return "schedule";
   if (p === "/chat" || p.startsWith("/chat/")) return "chat";
-  if (p === "/zot-planner") return "zot";
+  if (p === "/zot-planner") return "planner";
   if (p === "/progress" || p === "/announcements" || p === "/assignments" || p === "/academic-info") return "progress";
   if (p === "/tutor-analytics") return "analytics";
   return "home";
@@ -71,7 +71,7 @@ export function BottomNav({ currentPage }: BottomNavProps) {
 
   const studentNavItems = [
     { id: "home", label: "Home", icon: Home, path: "/home" },
-    { id: "zot", label: "Zot Zot!", icon: PawPrint, path: "/zot-planner" },
+    { id: "planner", label: "Planner", icon: GraduationCap, path: "/zot-planner" },
     { id: "schedule", label: "Schedule", icon: Calendar, path: "/schedule" },
     { id: "tutors", label: "Tutors", icon: Users, path: "/tutors" },
     { id: "chat", label: "Chat", icon: MessageCircle, path: "/chat" },
@@ -116,7 +116,7 @@ export function BottomNav({ currentPage }: BottomNavProps) {
             );
 
             return (
-              <Link key={item.id} to={item.path}>
+              <Link key={item.id} to={item.path} data-testid={`nav-tab-${item.id}`} id={`nav-tab-${item.id}`} aria-label={item.label}>
                 {content}
               </Link>
             );

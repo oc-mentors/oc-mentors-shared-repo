@@ -36,6 +36,7 @@ export function LogoutConfirmModal({ isOpen, onClose, onConfirm }: LogoutConfirm
               backgroundColor: colors.bgCard,
             }}
             onClick={(e) => e.stopPropagation()}
+            data-testid="logout-confirm-modal" id="logout-confirm-modal" aria-label="Logout confirmation"
           >
             {/* Animated Background */}
             <div className="relative overflow-hidden">
@@ -56,6 +57,7 @@ export function LogoutConfirmModal({ isOpen, onClose, onConfirm }: LogoutConfirm
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={onClose}
+                  data-testid="logout-modal-close" id="logout-modal-close" aria-label="Close"
                   className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors z-10"
                   style={{ backgroundColor: colors.borderPrimary }}
                 >
@@ -138,6 +140,7 @@ export function LogoutConfirmModal({ isOpen, onClose, onConfirm }: LogoutConfirm
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onClose}
+                    data-testid="logout-cancel-button" id="logout-cancel-button" aria-label="Cancel"
                     className="flex-1 py-4 rounded-2xl font-bold text-[16px] border-2"
                     style={{
                       backgroundColor: colors.bgTertiary,
@@ -155,6 +158,7 @@ export function LogoutConfirmModal({ isOpen, onClose, onConfirm }: LogoutConfirm
                     }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onConfirm}
+                    data-testid="logout-confirm-button" id="logout-confirm-button" aria-label="Yes, Logout"
                     className="flex-1 py-4 rounded-2xl font-bold text-[16px] shadow-lg relative overflow-hidden"
                     style={{ 
                       backgroundColor: "#FF453A",

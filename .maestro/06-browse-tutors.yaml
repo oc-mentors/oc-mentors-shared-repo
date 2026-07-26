@@ -1,0 +1,29 @@
+appId: com.ocmentorscorp.app
+name: "6 — Browse tutors and open profile"
+tags:
+  - tutors
+  - journey-6
+---
+# Requires TEST_EMAIL with learning quiz already completed.
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Login|Student|Choose your role"
+    timeout: 30000
+- runFlow: subflows/login-student-home.yaml
+- tapOn:
+    text: "Tutors"
+- assertVisible:
+    text: "Find Tutors"
+- assertVisible:
+    text: "Search tutors"
+- tapOn:
+    text: "Tutor .*"
+    index: 0
+- assertVisible:
+    text: "Tutor profile"
+- assertVisible:
+    text: "Back"
+- assertVisible:
+    text: "Book Lesson"
